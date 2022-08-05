@@ -1,2 +1,2 @@
-# Smart-Contracts-Library
+# EtherAuthority Smart Contracts Library
 Collection of ready made smart contracts
