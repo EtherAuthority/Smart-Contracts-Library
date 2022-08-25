@@ -1,2 +1,2 @@
-# EtherAuthority Smart Contracts Library
-Collection of ready made smart contracts
+# EtherAuthority Smart Contract Updates
+Dev updates
