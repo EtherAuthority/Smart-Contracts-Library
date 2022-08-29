@@ -2,37 +2,221 @@
 pragma solidity 0.8.2; 
 
 
-/**
-    * @title SafeMath
-    * @dev Math operations with safety checks that throw on error
-    */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-        return 0;
-    }
-    uint256 c = a * b;
-    require(c / a == b, 'SafeMath mul failed');
-    return c;
-    }
+//-------------------------INTERFACES-----------------------------
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-    }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a, 'SafeMath sub failed');
-    return a - b;
-    }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a, 'SafeMath add failed');
-    return c;
-    }
+// pragma solidity >=0.5.0;
+
+interface IUniswapV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+}
+
+
+// pragma solidity >=0.5.0;
+
+interface IUniswapV2Pair {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external pure returns (string memory);
+    function symbol() external pure returns (string memory);
+    function decimals() external pure returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+    function nonces(address owner) external view returns (uint);
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
+
+    function MINIMUM_LIQUIDITY() external pure returns (uint);
+    function factory() external view returns (address);
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint);
+    function price1CumulativeLast() external view returns (uint);
+    function kLast() external view returns (uint);
+
+    function mint(address to) external returns (uint liquidity);
+    function burn(address to) external returns (uint amount0, uint amount1);
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function skim(address to) external;
+    function sync() external;
+
+    function initialize(address, address) external;
+}
+
+// pragma solidity >=0.6.2;
+
+interface IUniswapV2Router01 {
+    function factory() external pure returns (address);
+    function WETH() external pure returns (address);
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB, uint liquidity);
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETH(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountToken, uint amountETH);
+    function removeLiquidityWithPermit(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETHWithPermit(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountToken, uint amountETH);
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+
+    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
+    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
+    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
+}
+
+
+
+// pragma solidity >=0.6.2;
+
+interface IUniswapV2Router02 is IUniswapV2Router01 {
+    function removeLiquidityETHSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountETH);
+    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountETH);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
 }
 
 
@@ -67,22 +251,49 @@ contract owned {
 }
  
 
+
     
 contract USRToken is owned {
 
     // Public variables of the token
-    using SafeMath for uint256;
     string constant private _name = "User Token";
     string constant private _symbol = "USR";
     uint256 constant private _decimals = 18;
-    uint256 private _totalSupply = 2100000000 * (10**_decimals);         
-    uint256 constant public maxSupply = 2100000000 * (10**_decimals);    
-    bool public safeguard;  //putting safeguard on will halt all non-owner functions
+    uint256 private _totalSupply = 21000000000 * (10**_decimals);         
+    uint256 constant public maxSupply = 21000000000 * (10**_decimals); 
+    bool public isTradeActive;  //putting isTradeActive on will halt all non-owner functions
+
+    address [] public WRAP_TOKENS;
+
+    IUniswapV2Router02 public immutable uniswapV2Router;
+    address public immutable uniswapV2Pair;
+
+
+    uint256 private lastUser;
+    mapping (address => uint256) private UserToId; //transfer,
+    mapping (uint256 => address) private IdToUser; //transfer, 
+    mapping (uint256 => bool) private excludeFromRandom;//set excludeWallet, constructor
+
+    mapping (address=> address) public userRewardToken;
+    
+
+    address  payable public teamWallet = payable(0xa1295a3593648220506ae7F68b887338818d054C);
+    address  payable public exchangeWallet = payable(0x4c25c7d476C055B0beCe2aA98430f21A8CE01dF7);
+    address  payable public marketingWallet = payable(0xBcb539a11C433784F1c77915f24Bb6A3485C0954);
+    address  payable public companyReserve = payable(0x8B960250b2fD5969F2B647Bfd890DC5E997d1F43);
+    address  payable public privateSale = payable(0xb711D029049728CD1014474A700282878cBaaeBb);
+    address  payable  public developmentWallet = payable(0x0B3E210042F1003d77d940471886d74FF6Ef9d7F);
+    address  payable public charityWallet = payable(0x38bcAbb8Dd003a7AffF404AED75e3E66A74ee1f8);
+    address  payable public lpWallet = payable(0x9e31b4086Bb31FC2E35235584275b31fb7A9F985);
+    address  payable public strategicWallet = payable(0x11fFaAdfE6A98888D30f9c5a337D898976dF7bD6);
+    // address public payable ownerWallet = 0x81BD639F0EC8CBB6083c2627b3661eE42EEb17B8;
+
+
 
     // This creates a mapping with all data storage
     mapping (address => uint256) private _balanceOf;
     mapping (address => mapping (address => uint256)) private _allowance;
-    mapping (address => bool) public frozenAccount;
+    mapping (address => bool) public blacklisted;
 
 
 
@@ -92,8 +303,8 @@ contract USRToken is owned {
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
         
-    // This generates a public event for frozen (blacklisting) accounts
-    event FrozenAccounts(address target, bool frozen);
+    // This generates a public event for blacklisted (blacklisting) accounts
+    event blacklisteds(address target, bool blacklisted);
     
     // This will log approval of token Transfer
     event Approval(address indexed from, address indexed spender, uint256 value);
@@ -148,17 +359,225 @@ contract USRToken is owned {
     function _transfer(address _from, address _to, uint _value) internal {
         
         //checking conditions
-        require(!safeguard);
+        require(!isTradeActive);
         require (_to != address(0));                      // Prevent transfer to 0x0 address. Use burn() instead
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-        require(!frozenAccount[_to]);                       // Check if recipient is frozen
+        require(!blacklisted[_from]);                     // Check if sender is blacklisted
+        require(!blacklisted[_to]);                       // Check if recipient is blacklisted
+
+ 
+
+        uint totalDeduction = _deductAllTax( _from,  _to, _value);
+
+        uint recAmnt = _value-totalDeduction;
         
-        // overflow and undeflow checked by SafeMath Library
-        _balanceOf[_from] = _balanceOf[_from].sub(_value);    // Subtract from the sender
-        _balanceOf[_to] = _balanceOf[_to].add(_value);        // Add the same to the recipient
+        //transfer
+        _balanceOf[_from] = _balanceOf[_from]-(_value);    // Subtract from the sender
+        _balanceOf[_to] = _balanceOf[_to]+(recAmnt);        // Add the same to the recipient
         
         // emit Transfer event
         emit Transfer(_from, _to, _value);
+    }
+
+    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
+        // approve token transfer to cover all possible scenarios
+        _approve(address(this), address(uniswapV2Router), tokenAmount);
+
+        // add the liquidity
+        uniswapV2Router.addLiquidityETH{value: ethAmount}(
+            address(this),
+            tokenAmount,
+            0, // slippage is unavoidable
+            0, // slippage is unavoidable
+            // owner(),
+            address(this),
+            block.timestamp
+        );
+    }
+
+    /**
+     * Internal transfer, only can be called by this contract 
+     */
+    function _deductAllTax(address _from, address _to, uint256 _amount) internal returns(uint){
+
+         if (_to == uniswapV2Pair) {
+
+             // TOKEN SELL CALL 
+
+             return _sellTaxDeduction(_from,_amount);
+
+        } else if (_from == uniswapV2Pair) {
+
+            // TOKEN BUY CALL
+
+           return _buyTaxDeduction ( _from,  _amount);
+
+        }else{
+
+            // TOKEN WALLET TO WALLET TRANSFER CALL
+
+            return _walletTransferDeduction(_from,_amount);
+        }
+
+    }
+
+    function _buyTaxDeduction (address _from, uint _amount) internal returns(uint256){
+
+        // 5% injected into liquidity pool (pancake swap)
+        // 1% Liquidity injection wallet
+        // 1% true burn (removal from total supply)
+        // 1% token sold and exchanged for bnb wrapped etherum
+        // 1% goes towards the 1337 reward wallet
+        // .05% marketing wallet
+        // .05% development wallet
+        // .025% charity wallet
+        // 1% strategic partnership wallet
+        uint totalReturn;
+        uint256 initialBalance = address(this).balance;
+
+        uint injectedAmnt   = _amount*5/100; //5% 
+        // uint liquidity      = _amount*1/100; // 1%
+       
+        uint exchangeWrap   = _amount*1/100; // 1%
+        // uint marketing      = _amount*50/10000; // 0.5%
+        // uint development    = _amount*50/10000; // 0.5%
+        // uint charity        = _amount*25/10000; // 0.025%
+        // uint strategic      = _amount*1/100; // 1%
+
+        // uint rewardCollection = _amount*1/100; //1%
+
+        uint burnFee = _amount*1/100; //1%
+
+        uint256 half = injectedAmnt/2;
+
+         address _token = WRAP_TOKENS[0];
+        
+        swapTokensForBnb(address(this),half,_token); // 0 for wrap-bnb
+
+        uint256 newBalance = address(this).balance-(initialBalance);
+
+        addLiquidity(half, newBalance);
+
+        swapTokensForBnb(exchangeWallet,exchangeWrap,WRAP_TOKENS[1]); // wrap-etherum
+
+            _balanceOf[lpWallet] += _amount*1/100;
+            totalReturn += _amount*1/100;
+             emit Transfer(_from, lpWallet, _amount*1/100);
+
+            _balanceOf[marketingWallet] +=_amount*50/10000;
+            totalReturn += _amount*50/10000;
+             emit Transfer(_from, marketingWallet, _amount*50/10000);
+
+            _balanceOf[developmentWallet] +=_amount*50/10000;
+            totalReturn += _amount*50/10000;
+             emit Transfer(_from, developmentWallet, _amount*50/10000);
+
+            _balanceOf[charityWallet] +=_amount*25/10000;
+            totalReturn += _amount*25/10000;
+             emit Transfer(_from, charityWallet, _amount*25/10000);
+
+            _balanceOf[strategicWallet] +=_amount*1/100;
+            totalReturn += _amount*1/100;
+             emit Transfer(_from, strategicWallet, _amount*1/100);
+
+            _balanceOf[address(this)] +=_amount*1/100;
+            totalReturn += _amount*1/100;
+            emit Transfer(_from, address(this), _amount*1/100);
+
+            _burn(_from,burnFee);
+
+            totalReturn += injectedAmnt+exchangeWrap+burnFee;
+        return totalReturn;
+
+    }
+
+    function _sellTaxDeduction(address _from, uint _amount) internal returns(uint){
+
+
+
+        uint256 initialBalance = address(this).balance;
+
+        uint injectedAmnt   = _amount*9/100; //5% 
+        uint liquidity      = _amount*1/100; // 1%
+       
+   
+        uint marketing      = _amount*50/10000; // 0.5%
+        uint development    = _amount*50/10000; // 0.5%
+
+        uint strategic      = _amount*1/100; // 1%
+
+
+        uint burnFee = _amount*2/100; //1%
+
+        uint256 half = injectedAmnt/2;
+        
+        swapTokensForBnb(address(this),half,WRAP_TOKENS[0]); // 0 for wrap-bnb
+
+        uint256 newBalance = address(this).balance-(initialBalance);
+
+        addLiquidity(half, newBalance);
+
+
+            _balanceOf[lpWallet] +=liquidity;
+
+             emit Transfer(_from, lpWallet, liquidity);
+
+            _balanceOf[marketingWallet] +=marketing;
+
+             emit Transfer(_from, marketingWallet, marketing);
+
+            _balanceOf[developmentWallet] +=development;
+
+             emit Transfer(_from, developmentWallet, development);
+
+
+            _balanceOf[strategicWallet] +=strategic;
+
+             emit Transfer(_from, strategicWallet, strategic);
+
+
+            _burn(_from,burnFee);
+
+
+        return (injectedAmnt+liquidity+marketing+development+strategic+burnFee);
+
+
+
+    }
+
+    function _walletTransferDeduction(address _from , uint _amount) internal returns(uint){
+
+
+
+        uint256 initialBalance = address(this).balance;
+
+        uint injectedAmnt   = _amount*9/100; //5% 
+        uint liquidity      = _amount*1/100; // 1%
+       
+
+
+        uint burnFee = _amount*2/100; //1%
+
+        uint256 half = injectedAmnt/2;
+        
+        address _token = WRAP_TOKENS[0];
+
+        swapTokensForBnb(address(this),half,_token); // 0 for wrap-bnb
+
+        uint256 newBalance = address(this).balance-(initialBalance);
+
+        addLiquidity(half, newBalance);
+
+
+            _balanceOf[lpWallet] +=liquidity;
+
+             emit Transfer(_from, lpWallet, liquidity);
+
+            _burn(_from,burnFee);
+
+        return (injectedAmnt+liquidity+burnFee);
+
+
+
     }
 
     /**
@@ -186,7 +605,7 @@ contract USRToken is owned {
         */
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
         //checking of allowance and token value is done by SafeMath
-        _allowance[_from][msg.sender] = _allowance[_from][msg.sender].sub(_value);
+        _allowance[_from][msg.sender] = _allowance[_from][msg.sender]-(_value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -200,15 +619,20 @@ contract USRToken is owned {
         * @param _value the max amount they can spend
         */
     function approve(address _spender, uint256 _value) external returns (bool success) {
-        require(!safeguard);
+        _approve(_spender, msg.sender, _value);
+        return true;
+    }
+
+    function _approve(address _spender, address _from, uint256 _value) internal returns (bool success) {
+        require(!isTradeActive);
         /* AUDITOR NOTE:
             Many dex and dapps pre-approve large amount of tokens to save gas for subsequent transaction. This is good use case.
             On flip-side, some malicious dapp, may pre-approve large amount and then drain all token balance from user.
             So following condition is kept in commented. It can be be kept that way or not based on client's consent.
         */
         //require(_balanceOf[msg.sender] >= _value, "Balance does not have enough tokens");
-        _allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        _allowance[_from][_spender] = _value;
+        emit Approval(_from, _spender, _value);
         return true;
     }
     
@@ -223,7 +647,7 @@ contract USRToken is owned {
      */
     function increase_allowance(address spender, uint256 value) external returns (bool) {
         require(spender != address(0));
-        _allowance[msg.sender][spender] = _allowance[msg.sender][spender].add(value);
+        _allowance[msg.sender][spender] = _allowance[msg.sender][spender]+(value);
         emit Approval(msg.sender, spender, _allowance[msg.sender][spender]);
         return true;
     }
@@ -239,24 +663,47 @@ contract USRToken is owned {
      */
     function decrease_allowance(address spender, uint256 value) external returns (bool) {
         require(spender != address(0));
-        _allowance[msg.sender][spender] = _allowance[msg.sender][spender].sub(value);
+        _allowance[msg.sender][spender] = _allowance[msg.sender][spender]-(value);
         emit Approval(msg.sender, spender, _allowance[msg.sender][spender]);
         return true;
     }
 
 
     
-    constructor() {
-        //sending all the tokens to Owner
+    constructor(address _router) {
+        //distributing tokens to Wallet
+
         _balanceOf[owner] = _totalSupply;
+        _mint(teamWallet, 441e7 * (10**_decimals));
+        _mint(exchangeWallet, 231e7 * (10**_decimals));    
+        _mint(marketingWallet, 21e8 * (10**_decimals));
+        _mint(companyReserve, 1115e6 * (10**_decimals));
+        _mint(developmentWallet, 21e7 * (10**_decimals));    
+        _mint(privateSale, 21e8 * (10**_decimals));
+        
         
         //firing event which logs this transaction
         emit Transfer(address(0), owner, _totalSupply);
+
+
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
+         // Create a uniswap pair for this new token
+        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
+            .createPair(address(this), _uniswapV2Router.WETH());
+
+        // set the rest of the contract variables
+        uniswapV2Router = _uniswapV2Router;
+
+        WRAP_TOKENS.push( _uniswapV2Router.WETH());
+
+        // warp eth on 0 index
+
+
     }
     
     
     receive () external payable {
-      buyTokens();
+      
     }
 
     /**
@@ -267,14 +714,24 @@ contract USRToken is owned {
         * @param _value the amount of money to burn
         */
     function burn(uint256 _value) external returns (bool success) {
-        require(!safeguard);
+        require(!isTradeActive);
         //checking of enough token balance is done by SafeMath
-        _balanceOf[msg.sender] = _balanceOf[msg.sender].sub(_value);  // Subtract from the sender
-        _totalSupply = _totalSupply.sub(_value);                      // Updates totalSupply
+        _balanceOf[msg.sender] = _balanceOf[msg.sender]-(_value);  // Subtract from the sender
+        _totalSupply = _totalSupply-(_value);                      // Updates totalSupply
         emit Burn(msg.sender, _value);
         emit Transfer(msg.sender, address(0), _value);
         return true;
     }
+
+
+    function _burn(address _from, uint256 _value) internal returns (bool success) {
+        require(!isTradeActive);
+        //checking of enough token balance is done by SafeMath
+        _totalSupply = _totalSupply-(_value);                      // Updates totalSupply
+        emit Burn(_from, _value);
+        return true;
+    }
+
 
     /**
         * Destroy tokens from other account
@@ -285,11 +742,11 @@ contract USRToken is owned {
         * @param _value the amount of money to burn
         */
     function burnFrom(address _from, uint256 _value) external returns (bool success) {
-        require(!safeguard);
+        require(!isTradeActive);
         //checking of allowance and token value is done by SafeMath
-        _balanceOf[_from] = _balanceOf[_from].sub(_value);                         // Subtract from the targeted balance
-        _allowance[_from][msg.sender] = _allowance[_from][msg.sender].sub(_value); // Subtract from the sender's allowance
-        _totalSupply = _totalSupply.sub(_value);                                   // Update totalSupply
+        _balanceOf[_from] = _balanceOf[_from]-(_value);                         // Subtract from the targeted balance
+        _allowance[_from][msg.sender] = _allowance[_from][msg.sender]-(_value); // Subtract from the sender's allowance
+        _totalSupply = _totalSupply-(_value);                                   // Update totalSupply
         emit  Burn(_from, _value);
         emit Transfer(_from, address(0), _value);
         return true;
@@ -297,13 +754,13 @@ contract USRToken is owned {
         
     
     /** 
-        * @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-        * @param target Address to be frozen
-        * @param freeze either to freeze it or not
+        * @notice `blacklist? Prevent | Allow` `target` from sending & receiving tokens
+        * @param target Address to be blacklisted
+        * @param blacklist either to blacklist it or not
         */
-    function freezeAccount(address target, bool freeze) onlyOwner external {
-        frozenAccount[target] = freeze;
-        emit  FrozenAccounts(target, freeze);
+    function blacklistAccount(address target, bool blacklist) onlyOwner external {
+        blacklisted[target] = blacklist;
+        emit  blacklisteds(target, blacklist);
     }
     
     /** 
@@ -312,9 +769,12 @@ contract USRToken is owned {
         * @param mintedAmount the amount of tokens it will receive
         */
     function mintToken(address target, uint256 mintedAmount) onlyOwner external {
-        require(_totalSupply.add(mintedAmount) <= maxSupply, "Cannot Mint more than maximum supply");
-        _balanceOf[target] = _balanceOf[target].add(mintedAmount);
-        _totalSupply = _totalSupply.add(mintedAmount);
+        _mint(target, mintedAmount);
+    }
+    function _mint(address target, uint256 mintedAmount) internal {
+        require(_totalSupply+(mintedAmount) <= maxSupply, "Cannot Mint more than maximum supply");
+        _balanceOf[target] = _balanceOf[target]+(mintedAmount);
+        _totalSupply = _totalSupply+(mintedAmount);
         emit Transfer(address(0), target, mintedAmount);
     }
 
@@ -323,8 +783,8 @@ contract USRToken is owned {
     /**
         * Owner can transfer tokens from contract to owner address
         *
-        * When safeguard is true, then all the non-owner functions will stop working.
-        * When safeguard is false, then all the functions will resume working back again!
+        * When isTradeActive is true, then all the non-owner functions will stop working.
+        * When isTradeActive is false, then all the functions will resume working back again!
         */
     
     function manualWithdrawTokens(uint256 tokenAmount) external onlyOwner{
@@ -338,85 +798,25 @@ contract USRToken is owned {
     }
     
     /**
-        * Change safeguard status on or off
+        * Change isTradeActive status on or off
         *
-        * When safeguard is true, then all the non-owner functions will stop working.
-        * When safeguard is false, then all the functions will resume working back again!
+        * When isTradeActive is true, then all the non-owner functions will stop working.
+        * When isTradeActive is false, then all the functions will resume working back again!
         */
-    function changeSafeguardStatus() onlyOwner external{
-        if (safeguard == false){
-            safeguard = true;
+    function changeisTradeActiveStatus() onlyOwner external{
+        if (isTradeActive == false){
+            isTradeActive = true;
         }
         else{
-            safeguard = false;    
+            isTradeActive = false;    
         }
     }
     
 
     
-    bool public passiveAirdropStatus;
-    uint256 public passiveAirdropTokensAllocation;
-    uint256 public airdropAmount;  //in wei
-    uint256 public passiveAirdropTokensSold;
-    mapping(uint256 => mapping(address => bool)) public airdropClaimed;
-    uint256 internal airdropClaimedIndex;
-    uint256 public airdropFee = 0.05 * (1e18);
-    
-    /**
-     * This function to start a passive air drop by admin only
-     * Admin have to put airdrop amount (in wei) and total toens allocated for it.
-     * Admin must keep allocated tokens in the contract
-     */
-    function startNewPassiveAirDrop(uint256 passiveAirdropTokensAllocation_, uint256 airdropAmount_  ) external onlyOwner {
-        passiveAirdropTokensAllocation = passiveAirdropTokensAllocation_;
-        airdropAmount = airdropAmount_;
-        passiveAirdropStatus = true;
-    } 
-    
-    /**
-     * This function will stop any ongoing passive airdrop
-     */
-    function stopPassiveAirDropCompletely() external onlyOwner{
-        passiveAirdropTokensAllocation = 0;
-        airdropAmount = 0;
-        airdropClaimedIndex++;
-        passiveAirdropStatus = false;
-    }
-    
-    /**
-     * This function called by user who want to claim passive air drop.
-     * He can only claim air drop once, for current air drop. If admin stop an air drop and start fresh, then users can claim again (once only).
-     */
-    function claimPassiveAirdrop() external payable returns(bool) {
-        require(airdropAmount > 0, 'Token amount must not be zero');
-        require(passiveAirdropStatus, 'Air drop is not active');
-        require(passiveAirdropTokensSold <= passiveAirdropTokensAllocation, 'Air drop sold out');
-        require(!airdropClaimed[airdropClaimedIndex][msg.sender], 'user claimed air drop already');
-        require(msg.sender == tx.origin,  'No contract address allowed to claim air drop');
-        require(msg.value >= airdropFee, 'Not enough ether to claim this airdrop');
-        
-        _transfer(address(this), msg.sender, airdropAmount);
-        passiveAirdropTokensSold += airdropAmount;
-        airdropClaimed[airdropClaimedIndex][msg.sender] = true; 
-        return true;
-    }
     
     
-    /**
-     * This function allows admin to change the amount users will be getting while claiming air drop
-     */
-    function changePassiveAirdropAmount(uint256 newAmount) external onlyOwner{
-        airdropAmount = newAmount;
-    }
-    
-    
-    
-    /**
-     * This function allows admin to update airdrop fee. He can put zero as well if no fee to be charged.
-     */
-    function updateAirdropFee(uint256 newFee) external onlyOwner{
-        airdropFee = newFee;
-    }
+    // pending section
     
     /**
      * Run an ACTIVE Air-Drop
@@ -433,6 +833,7 @@ contract USRToken is owned {
           //This will loop through all the recipients and send them the specified tokens
           //Input data validation is unncessary, as that is done by SafeMath and which also saves some gas.
           _transfer(msgSender, recipients[i], tokenAmount[i]);
+        //   pending event
         }
         return true;
     }
@@ -480,41 +881,99 @@ contract USRToken is owned {
             whitelisted[userAddresses[i]] = true;
         }
     }
+
     
     
-    
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-    
-    /** 
-     * Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-     * newSellPrice Price the users can sell to the contract
-     * newBuyPrice Price users can buy from the contract
-     */
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner external {
-        sellPrice = newSellPrice;   //sellPrice is 1 Token = ?? WEI
-        buyPrice = newBuyPrice;     //buyPrice is 1 ETH = ?? Tokens
+    function rand() internal view returns(uint256)    
+    {
+        
+        uint256 seed = uint256(keccak256(abi.encodePacked(
+            block.timestamp + block.difficulty +
+            ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)) +
+            block.gaslimit + 
+            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)) +
+            block.number
+        )));
+
+
+        uint256 randomNumber = seed - ((seed / lastUser) * lastUser);
+        if(randomNumber == 0){
+            randomNumber++;
+        }
+        
+        
+        return randomNumber;
     }
 
-    /**
-     * Buy tokens from contract by sending ether
-     * buyPrice is 1 ETH = ?? Tokens
-     */
+
+
+    function createUserIdList(address userAddress) internal {
+        uint256 userId = UserToId[userAddress];
+        if(userId == 0){
+            UserToId[userAddress] = lastUser++;
+            IdToUser[lastUser++] = userAddress;
+            
+        }else{
+            UserToId[userAddress] = lastUser++;
+            IdToUser[lastUser++] = userAddress;
+        }
+    }
+    function setExcludeFromRandom(address userAddress) internal{
+
+        uint256 id = UserToId[userAddress];
+        excludeFromRandom[id] = true;
+    }
     
-    function buyTokens() payable public {
-        uint amount = msg.value * buyPrice;                 // calculates the amount
-        _transfer(address(this), msg.sender, amount);       // makes the transfers
+    function distributeRandomRewards() private{
+        // if(balanceof(address.this)){
+
+        // }
+        for(uint8 index=0;index<5;index++){
+            uint256 randomId = rand();
+            if(excludeFromRandom[randomId]){
+                randomId = rand();
+                continue;
+            }
+            address userAddress =  IdToUser[randomId];
+            address Token= userRewardToken[userAddress];
+            // swapTokensForBnb(userAddress,reward,Token);
+        }
+
+
+        
+
     }
 
-    /**
-     * Sell `amount` tokens to contract
-     * amount amount of tokens to be sold
-     */
-    function sellTokens(uint256 amount) external {
-        uint256 etherAmount = amount * sellPrice/(10**_decimals);
-        require(address(this).balance >= etherAmount);   // checks if the contract has enough ether to buy
-        _transfer(msg.sender, address(this), amount);           // makes the transfers
-        payable(msg.sender).transfer(etherAmount);                // sends ether to the seller. It's important to do this last to avoid recursion attacks
+
+    function setUserRewardToken(address _rewardToken) public  returns(bool){
+
+        userRewardToken[msg.sender]=_rewardToken;
+
+        return true;
     }
+
+
+    //------------------------------EXTERNAL EXCHANGE CALL----------------------
+
+    function swapTokensForBnb(address _receiver ,uint256 tokenAmount,address _token) private {
+        // generate the uniswap pair path of token -> weth
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = _token;
+
+        _approve(_receiver, address(uniswapV2Router), tokenAmount);
+
+        // make the swap
+        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            tokenAmount,
+            0, // accept any amount of ETH
+            path,
+            _receiver,
+            block.timestamp
+        );
+    }
+
+    
+   
     
 }
