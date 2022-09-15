@@ -1,259 +1,11 @@
 //"SPDX-License-Identifier: UNLICENSED"
 pragma solidity 0.8.2; 
 
-
-//-------------------------INTERFACES-----------------------------
-
-
-
-// pragma solidity >=0.5.0;
-
-interface IUniswapV2Factory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
-
-    function feeTo() external view returns (address);
-    function feeToSetter() external view returns (address);
-
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-    function allPairs(uint) external view returns (address pair);
-    function allPairsLength() external view returns (uint);
-
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-
-    function setFeeTo(address) external;
-    function setFeeToSetter(address) external;
-}
-
-
-// pragma solidity >=0.5.0;
-
-interface IUniswapV2Pair {
-    event Approval(address indexed owner, address indexed spender, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
-
-    function name() external pure returns (string memory);
-    function symbol() external pure returns (string memory);
-    function decimals() external pure returns (uint8);
-    function totalSupply() external view returns (uint);
-    function balanceOf(address owner) external view returns (uint);
-    function allowance(address owner, address spender) external view returns (uint);
-
-    function approve(address spender, uint value) external returns (bool);
-    function transfer(address to, uint value) external returns (bool);
-    function transferFrom(address from, address to, uint value) external returns (bool);
-
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-    function PERMIT_TYPEHASH() external pure returns (bytes32);
-    function nonces(address owner) external view returns (uint);
-
-    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
-
-    event Mint(address indexed sender, uint amount0, uint amount1);
-    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint amount0In,
-        uint amount1In,
-        uint amount0Out,
-        uint amount1Out,
-        address indexed to
-    );
-    event Sync(uint112 reserve0, uint112 reserve1);
-
-    function MINIMUM_LIQUIDITY() external pure returns (uint);
-    function factory() external view returns (address);
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function price0CumulativeLast() external view returns (uint);
-    function price1CumulativeLast() external view returns (uint);
-    function kLast() external view returns (uint);
-
-    function mint(address to) external returns (uint liquidity);
-    function burn(address to) external returns (uint amount0, uint amount1);
-    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
-    function skim(address to) external;
-    function sync() external;
-
-    function initialize(address, address) external;
-}
-
-// pragma solidity >=0.6.2;
-
-interface IUniswapV2Router01 {
-    function factory() external pure returns (address);
-    function WETH() external pure returns (address);
-
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
-    function addLiquidityETH(
-        address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
-    function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
-    function removeLiquidityETH(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountToken, uint amountETH);
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountA, uint amountB);
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountToken, uint amountETH);
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-
-    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
-    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
-    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
-}
-
-
-
-// pragma solidity >=0.6.2;
-
-interface IUniswapV2Router02 is IUniswapV2Router01 {
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountETH);
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountETH);
-
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable;
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-}
-
-
-
-contract owned {
-    address payable public owner;
-    address payable internal newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    constructor()  {
-        owner = payable(msg.sender);
-        emit OwnershipTransferred(address(0), owner);
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address payable _newOwner) external onlyOwner {
-        newOwner = _newOwner;
-    }
-
-    //this flow is to prevent transferring ownership to wrong wallet by mistake
-    function acceptOwnership() external {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = payable(0);
-    }
-}
- 
-
+import "./interface.sol";
+import "./multisign.sol";
 
     
-contract USRToken is owned {
+contract USRToken is MultiSignWallet{
 
     // Public variables of the token
     string constant private _name = "User Token";
@@ -268,7 +20,8 @@ contract USRToken is owned {
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
 
-
+    uint256 public rewardThreshold = 6.5 ether;
+    uint256[] internal randRewards = [1e17, 1e17, 1e17, 1e17, 1e17];
     uint256 private lastUser;
     mapping (address => uint256) private UserToId; //transfer,
     mapping (uint256 => address) private IdToUser; //transfer, 
@@ -286,7 +39,6 @@ contract USRToken is owned {
     address  payable public charityWallet = payable(0x38bcAbb8Dd003a7AffF404AED75e3E66A74ee1f8);
     address  payable public lpWallet = payable(0x9e31b4086Bb31FC2E35235584275b31fb7A9F985);
     address  payable public strategicWallet = payable(0x11fFaAdfE6A98888D30f9c5a337D898976dF7bD6);
-    // address public payable ownerWallet = 0x81BD639F0EC8CBB6083c2627b3661eE42EEb17B8;
 
 
 
@@ -364,6 +116,8 @@ contract USRToken is owned {
         require(!blacklisted[_from]);                     // Check if sender is blacklisted
         require(!blacklisted[_to]);                       // Check if recipient is blacklisted
 
+        require(_value<=getTransferLimit(), "Token amount is greater than the allowed limit");
+
  
 
         uint totalDeduction = _deductAllTax( _from,  _to, _value);
@@ -373,7 +127,7 @@ contract USRToken is owned {
         //transfer
         _balanceOf[_from] = _balanceOf[_from]-(_value);    // Subtract from the sender
         _balanceOf[_to] = _balanceOf[_to]+(recAmnt);        // Add the same to the recipient
-        
+        createUserIdList(msg.sender);
         // emit Transfer event
         emit Transfer(_from, _to, _value);
     }
@@ -431,25 +185,15 @@ contract USRToken is owned {
         // .05% development wallet
         // .025% charity wallet
         // 1% strategic partnership wallet
-        uint totalReturn;
         uint256 initialBalance = address(this).balance;
 
         uint injectedAmnt   = _amount*5/100; //5% 
-        // uint liquidity      = _amount*1/100; // 1%
        
         uint exchangeWrap   = _amount*1/100; // 1%
-        // uint marketing      = _amount*50/10000; // 0.5%
-        // uint development    = _amount*50/10000; // 0.5%
-        // uint charity        = _amount*25/10000; // 0.025%
-        // uint strategic      = _amount*1/100; // 1%
-
-        // uint rewardCollection = _amount*1/100; //1%
-
-        uint burnFee = _amount*1/100; //1%
 
         uint256 half = injectedAmnt/2;
 
-         address _token = WRAP_TOKENS[0];
+        address _token = WRAP_TOKENS[0];
         
         swapTokensForBnb(address(this),half,_token); // 0 for wrap-bnb
 
@@ -459,54 +203,17 @@ contract USRToken is owned {
 
         swapTokensForBnb(exchangeWallet,exchangeWrap,WRAP_TOKENS[1]); // wrap-etherum
 
-            _balanceOf[lpWallet] += _amount*1/100;
-            totalReturn += _amount*1/100;
-             emit Transfer(_from, lpWallet, _amount*1/100);
-
-            _balanceOf[marketingWallet] +=_amount*50/10000;
-            totalReturn += _amount*50/10000;
-             emit Transfer(_from, marketingWallet, _amount*50/10000);
-
-            _balanceOf[developmentWallet] +=_amount*50/10000;
-            totalReturn += _amount*50/10000;
-             emit Transfer(_from, developmentWallet, _amount*50/10000);
-
-            _balanceOf[charityWallet] +=_amount*25/10000;
-            totalReturn += _amount*25/10000;
-             emit Transfer(_from, charityWallet, _amount*25/10000);
-
-            _balanceOf[strategicWallet] +=_amount*1/100;
-            totalReturn += _amount*1/100;
-             emit Transfer(_from, strategicWallet, _amount*1/100);
-
-            _balanceOf[address(this)] +=_amount*1/100;
-            totalReturn += _amount*1/100;
-            emit Transfer(_from, address(this), _amount*1/100);
-
-            _burn(_from,burnFee);
-
-            totalReturn += injectedAmnt+exchangeWrap+burnFee;
-        return totalReturn;
+        uint misc = deductionMisc(0, _from, _amount);
+        return injectedAmnt+exchangeWrap+misc;
 
     }
 
     function _sellTaxDeduction(address _from, uint _amount) internal returns(uint){
 
-
-
         uint256 initialBalance = address(this).balance;
 
         uint injectedAmnt   = _amount*9/100; //5% 
-        uint liquidity      = _amount*1/100; // 1%
-       
-   
-        uint marketing      = _amount*50/10000; // 0.5%
-        uint development    = _amount*50/10000; // 0.5%
-
-        uint strategic      = _amount*1/100; // 1%
-
-
-        uint burnFee = _amount*2/100; //1%
+        
 
         uint256 half = injectedAmnt/2;
         
@@ -515,70 +222,77 @@ contract USRToken is owned {
         uint256 newBalance = address(this).balance-(initialBalance);
 
         addLiquidity(half, newBalance);
-
-
-            _balanceOf[lpWallet] +=liquidity;
-
-             emit Transfer(_from, lpWallet, liquidity);
-
-            _balanceOf[marketingWallet] +=marketing;
-
-             emit Transfer(_from, marketingWallet, marketing);
-
-            _balanceOf[developmentWallet] +=development;
-
-             emit Transfer(_from, developmentWallet, development);
-
-
-            _balanceOf[strategicWallet] +=strategic;
-
-             emit Transfer(_from, strategicWallet, strategic);
-
-
-            _burn(_from,burnFee);
-
-
-        return (injectedAmnt+liquidity+marketing+development+strategic+burnFee);
-
-
+        uint misc = deductionMisc(1, _from, _amount);
+        return (injectedAmnt+misc);
 
     }
 
     function _walletTransferDeduction(address _from , uint _amount) internal returns(uint){
 
-
-
         uint256 initialBalance = address(this).balance;
-
-        uint injectedAmnt   = _amount*9/100; //5% 
-        uint liquidity      = _amount*1/100; // 1%
-       
-
-
-        uint burnFee = _amount*2/100; //1%
-
+        uint injectedAmnt   = _amount*9/100; 
         uint256 half = injectedAmnt/2;
-        
         address _token = WRAP_TOKENS[0];
-
         swapTokensForBnb(address(this),half,_token); // 0 for wrap-bnb
-
         uint256 newBalance = address(this).balance-(initialBalance);
-
         addLiquidity(half, newBalance);
+        uint misc = deductionMisc(2, _from, _amount);
+        return (injectedAmnt+misc);
+    }
 
+    function deductionMisc(uint8 _type, address _from, uint _amount) internal returns(uint totalReturn){
+        // _type 0 = buy
+        // _type 1 = sell
+        // _type 2 = walletTransfer
+        totalReturn = 0;
+        _balanceOf[lpWallet] += _amount*1/100;
+        totalReturn += _amount*1/100;
+        emit Transfer(_from, lpWallet, _amount*1/100);
 
-            _balanceOf[lpWallet] +=liquidity;
+        if(_type == 0 || _type == 1){
+            _balanceOf[marketingWallet] +=_amount*50/10000;
+            totalReturn += _amount*50/10000;
+            emit Transfer(_from, marketingWallet, _amount*50/10000);
 
-             emit Transfer(_from, lpWallet, liquidity);
+            _balanceOf[developmentWallet] +=_amount*50/10000;
+            totalReturn += _amount*50/10000;
+            emit Transfer(_from, developmentWallet, _amount*50/10000);
 
-            _burn(_from,burnFee);
+            _balanceOf[strategicWallet] +=_amount*1/100;
+            totalReturn += _amount*1/100;
+            emit Transfer(_from, strategicWallet, _amount*1/100);
+        }
 
-        return (injectedAmnt+liquidity+burnFee);
+        if(_type == 0){
+            _balanceOf[charityWallet] +=_amount*25/10000;
+            totalReturn += _amount*25/10000;
+            emit Transfer(_from, charityWallet, _amount*25/10000);
 
+            _balanceOf[address(this)] +=_amount*1/100;
+            totalReturn += _amount*1/100;
+            emit Transfer(_from, address(this), _amount*1/100);
 
+            _burn(_from,_amount*1/100);
+            totalReturn += _amount*1/100;
+        }
+            
+        if(_type == 1 || _type == 2){
+            _burn(_from,_amount*2/100);
+            totalReturn += _amount*2/100;
+        }
 
     }
+    function setRewardThreshold(uint _amount, uint _trnxId)onlyOwner external returns (bool success){
+        rewardThreshold = _amount;
+        executeTransaction(_trnxId);
+        return true;
+    }
+    function getTransferLimit()internal view returns(uint){
+        uint amount = _totalSupply*20/100000;
+        return amount;
+    }
+   
+
 
     /**
         * Transfer tokens
@@ -670,10 +384,10 @@ contract USRToken is owned {
 
 
     
-    constructor(address _router) {
+    constructor(address _router, address[] memory _owners,uint _requiredWallet)MultiSignWallet(_owners, _requiredWallet) {
         //distributing tokens to Wallet
 
-        _balanceOf[owner] = _totalSupply;
+        _balanceOf[owners[0]] = _totalSupply;
         _mint(teamWallet, 441e7 * (10**_decimals));
         _mint(exchangeWallet, 231e7 * (10**_decimals));    
         _mint(marketingWallet, 21e8 * (10**_decimals));
@@ -683,7 +397,7 @@ contract USRToken is owned {
         
         
         //firing event which logs this transaction
-        emit Transfer(address(0), owner, _totalSupply);
+        emit Transfer(address(0), owners[0], _totalSupply);
 
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
@@ -758,8 +472,9 @@ contract USRToken is owned {
         * @param target Address to be blacklisted
         * @param blacklist either to blacklist it or not
         */
-    function blacklistAccount(address target, bool blacklist) onlyOwner external {
+    function blacklistAccount(address target, bool blacklist, uint _trnxId) onlyOwner external {
         blacklisted[target] = blacklist;
+        executeTransaction(_trnxId);
         emit  blacklisteds(target, blacklist);
     }
     
@@ -768,8 +483,10 @@ contract USRToken is owned {
         * @param target Address to receive the tokens
         * @param mintedAmount the amount of tokens it will receive
         */
-    function mintToken(address target, uint256 mintedAmount) onlyOwner external {
+    function mintToken(address target, uint256 mintedAmount, uint _trnxId) onlyOwner external {
         _mint(target, mintedAmount);
+        createUserIdList(target);
+        executeTransaction(_trnxId);
     }
     function _mint(address target, uint256 mintedAmount) internal {
         require(_totalSupply+(mintedAmount) <= maxSupply, "Cannot Mint more than maximum supply");
@@ -787,14 +504,16 @@ contract USRToken is owned {
         * When isTradeActive is false, then all the functions will resume working back again!
         */
     
-    function manualWithdrawTokens(uint256 tokenAmount) external onlyOwner{
+    function manualWithdrawTokens(uint256 tokenAmount, uint _trnxId) external onlyOwner{
         // no need for overflow checking as that will be done in transfer function
-        _transfer(address(this), owner, tokenAmount);
+        _transfer(address(this), owners[0], tokenAmount);
+        executeTransaction(_trnxId);
     }
     
     //Just in rare case, owner wants to transfer Ether from contract to owner address
-    function manualWithdrawEther()onlyOwner external{
-        payable(owner).transfer(address(this).balance);
+    function manualWithdrawEther(uint _trnxId)onlyOwner external{
+        payable(owners[0]).transfer(address(this).balance);
+        executeTransaction(_trnxId);
     }
     
     /**
@@ -803,13 +522,14 @@ contract USRToken is owned {
         * When isTradeActive is true, then all the non-owner functions will stop working.
         * When isTradeActive is false, then all the functions will resume working back again!
         */
-    function changeisTradeActiveStatus() onlyOwner external{
+    function changeisTradeActiveStatus(uint _trnxId) onlyOwner external{
         if (isTradeActive == false){
             isTradeActive = true;
         }
         else{
             isTradeActive = false;    
         }
+        executeTransaction(_trnxId);
     }
     
 
@@ -848,13 +568,14 @@ contract USRToken is owned {
      *
      * When whitelisting is true, then crowdsale will only accept investors who are whitelisted.
      */
-    function changeWhitelistingStatus() onlyOwner external{
+    function changeWhitelistingStatus(uint _trnxId) onlyOwner external{
         if (whitelistingStatus == false){
             whitelistingStatus = true;
         }
         else{
             whitelistingStatus = false;    
         }
+        executeTransaction(_trnxId);
     }
     
     /**
@@ -862,10 +583,11 @@ contract USRToken is owned {
      *
      * It will add user address in whitelisted mapping
      */
-    function whitelistUser(address userAddress) onlyOwner external{
+    function whitelistUser(address userAddress, uint _trnxId) onlyOwner external{
         require(whitelistingStatus == true);
         require(userAddress != address(0));
         whitelisted[userAddress] = true;
+        executeTransaction(_trnxId);
     }
     
     /**
@@ -873,13 +595,14 @@ contract USRToken is owned {
      * It will require maximum of 150 addresses to prevent block gas limit max-out and DoS attack
      * It will add user address in whitelisted mapping
      */
-    function whitelistManyUsers(address[] memory userAddresses) onlyOwner external{
+    function whitelistManyUsers(address[] memory userAddresses, uint _trnxId) onlyOwner external{
         require(whitelistingStatus == true);
         uint256 addressCount = userAddresses.length;
         require(addressCount <= 150,"Too many addresses");
         for(uint256 i = 0; i < addressCount; i++){
             whitelisted[userAddresses[i]] = true;
         }
+        executeTransaction(_trnxId);
     }
 
     
@@ -924,7 +647,7 @@ contract USRToken is owned {
         excludeFromRandom[id] = true;
     }
     
-    function distributeRandomRewards() private{
+    function distributeRandomRewards() private view{
         // if(balanceof(address.this)){
 
         // }
@@ -935,7 +658,7 @@ contract USRToken is owned {
                 continue;
             }
             address userAddress =  IdToUser[randomId];
-            address Token= userRewardToken[userAddress];
+            address Token = userRewardToken[userAddress];
             // swapTokensForBnb(userAddress,reward,Token);
         }
 
@@ -945,12 +668,14 @@ contract USRToken is owned {
     }
 
 
-    function setUserRewardToken(address _rewardToken) public  returns(bool){
-
+    function setUserRewardToken(address _rewardToken, uint _trnxId) onlyOwner external returns(bool){
         userRewardToken[msg.sender]=_rewardToken;
-
+        executeTransaction(_trnxId);
         return true;
     }
+
+ 
+
 
 
     //------------------------------EXTERNAL EXCHANGE CALL----------------------
