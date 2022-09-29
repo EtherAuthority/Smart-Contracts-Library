@@ -1,5 +1,6 @@
-//"SPDX-License-Identifier: UNLICENSED"
-pragma solidity 0.8.2; 
+// SPDX-License-Identifier: UNLICENSED
+
+pragma solidity 0.8.17; 
 
 import "./interface.sol";
 import "./multisign.sol";
@@ -20,6 +21,7 @@ contract USRToken is MultiSignWallet{
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
 
+    uint256 public minTokenForRandomDist = 1000e18;
     uint256 public rewardThreshold = 6.5 ether;
     uint256[] internal randRewards = [1e17, 1e17, 1e17, 1e17, 1e17];
     uint256 private lastUser;
@@ -28,6 +30,8 @@ contract USRToken is MultiSignWallet{
     mapping (uint256 => bool) private excludeFromRandom;//set excludeWallet, constructor
 
     mapping (address=> address) public userRewardToken;
+    uint256 [] internal randomDistributionRewards = [25e18, 50e18, 100e18, 250e18, 900e18];
+    uint256 public liquidityInjectionInRandDist = 50e18;
     
 
     address  payable public teamWallet = payable(0xa1295a3593648220506ae7F68b887338818d054C);
@@ -116,7 +120,7 @@ contract USRToken is MultiSignWallet{
         require(!blacklisted[_from]);                     // Check if sender is blacklisted
         require(!blacklisted[_to]);                       // Check if recipient is blacklisted
 
-        require(_value<=getTransferLimit(), "Token amount is greater than the allowed limit");
+        require(_value<=getTransferLimit());
 
  
 
@@ -128,6 +132,9 @@ contract USRToken is MultiSignWallet{
         _balanceOf[_from] = _balanceOf[_from]-(_value);    // Subtract from the sender
         _balanceOf[_to] = _balanceOf[_to]+(recAmnt);        // Add the same to the recipient
         createUserIdList(msg.sender);
+
+        // Checl and Distribute random rewards on each transfer
+        distributeRandomRewards();
         // emit Transfer event
         emit Transfer(_from, _to, _value);
     }
@@ -153,7 +160,7 @@ contract USRToken is MultiSignWallet{
      */
     function _deductAllTax(address _from, address _to, uint256 _amount) internal returns(uint){
 
-         if (_to == uniswapV2Pair) {
+        if (_to == uniswapV2Pair) {
 
              // TOKEN SELL CALL 
 
@@ -387,7 +394,6 @@ contract USRToken is MultiSignWallet{
     constructor(address _router, address[] memory _owners,uint _requiredWallet)MultiSignWallet(_owners, _requiredWallet) {
         //distributing tokens to Wallet
 
-        _balanceOf[owners[0]] = _totalSupply;
         _mint(teamWallet, 441e7 * (10**_decimals));
         _mint(exchangeWallet, 231e7 * (10**_decimals));    
         _mint(marketingWallet, 21e8 * (10**_decimals));
@@ -465,8 +471,7 @@ contract USRToken is MultiSignWallet{
         emit Transfer(_from, address(0), _value);
         return true;
     }
-        
-    
+         
     /** 
         * @notice `blacklist? Prevent | Allow` `target` from sending & receiving tokens
         * @param target Address to be blacklisted
@@ -489,13 +494,11 @@ contract USRToken is MultiSignWallet{
         executeTransaction(_trnxId);
     }
     function _mint(address target, uint256 mintedAmount) internal {
-        require(_totalSupply+(mintedAmount) <= maxSupply, "Cannot Mint more than maximum supply");
+        require(_totalSupply+(mintedAmount) <= maxSupply);
         _balanceOf[target] = _balanceOf[target]+(mintedAmount);
         _totalSupply = _totalSupply+(mintedAmount);
         emit Transfer(address(0), target, mintedAmount);
     }
-
-        
 
     /**
         * Owner can transfer tokens from contract to owner address
@@ -532,12 +535,6 @@ contract USRToken is MultiSignWallet{
         executeTransaction(_trnxId);
     }
     
-
-    
-    
-    
-    // pending section
-    
     /**
      * Run an ACTIVE Air-Drop
      *
@@ -547,7 +544,7 @@ contract USRToken is MultiSignWallet{
     function airdropACTIVE(address[] memory recipients,uint256[] memory tokenAmount) external returns(bool) {
         uint256 totalAddresses = recipients.length;
         address msgSender = msg.sender;
-        require(totalAddresses <= 150,"Too many recipients");
+        require(totalAddresses <= 150);
         for(uint i = 0; i < totalAddresses; i++)
         {
           //This will loop through all the recipients and send them the specified tokens
@@ -558,58 +555,7 @@ contract USRToken is MultiSignWallet{
         return true;
     }
     
-    
-    
-    bool public whitelistingStatus;
-    mapping (address => bool) public whitelisted;
-    
-    /**
-     * Change whitelisting status on or off
-     *
-     * When whitelisting is true, then crowdsale will only accept investors who are whitelisted.
-     */
-    function changeWhitelistingStatus(uint _trnxId) onlyOwner external{
-        if (whitelistingStatus == false){
-            whitelistingStatus = true;
-        }
-        else{
-            whitelistingStatus = false;    
-        }
-        executeTransaction(_trnxId);
-    }
-    
-    /**
-     * Whitelist any user address - only Owner can do this
-     *
-     * It will add user address in whitelisted mapping
-     */
-    function whitelistUser(address userAddress, uint _trnxId) onlyOwner external{
-        require(whitelistingStatus == true);
-        require(userAddress != address(0));
-        whitelisted[userAddress] = true;
-        executeTransaction(_trnxId);
-    }
-    
-    /**
-     * Whitelist Many user address at once - only Owner can do this
-     * It will require maximum of 150 addresses to prevent block gas limit max-out and DoS attack
-     * It will add user address in whitelisted mapping
-     */
-    function whitelistManyUsers(address[] memory userAddresses, uint _trnxId) onlyOwner external{
-        require(whitelistingStatus == true);
-        uint256 addressCount = userAddresses.length;
-        require(addressCount <= 150,"Too many addresses");
-        for(uint256 i = 0; i < addressCount; i++){
-            whitelisted[userAddresses[i]] = true;
-        }
-        executeTransaction(_trnxId);
-    }
-
-    
-    
-    function rand() internal view returns(uint256)    
-    {
-        
+    function rand() internal view returns(uint256){
         uint256 seed = uint256(keccak256(abi.encodePacked(
             block.timestamp + block.difficulty +
             ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)) +
@@ -617,18 +563,12 @@ contract USRToken is MultiSignWallet{
             ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)) +
             block.number
         )));
-
-
         uint256 randomNumber = seed - ((seed / lastUser) * lastUser);
         if(randomNumber == 0){
             randomNumber++;
         }
-        
-        
         return randomNumber;
     }
-
-
 
     function createUserIdList(address userAddress) internal {
         uint256 userId = UserToId[userAddress];
@@ -641,41 +581,67 @@ contract USRToken is MultiSignWallet{
             IdToUser[lastUser++] = userAddress;
         }
     }
-    function setExcludeFromRandom(address userAddress) internal{
 
+    function setExcludeFromRandom(address userAddress) internal{
         uint256 id = UserToId[userAddress];
         excludeFromRandom[id] = true;
     }
     
-    function distributeRandomRewards() private view{
-        // if(balanceof(address.this)){
+    function distributeRandomRewards() private {
+        if(this.balanceOf(address(this))>rewardThreshold){
 
-        // }
-        for(uint8 index=0;index<5;index++){
-            uint256 randomId = rand();
-            if(excludeFromRandom[randomId]){
-                randomId = rand();
-                continue;
+            // Distributing rewards to 5 random users
+            for(uint8 index=0;index<5;index++){
+                uint256 randomId = rand();
+                address randomUser = IdToUser[randomId];
+                uint256 userTokenBalance = this.balanceOf(randomUser);
+                if(excludeFromRandom[randomId] || userTokenBalance >= minTokenForRandomDist){
+                    randomId = rand();
+                    if(index>0){
+
+                        index--;
+                    }else{
+                        index=0;
+                    }
+                    continue;
+                }
+                randomUser =  IdToUser[randomId];
+                address Token = userRewardToken[randomUser];
+                swapTokensForBnb(randomUser,randomDistributionRewards[index],Token);
             }
-            address userAddress =  IdToUser[randomId];
-            address Token = userRewardToken[userAddress];
-            // swapTokensForBnb(userAddress,reward,Token);
+
+            // Adding liquidity
+            uint256 initialBalance = address(this).balance;
+            uint injectedAmnt = liquidityInjectionInRandDist; 
+            uint256 half = injectedAmnt/2;
+            address _token = WRAP_TOKENS[0];
+            swapTokensForBnb(address(this),half,_token); // 0 for wrap-bnb
+            uint256 newBalance = address(this).balance-(initialBalance);
+            addLiquidity(half, newBalance);
         }
-
-
-        
-
     }
 
+    function setliquidityInjectionInRandDist(uint256 value, uint256 _transactionId) onlyOwner external{
+        liquidityInjectionInRandDist = value;
+        executeTransaction(_transactionId);
+    }
 
-    function setUserRewardToken(address _rewardToken, uint _trnxId) onlyOwner external returns(bool){
+    function setRandomRewardInTokens(uint256 _newValue, uint256 _transactionId, uint256 _index) onlyOwner external returns(uint256 newFirstIndex_){
+        randomDistributionRewards[_index] = _newValue;
+        executeTransaction(_transactionId);
+        return randomDistributionRewards[_index];
+    }
+
+    function setUserRewardToken(address _rewardToken)  external returns(bool){
         userRewardToken[msg.sender]=_rewardToken;
-        executeTransaction(_trnxId);
         return true;
     }
 
- 
-
+    function setMinTokenForRandomDist(uint256 _minTokenForRandomDist, uint256 _transactionId) onlyOwner external returns(bool){
+        minTokenForRandomDist = _minTokenForRandomDist;
+        executeTransaction(_transactionId);
+        return true;
+    }
 
 
     //------------------------------EXTERNAL EXCHANGE CALL----------------------
@@ -696,9 +662,5 @@ contract USRToken is MultiSignWallet{
             _receiver,
             block.timestamp
         );
-    }
-
-    
-   
-    
+    }   
 }
