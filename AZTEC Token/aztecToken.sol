@@ -625,7 +625,7 @@ contract AZTEC is ERC20, Ownable {
     uint256 internal _maxSupply;
 
     constructor() ERC20(tokenName, tokenSymbol){
-        _maxSupply = 720000000; // maximum supply is set to 720 million
+        _maxSupply = 720000000 * (10**decimals()); // maximum supply is set to 720 million
         /*
         * Mint to 5 wallets (299 million)
         * Wallet 1: 0x8ec976238D0644A5a9adfE94136EC09a0FB05C4B - 215,400,000
@@ -663,5 +663,3 @@ contract AZTEC is ERC20, Ownable {
     }
 
 }
-
-
