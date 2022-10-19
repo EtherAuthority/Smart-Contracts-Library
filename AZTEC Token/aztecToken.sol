@@ -651,6 +651,7 @@ contract AZTEC is ERC20, Ownable {
 
     function setMaxSupply(uint256 newMaxSupply) external onlyOwner returns (uint256) {
         require(newMaxSupply != maxSupply(), "same value given");
+        require(newMaxSupply > totalSupply(), "less than totalSupply()");
         _maxSupply = newMaxSupply;
         return maxSupply();
     } 
