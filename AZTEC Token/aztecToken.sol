@@ -623,22 +623,27 @@ contract AZTEC is ERC20, Ownable {
     string internal tokenName = "AZTEC";
     string internal tokenSymbol = "AZT";
     uint256 internal _maxSupply;
+    address public rewardsWallet = 0x8ec976238D0644A5a9adfE94136EC09a0FB05C4B;
+    address public teamWallet = 0x048A714712e8D38ceC4C07c52A9C6D72BEeD29Fb;
+    address public partnersWallet = 0x9f86491042D0595d6cF2df2aA77D8726b4680333;
+    address public ecosystemWallet = 0xf116160386A80908a72D7EeE8FF4971C2EBc8B95;
+    address public lpWallet = 0x1145A19A380019fFBa04BA5C50AcAcfaC3B12B5c;
 
     constructor() ERC20(tokenName, tokenSymbol){
         _maxSupply = 720000000 * (10**decimals()); // maximum supply is set to 720 million
         /*
-        * Mint to 5 wallets (299 million)
-        * Wallet 1: 0x8ec976238D0644A5a9adfE94136EC09a0FB05C4B - 215,400,000
-        * Wallet 2: 0x048A714712e8D38ceC4C07c52A9C6D72BEeD29Fb - 30,125,000
-        * Wallet 3: 0x9f86491042D0595d6cF2df2aA77D8726b4680333 - 15,000,000
-        * Wallet 4: 0xf116160386A80908a72D7EeE8FF4971C2EBc8B95 - 20,000,000 
-        * Wallet 5: 0x1145A19A380019fFBa04BA5C50AcAcfaC3B12B5c - 18,475,000
+        * Minting to 5 wallets (299 million)
+        * Rewards Wallet: 0x8ec976238D0644A5a9adfE94136EC09a0FB05C4B - 215,400,000
+        * Team Wallets: 0x048A714712e8D38ceC4C07c52A9C6D72BEeD29Fb - 30,125,000
+        * Partneres Wallet: 0x9f86491042D0595d6cF2df2aA77D8726b4680333 - 15,000,000
+        * Ecosystem Wallet: 0xf116160386A80908a72D7EeE8FF4971C2EBc8B95 - 20,000,000 
+        * LP Wallet 5: 0x1145A19A380019fFBa04BA5C50AcAcfaC3B12B5c - 18,475,000
         */
-        _mint(0x8ec976238D0644A5a9adfE94136EC09a0FB05C4B, 215400000 * (10**decimals()));
-        _mint(0x048A714712e8D38ceC4C07c52A9C6D72BEeD29Fb, 30125000 * (10**decimals()));
-        _mint(0x9f86491042D0595d6cF2df2aA77D8726b4680333, 15000000 * (10**decimals()));
-        _mint(0xf116160386A80908a72D7EeE8FF4971C2EBc8B95, 20000000 * (10**decimals()));
-        _mint(0x1145A19A380019fFBa04BA5C50AcAcfaC3B12B5c, 18475000 * (10**decimals()));
+        _mint(rewardsWallet, 215400000 * (10**decimals()));
+        _mint(teamWallet, 30125000 * (10**decimals()));
+        _mint(partnersWallet, 15000000 * (10**decimals()));
+        _mint(ecosystemWallet, 20000000 * (10**decimals()));
+        _mint(lpWallet, 18475000 * (10**decimals()));
     }
     function maxSupply() public view virtual returns (uint256) {
         return _maxSupply;
