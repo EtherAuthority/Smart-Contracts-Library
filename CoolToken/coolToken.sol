@@ -859,7 +859,6 @@ contract CoolToken is ERC20, Ownable {
         ETH = _uniswapV2Router.WETH();
         designatedWallet = payable(_designatgedWallet);
         _maxSupply = maximumSupply * (10**decimals());
-        // specialCaseHolder[0] = uniswapV2Pair;
         setExcludeFromRandom(uniswapV2Pair);
     } 
 
