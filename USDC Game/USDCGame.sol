@@ -268,15 +268,9 @@ interface IERC20 {
     ) external returns (bool);
 }
 
-// File: GDO/New Again/main.sol
 
 /*SPDX-License-Identifier: GPL-3.0*/
 pragma solidity ^0.8.15;
-
-/*Imports*/
-
-
-
 
 contract USDCGame is Ownable, ReentrancyGuard{
     /*State*/
