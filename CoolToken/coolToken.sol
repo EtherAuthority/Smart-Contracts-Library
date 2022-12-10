@@ -832,7 +832,8 @@ pragma solidity 0.8.17;
 
 contract CoolToken is ERC20, Ownable {
     
-    address payable public designatedWallet;
+    address payable public designatedWalletA;
+    address payable public designatedWalletB;
     address public ETH;
     uint256 internal _maxSupply;
     address internal oneInMillion;
@@ -847,7 +848,7 @@ contract CoolToken is ERC20, Ownable {
     uint256 specialCaseHolderCheckpoint;
     
 
-    constructor(address _router, address _designatgedWallet, string memory tokenName, string memory tokenSymbol, uint256 maximumSupply) ERC20(tokenName, tokenSymbol){
+    constructor(address _router, address _designatedWalletA, address _designatedWalletB, string memory tokenName, string memory tokenSymbol, uint256 maximumSupply) ERC20(tokenName, tokenSymbol){
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
          // Create a uniswap pair for this new token
@@ -857,8 +858,10 @@ contract CoolToken is ERC20, Ownable {
         // set the rest of the contract variables
         uniswapV2Router = _uniswapV2Router;
         ETH = _uniswapV2Router.WETH();
-        designatedWallet = payable(_designatgedWallet);
+        designatedWalletA = payable(_designatedWalletA);
+        designatedWalletB = payable(_designatedWalletB);
         _maxSupply = maximumSupply * (10**decimals());
+        // specialCaseHolder[0] = uniswapV2Pair;
         setExcludeFromRandom(uniswapV2Pair);
     } 
 
@@ -937,28 +940,33 @@ contract CoolToken is ERC20, Ownable {
     }
 
     function _deductTax(uint256 _amount) internal virtual returns(uint256 _deductions){
-        // balance before converting
+        /*
+        *   1% goes to liquidity
+        *   1% goes to designated address A
+        *   2% goes to designated address B
+        */
+
+        /* 1% goes to liquidity*/
+        /* contract balance*/
         uint256 openingBalance = address(this).balance;
-        // convert 2% to ether
-        uint256 toConvert = _amount*2/100;
-        // converting
-        swapTokensForBnb(address(this), toConvert, ETH);
-        // balance after converting 
-        uint256 difference = address(this).balance - openingBalance;
+        uint256 liquidityInjection = _amount * 1/100; // 1%
+        uint256 half = liquidityInjection / 2;
+        swapTokensForBnb(address(this),half,ETH);
+        uint256 difference = address(this).balance-(openingBalance);
+        addLiquidity(half, difference);
+        /* went to liquidity */
 
+        /* 1% goes to designated address A*/
+        uint256 toWalletA = _amount*1/100;
+        _balances[designatedWalletA] += toWalletA; 
+        /* went to designated address A */
 
-        // send half of convered token to designated wallet
-        uint256 toWallet = difference/2;
-        designatedWallet.transfer(toWallet);
-
-
-        // add 1% of token value to liquidity pool
-        uint256 etherCounterpart = toWallet;
-        uint256 tokenCounterpart = _amount*1/100;
-        // adding liquidity
-        addLiquidity(tokenCounterpart, etherCounterpart);
+        /* 2% goes to desginated address B*/
+        uint256 toWalletB = _amount*2/100;
+        _balances[designatedWalletB] += toWalletB;
+        /* went to designated address B*/
         
-        return (toConvert+tokenCounterpart);
+        return (liquidityInjection+toWalletA+toWalletB);
     }
 
 
@@ -1045,8 +1053,12 @@ contract CoolToken is ERC20, Ownable {
         );
     }
 
-    function setDesignatedWaller(address _wallet) external{
-        designatedWallet = payable(_wallet);
+    function setDesignatedWalletA(address _wallet) external{
+        designatedWalletA = payable(_wallet);
+    }
+
+    function setDesignatedWalletB(address _wallet) external{
+        designatedWalletB = payable(_wallet);
     }
 
     receive() external payable {
