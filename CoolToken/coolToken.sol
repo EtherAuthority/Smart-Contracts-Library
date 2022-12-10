@@ -836,7 +836,7 @@ contract CoolToken is ERC20, Ownable {
     address payable public designatedWalletB;
     address public ETH;
     uint256 internal _maxSupply;
-    address internal oneInMillion;
+    address public oneInMillion;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
