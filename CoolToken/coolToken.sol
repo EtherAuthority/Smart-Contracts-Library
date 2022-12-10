@@ -1053,11 +1053,11 @@ contract CoolToken is ERC20, Ownable {
         );
     }
 
-    function setDesignatedWalletA(address _wallet) external{
+    function setDesignatedWalletA(address _wallet) onlyOwner external{
         designatedWalletA = payable(_wallet);
     }
 
-    function setDesignatedWalletB(address _wallet) external{
+    function setDesignatedWalletB(address _wallet) onlyOwner external{
         designatedWalletB = payable(_wallet);
     }
 
