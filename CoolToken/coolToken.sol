@@ -837,32 +837,33 @@ contract CoolToken is ERC20, Ownable {
     address public ETH;
     uint256 internal _maxSupply;
     address public oneInMillion;
+    bool public tradeTaxEnabled;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair; 
-    uint256 specialCaseHolderCount = 0;
-    mapping (address => uint256) private UserToId; //transfer,
-    mapping (uint256 => address) private IdToUser; //transfer, 
-    mapping (uint256 => bool) private excludeFromRandom;//set excludeWallet, constructor
-    uint256 specialCaseHolderCheckpoint;
+    uint256 public specialCaseHolderCount = 0;
+    mapping (address => uint256) private UserToId; 
+    mapping (uint256 => address) private IdToUser;
+    mapping (uint256 => bool) private excludeFromRandom;
+    uint256 public specialCaseHolderCheckpoint;
     
 
     constructor(address _router, address _designatedWalletA, address _designatedWalletB, string memory tokenName, string memory tokenSymbol, uint256 maximumSupply) ERC20(tokenName, tokenSymbol){
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
-         // Create a uniswap pair for this new token
+        /* Create a uniswap pair for this new token*/
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
 
-        // set the rest of the contract variables
+        /* set the rest of the contract variables*/
         uniswapV2Router = _uniswapV2Router;
         ETH = _uniswapV2Router.WETH();
         designatedWalletA = payable(_designatedWalletA);
         designatedWalletB = payable(_designatedWalletB);
         _maxSupply = maximumSupply * (10**decimals());
-        // specialCaseHolder[0] = uniswapV2Pair;
         setExcludeFromRandom(uniswapV2Pair);
+        tradeTaxEnabled = true;
     } 
 
     function maxSupply() public view virtual returns (uint256) {
@@ -897,8 +898,13 @@ contract CoolToken is ERC20, Ownable {
         require(to != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, amount);
-        uint256 totalDeductions = _tradeTax(amount, to, from);
-        uint256 afterDeductions = amount - totalDeductions;
+        uint256 totalDeductions = 0;
+
+        if(tradeTaxEnabled && (from == uniswapV2Pair || to == uniswapV2Pair)){
+            totalDeductions = _deductTax(amount);
+        }
+
+        amount = amount - totalDeductions;
 
         uint256 fromBalance = _balances[from];
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
@@ -906,37 +912,15 @@ contract CoolToken is ERC20, Ownable {
             _balances[from] = fromBalance - amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
-            _balances[to] += afterDeductions;
+            _balances[to] += amount;
         }
 
         emit Transfer(from, to, amount);
+        
         createUserIdList(msg.sender);
-
-        _afterTokenTransfer(from, to, amount);
-    }
-
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
         setSpecialUser();
-    }
-
-    function _tradeTax(uint _amount, address to, address from) internal virtual returns(uint256 _deductions){
-        if (to == uniswapV2Pair) {
-            // TOKEN SELL CALL
-            return _deductTax(_amount);
-
-        } else if (from == uniswapV2Pair) {
-
-            // TOKEN BUY CALL
-            return _deductTax(_amount);
-
-        }else{
-            // TOKEN WALLET TO WALLET TRANSFER CALL
-            return 0;
-        }
+        
+        _afterTokenTransfer(from, to, amount);
     }
 
     function _deductTax(uint256 _amount) internal virtual returns(uint256 _deductions){
@@ -1051,6 +1035,10 @@ contract CoolToken is ERC20, Ownable {
             address(this),
             block.timestamp
         );
+    }
+
+    function setTradeTaxStatus(bool _newStatus) onlyOwner external{
+        tradeTaxEnabled = _newStatus;
     }
 
     function setDesignatedWalletA(address _wallet) onlyOwner external{
