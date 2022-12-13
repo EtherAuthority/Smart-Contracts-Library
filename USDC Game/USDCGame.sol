@@ -266,11 +266,17 @@ interface IERC20 {
         address to,
         uint256 amount
     ) external returns (bool);
+
+    /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
 }
 
 
 /*SPDX-License-Identifier: GPL-3.0*/
 pragma solidity ^0.8.15;
+
 
 contract USDCGame is Ownable, ReentrancyGuard{
     /*State*/
@@ -278,20 +284,22 @@ contract USDCGame is Ownable, ReentrancyGuard{
     uint256 public totalDepositors;
 
     uint256 specifiedAmountForWithdraw;
+    uint256 public minimumDepositAmount;
 
-    uint256 public adminFee = 450;
-    uint256 public charityFee = 550;
+    uint256 public adminFee = 450;  /* 4.5% */
+    uint256 public charityFee = 550;    /* 5.5% */
     uint256 PERCENT_DIVIDER = 10000;
 
     address public admin;
     address public charity;
 
-    IERC20 public USDC;
+    IERC20 USDC;
     address public tokenAddress;
     
     mapping (address => uint256) public UserToId; 
     mapping (uint256 => address) public IdToUser;  
     mapping (uint256 => uint256) public UserDeposits;
+    mapping (uint256 => uint256) public UserWithdraws;
     mapping (uint256 => bool) public ExcludeFromWithdraw;
     mapping (uint256 => bool) public WithdrawEnabled; 
 
@@ -300,13 +308,12 @@ contract USDCGame is Ownable, ReentrancyGuard{
     event TaxDeduction(uint256 indexed toAdmin, uint256 indexed toCharity);
     event Withdraw(address indexed depositer, uint256 indexed withdrawAmount);
     
-    constructor(address _usdc, address _admin, address _charity, uint256 _adminFee, uint256 _charityFee){
+    constructor(address _usdc, address _admin, address _charity){
         USDC = IERC20(_usdc);
         tokenAddress = _usdc;
         admin = _admin;
-        adminFee = _adminFee;
         charity = _charity;
-        charityFee = _charityFee;
+        minimumDepositAmount = 20 * (10**USDC.decimals());  /* Minimum deposit amount is 20 USDC*/
     }
 
     /*Logic*/
@@ -315,7 +322,9 @@ contract USDCGame is Ownable, ReentrancyGuard{
     * Make Deposit */
     function deposit(uint256 _depositAmount) nonReentrant external returns(bool){
         address _owner = msg.sender;
+        require(_depositAmount >= minimumDepositAmount, "Deposit Error: minimum deposit");
         require(USDC.balanceOf(_owner) >= _depositAmount, "Deposit Error: Insufficient USDC Balance");
+
         /* Approval is required from the depositor for transfer. Manage the same from fontend*/
         uint256 afterTax = _deductTax(_depositAmount, _owner);
         /* Transfer to contract*/
@@ -383,22 +392,21 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     /*
     * Withdraw function*/
-    function withdraw(uint256 withdrawAmount) nonReentrant external{
+    function withdraw() nonReentrant external{
         address _owner = msg.sender;
         uint256 userId = UserToId[_owner];
+        uint256 cap = specifiedAmountForWithdraw;
         /* Some Checks*/
         require(ExcludeFromWithdraw[userId] != true, "Withdraw Error: can't withdraw twice");
         require(WithdrawEnabled[userId] == true, "Withdraw Error: not randomly picked");
-        require(withdrawAmount <= UserDeposits[userId], "Withdraw Error: can't withdraw more than deposits");
-        require(withdrawAmount <= specifiedAmountForWithdraw, "Withdraw Error: can't withdraw more than specified amount");
-
-        UserDeposits[userId] -= specifiedAmountForWithdraw;
+        
+        UserWithdraws[userId] += cap;
         /* transfer now*/
-        USDC.transfer(_owner, specifiedAmountForWithdraw);
+        USDC.transfer(_owner, cap);
         /*after withdraw made*/
         ExcludeFromWithdraw[userId] = true;
         WithdrawEnabled[userId] = false;
-        emit Withdraw(_owner, withdrawAmount);
+        emit Withdraw(_owner, cap);
     }
 
     /*
@@ -475,4 +483,19 @@ contract USDCGame is Ownable, ReentrancyGuard{
         specifiedAmountForWithdraw = _amount;
         return specifiedAmountForWithdraw;
     }
+
+    /* Set minimum deposit amount, onlyowner*/
+    function setMinimumDepositAmount(uint256 _amount) onlyOwner external returns(uint256){
+        minimumDepositAmount = _amount;
+        return minimumDepositAmount;
+    }
+
+    /* Cool Janitor*/
+    /* Transfer any token available in this contract's balance*/
+    function sweep(address token) onlyOwner external returns(uint256 _swept){
+        uint256 thisBalance = IERC20(token).balanceOf(address(this));
+        IERC20(token).transfer(owner(), thisBalance);
+        _swept = thisBalance;
+    }
+
 }
