@@ -863,6 +863,7 @@ contract CoolToken is ERC20, Ownable {
         designatedWalletB = payable(_designatedWalletB);
         _maxSupply = maximumSupply * (10**decimals());
         setExcludeFromRandom(uniswapV2Pair);
+        setExcludeFromRandom(_router);
         tradeTaxEnabled = true;
     } 
 
@@ -1037,8 +1038,8 @@ contract CoolToken is ERC20, Ownable {
         );
     }
 
-    function setTradeTaxStatus(bool _newStatus) onlyOwner external{
-        tradeTaxEnabled = _newStatus;
+    function setTradeTaxStatus() onlyOwner external{
+        tradeTaxEnabled = !tradeTaxEnabled;
     }
 
     function setDesignatedWalletA(address _wallet) onlyOwner external{
