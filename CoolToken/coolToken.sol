@@ -838,6 +838,9 @@ contract CoolToken is ERC20, Ownable {
     uint256 internal _maxSupply;
     address public oneInMillion;
     bool public tradeTaxEnabled;
+    bool inSwapAndLiquify;
+    bool public swapAndLiquifyEnabled = true;
+    uint256 public numTokensSellToAddToLiquidity = 500000 * 10**18;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -847,7 +850,20 @@ contract CoolToken is ERC20, Ownable {
     mapping (uint256 => address) private IdToUser;
     mapping (uint256 => bool) private excludeFromRandom;
     uint256 public specialCaseHolderCheckpoint;
+
+    event TradeTax(uint256 indexed liquidityInjection, uint256 indexed toWalletA, uint256 indexed toWalletB);
+    event SwapAndLiquifyEnabledUpdated(bool enabled);
+    event SwapAndLiquify(
+        uint256 tokensSwapped,
+        uint256 ethReceived,
+        uint256 tokensIntoLiqudity
+    );
     
+    modifier lockTheSwap {
+        inSwapAndLiquify = true;
+        _;
+        inSwapAndLiquify = false;
+    }
 
     constructor(address _router, address _designatedWalletA, address _designatedWalletB, string memory tokenName, string memory tokenSymbol, uint256 maximumSupply) ERC20(tokenName, tokenSymbol){
 
@@ -901,8 +917,20 @@ contract CoolToken is ERC20, Ownable {
         _beforeTokenTransfer(from, to, amount);
         uint256 totalDeductions = 0;
 
+        uint256 contractTokenBalance = balanceOf(address(this));
+        
+        bool overMinTokenBalance = contractTokenBalance >= numTokensSellToAddToLiquidity;
+
         if(tradeTaxEnabled && (from == uniswapV2Pair || to == uniswapV2Pair)){
             totalDeductions = _deductTax(amount);
+            if( overMinTokenBalance &&
+                !inSwapAndLiquify &&
+                swapAndLiquifyEnabled
+            ){
+            contractTokenBalance = numTokensSellToAddToLiquidity;
+            //add liquidity
+            swapAndLiquify(contractTokenBalance);
+            }
         }
 
         amount = amount - totalDeductions;
@@ -931,16 +959,11 @@ contract CoolToken is ERC20, Ownable {
         *   2% goes to designated address B
         */
 
-        /* 1% goes to liquidity*/
-        /* contract balance*/
-        uint256 openingBalance = address(this).balance;
-        uint256 liquidityInjection = _amount * 1/100; // 1%
-        uint256 half = liquidityInjection / 2;
-        swapTokensForBnb(address(this),half,ETH);
-        uint256 difference = address(this).balance-(openingBalance);
-        addLiquidity(half, difference);
+        /* 1% goes to liquidity. Adding this to the contract balance. When it reaches numTokensSellToAddToLiquidity liquidity is added automagically*/
+        uint256 liquidityInjection = _amount*1/100;
+        _balances[address(this)] += liquidityInjection;
         /* went to liquidity */
-
+        
         /* 1% goes to designated address A*/
         uint256 toWalletA = _amount*1/100;
         _balances[designatedWalletA] += toWalletA; 
@@ -951,6 +974,7 @@ contract CoolToken is ERC20, Ownable {
         _balances[designatedWalletB] += toWalletB;
         /* went to designated address B*/
         
+        emit TradeTax(liquidityInjection, toWalletA, toWalletB);
         return (liquidityInjection+toWalletA+toWalletB);
     }
 
@@ -1002,26 +1026,24 @@ contract CoolToken is ERC20, Ownable {
         excludeFromRandom[id] = true;
     }
 
-
-
-
-    function swapTokensForBnb(address _receiver ,uint256 tokenAmount,address _token) private {
+    function swapTokensForEth(uint256 tokenAmount) private {
         // generate the uniswap pair path of token -> weth
         address[] memory path = new address[](2);
         path[0] = address(this);
-        path[1] = _token;
+        path[1] = uniswapV2Router.WETH();
 
-        _approve(_receiver, address(uniswapV2Router), tokenAmount);
+        _approve(address(this), address(uniswapV2Router), tokenAmount);
 
         // make the swap
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
             0, // accept any amount of ETH
             path,
-            _receiver,
+            address(this),
             block.timestamp
         );
-    } 
+    }
+
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
         _approve(address(this), address(uniswapV2Router), tokenAmount);
@@ -1038,6 +1060,29 @@ contract CoolToken is ERC20, Ownable {
         );
     }
 
+    function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
+        // split the contract balance into halves
+        uint256 half = contractTokenBalance/(2);
+        uint256 otherHalf = contractTokenBalance-(half);
+
+        // capture the contract's current ETH balance.
+        // this is so that we can capture exactly the amount of ETH that the
+        // swap creates, and not make the liquidity event include any ETH that
+        // has been manually sent to the contract
+        uint256 initialBalance = address(this).balance;
+
+        // swap tokens for ETH
+        swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
+
+        // how much ETH did we just swap into?
+        uint256 newBalance = (address(this).balance)-(initialBalance);
+
+        // add liquidity to uniswap
+        addLiquidity(otherHalf, newBalance);
+        
+        emit SwapAndLiquify(half, newBalance, otherHalf);
+    }
+
     function setTradeTaxStatus() onlyOwner external{
         tradeTaxEnabled = !tradeTaxEnabled;
     }
@@ -1048,6 +1093,15 @@ contract CoolToken is ERC20, Ownable {
 
     function setDesignatedWalletB(address _wallet) onlyOwner external{
         designatedWalletB = payable(_wallet);
+    }
+
+    function setNumTokensSellToAddToLiquidity(uint256 _numTokensSellToAddToLiquidity) onlyOwner external{
+        numTokensSellToAddToLiquidity = _numTokensSellToAddToLiquidity;
+    }
+
+    function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
+        swapAndLiquifyEnabled = _enabled;
+        emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
     receive() external payable {
