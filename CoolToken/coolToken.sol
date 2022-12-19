@@ -875,7 +875,7 @@ contract CoolToken is ERC20, Ownable {
         designatedWalletB = payable(_designatedWalletB);
         _maxSupply = maximumSupply * (10**decimals());
 
-        createUserIdList(uniswapV2Pair);
+        createUserIdList(address(uniswapV2Pair));
         createUserIdList(_router);
         setExcludeFromRandom(uniswapV2Pair);
         setExcludeFromRandom(_router);
@@ -1016,14 +1016,12 @@ contract CoolToken is ERC20, Ownable {
 
     function createUserIdList(address userAddress) internal {
         uint256 userId = UserToId[userAddress];
+        uint256 incr = specialCaseHolderCount + 1;
         if(userId == 0){
-            UserToId[userAddress] = specialCaseHolderCount++;
-            IdToUser[specialCaseHolderCount] = userAddress;
-            
-        }else{
-            UserToId[userAddress] = specialCaseHolderCount++;
-            IdToUser[specialCaseHolderCount] = userAddress;
+            UserToId[userAddress] = incr;
+            IdToUser[incr] = userAddress;
         }
+        specialCaseHolderCount++;
     }
 
     function setExcludeFromRandom(address userAddress) public onlyOwner{
