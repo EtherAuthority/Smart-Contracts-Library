@@ -1018,11 +1018,11 @@ contract CoolToken is ERC20, Ownable {
         uint256 userId = UserToId[userAddress];
         if(userId == 0){
             UserToId[userAddress] = specialCaseHolderCount++;
-            IdToUser[specialCaseHolderCount++] = userAddress;
+            IdToUser[specialCaseHolderCount] = userAddress;
             
         }else{
             UserToId[userAddress] = specialCaseHolderCount++;
-            IdToUser[specialCaseHolderCount++] = userAddress;
+            IdToUser[specialCaseHolderCount] = userAddress;
         }
     }
 
