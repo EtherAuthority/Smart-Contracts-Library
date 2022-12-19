@@ -209,12 +209,8 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
         uint deadline
     ) external;
 }
-// File: GDO/New/token.sol
-
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
-
-
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
 pragma solidity ^0.8.15;
@@ -840,15 +836,15 @@ contract CoolToken is ERC20, Ownable {
     bool public tradeTaxEnabled;
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
-    uint256 public numTokensSellToAddToLiquidity = 500000 * 10**18;
+    uint256 public numTokensSellToAddToLiquidity = 50000 * 10**18;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair; 
     uint256 public specialCaseHolderCount = 0;
-    mapping (address => uint256) private UserToId; 
-    mapping (uint256 => address) private IdToUser;
-    mapping (uint256 => bool) private excludeFromRandom;
+    mapping (address => uint256) public UserToId; 
+    mapping (uint256 => address) public IdToUser;
+    mapping (uint256 => bool) public excludeFromRandom;
     uint256 public specialCaseHolderCheckpoint;
 
     event TradeTax(uint256 indexed liquidityInjection, uint256 indexed toWalletA, uint256 indexed toWalletB);
@@ -878,9 +874,15 @@ contract CoolToken is ERC20, Ownable {
         designatedWalletA = payable(_designatedWalletA);
         designatedWalletB = payable(_designatedWalletB);
         _maxSupply = maximumSupply * (10**decimals());
+
+        createUserIdList(uniswapV2Pair);
+        createUserIdList(_router);
         setExcludeFromRandom(uniswapV2Pair);
         setExcludeFromRandom(_router);
-        tradeTaxEnabled = true;
+        tradeTaxEnabled = false;
+        
+        /* Minting maxSupply to the msg.sender*/
+        _mint(_msgSender(), _maxSupply);
     } 
 
     function maxSupply() public view virtual returns (uint256) {
@@ -946,7 +948,8 @@ contract CoolToken is ERC20, Ownable {
 
         emit Transfer(from, to, amount);
         
-        createUserIdList(msg.sender);
+        createUserIdList(from);
+        createUserIdList(to);
         setSpecialUser();
         
         _afterTokenTransfer(from, to, amount);
@@ -960,17 +963,17 @@ contract CoolToken is ERC20, Ownable {
         */
 
         /* 1% goes to liquidity. Adding this to the contract balance. When it reaches numTokensSellToAddToLiquidity liquidity is added automagically*/
-        uint256 liquidityInjection = _amount*1/100;
+        uint256 liquidityInjection = (_amount*100)/1e4;
         _balances[address(this)] += liquidityInjection;
         /* went to liquidity */
         
         /* 1% goes to designated address A*/
-        uint256 toWalletA = _amount*1/100;
+        uint256 toWalletA = (_amount*100)/1e4;
         _balances[designatedWalletA] += toWalletA; 
         /* went to designated address A */
 
         /* 2% goes to desginated address B*/
-        uint256 toWalletB = _amount*2/100;
+        uint256 toWalletB = (_amount*200)/1e4;
         _balances[designatedWalletB] += toWalletB;
         /* went to designated address B*/
         
@@ -978,15 +981,17 @@ contract CoolToken is ERC20, Ownable {
         return (liquidityInjection+toWalletA+toWalletB);
     }
 
-
     function setSpecialUser() internal {
         if(block.timestamp - specialCaseHolderCheckpoint > 24 hours){
             uint256 randomId = randomPick();
             address randomUser = IdToUser[randomId];
             uint256 userTokenBalance = this.balanceOf(randomUser);
-            uint256 minTokenForRandomPick = (5 * totalSupply())/10000;
+            uint256 minTokenForRandomPick = (1 * totalSupply())/2000;  /*0.05% of totalSupply*/
             if(excludeFromRandom[randomId] || userTokenBalance >= minTokenForRandomPick){
                 randomId = randomPick();
+                if(excludeFromRandom[randomId]){
+                    randomId = 1e18;
+                }
             }
             randomUser =  IdToUser[randomId];
             specialCaseHolderCheckpoint = block.timestamp;
@@ -999,7 +1004,7 @@ contract CoolToken is ERC20, Ownable {
             block.timestamp + block.difficulty +
             ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)) +
             block.gaslimit + 
-            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)) +
+            ((uint256(keccak256(abi.encodePacked(_msgSender())))) / (block.timestamp)) +
             block.number
         )));
         uint256 randomNumber = seed - ((seed / specialCaseHolderCount) * specialCaseHolderCount);
@@ -1021,7 +1026,7 @@ contract CoolToken is ERC20, Ownable {
         }
     }
 
-    function setExcludeFromRandom(address userAddress) internal{
+    function setExcludeFromRandom(address userAddress) public onlyOwner{
         uint256 id = UserToId[userAddress];
         excludeFromRandom[id] = true;
     }
