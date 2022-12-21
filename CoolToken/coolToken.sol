@@ -836,7 +836,7 @@ contract CoolToken is ERC20, Ownable {
     bool public tradeTaxEnabled;
     bool public inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
-    uint256 public numTokensSellToAddToLiquidity = 50000 * 10**18;
+    uint256 public numTokensSellToAddToLiquidity = 500 * 10**18;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
