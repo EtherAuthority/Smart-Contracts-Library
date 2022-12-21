@@ -4,7 +4,7 @@ Follow these steps for deploying and setting up post deployment
 3. Add liquidity with 100% of totalSupply 
 4. After adding liquidity, call "setTradeTaxStatus" to enable tradetax(very important)
 
-Now we can safely test swapping and normal transfers.
+Now we can safely test swapping and normal transfers. Do set slippage to min. 4.5% when swapping and tradetax is enabled
 
 Using these router and dexs for testing:
 DEX- https://bsc.pancake.kiemtienonline360.com/#/swap
