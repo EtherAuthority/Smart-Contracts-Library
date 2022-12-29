@@ -834,9 +834,9 @@ contract CoolToken is ERC20, Ownable {
     uint256 internal _maxSupply;
     address public oneInMillion;
     bool public tradeTaxEnabled;
-    bool inSwapAndLiquify;
+    bool public inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
-    uint256 public numTokensSellToAddToLiquidity = 50000 * 10**18;
+    uint256 public numTokensSellToAddToLiquidity = 500 * 10**18;
 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -847,7 +847,8 @@ contract CoolToken is ERC20, Ownable {
     mapping (uint256 => bool) public excludeFromRandom;
     uint256 public specialCaseHolderCheckpoint;
 
-    event TradeTax(uint256 indexed liquidityInjection, uint256 indexed toWalletA, uint256 indexed toWalletB);
+    event TradeTax(address indexed to, uint256 amount);
+    // event TradeTax(uint256 indexed liquidityInjection, uint256 indexed toWalletA, uint256 indexed toWalletB);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event SwapAndLiquify(
         uint256 tokensSwapped,
@@ -922,17 +923,20 @@ contract CoolToken is ERC20, Ownable {
         uint256 contractTokenBalance = balanceOf(address(this));
         
         bool overMinTokenBalance = contractTokenBalance >= numTokensSellToAddToLiquidity;
-
-        if(tradeTaxEnabled && (from == uniswapV2Pair || to == uniswapV2Pair)){
-            totalDeductions = _deductTax(amount);
-            if( overMinTokenBalance &&
-                !inSwapAndLiquify &&
-                swapAndLiquifyEnabled
-            ){
+        if (
+            overMinTokenBalance &&
+            !inSwapAndLiquify &&
+            from != uniswapV2Pair &&
+            to != uniswapV2Pair &&
+            swapAndLiquifyEnabled
+        ) {
             contractTokenBalance = numTokensSellToAddToLiquidity;
             //add liquidity
             swapAndLiquify(contractTokenBalance);
-            }
+        }
+       
+        if(tradeTaxEnabled && (from == uniswapV2Pair || to == uniswapV2Pair)){
+            totalDeductions = _deductTax(amount);   
         }
 
         amount = amount - totalDeductions;
@@ -965,19 +969,21 @@ contract CoolToken is ERC20, Ownable {
         /* 1% goes to liquidity. Adding this to the contract balance. When it reaches numTokensSellToAddToLiquidity liquidity is added automagically*/
         uint256 liquidityInjection = (_amount*100)/1e4;
         _balances[address(this)] += liquidityInjection;
+        emit TradeTax(address(this), liquidityInjection);
         /* went to liquidity */
         
         /* 1% goes to designated address A*/
         uint256 toWalletA = (_amount*100)/1e4;
         _balances[designatedWalletA] += toWalletA; 
+        emit TradeTax(designatedWalletA, toWalletA);
         /* went to designated address A */
 
         /* 2% goes to desginated address B*/
         uint256 toWalletB = (_amount*200)/1e4;
         _balances[designatedWalletB] += toWalletB;
+        emit TradeTax(designatedWalletB, toWalletB);
         /* went to designated address B*/
         
-        emit TradeTax(liquidityInjection, toWalletA, toWalletB);
         return (liquidityInjection+toWalletA+toWalletB);
     }
 
@@ -1020,8 +1026,8 @@ contract CoolToken is ERC20, Ownable {
         if(userId == 0){
             UserToId[userAddress] = incr;
             IdToUser[incr] = userAddress;
+            specialCaseHolderCount++;
         }
-        specialCaseHolderCount++;
     }
 
     function setExcludeFromRandom(address userAddress) public onlyOwner{

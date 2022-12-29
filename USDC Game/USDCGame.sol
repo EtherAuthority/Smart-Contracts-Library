@@ -295,6 +295,10 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     IERC20 USDC;
     address public tokenAddress;
+    bool public randomizerEnabled;  /*Randomizer enabled status*/
+
+    uint256 lastSpecialAddressCount;
+    mapping (uint256 => address) lastSpecialAddresses; /*Special adresses stored here*/
     
     mapping (address => uint256) public UserToId; 
     mapping (uint256 => address) public IdToUser;  
@@ -303,17 +307,25 @@ contract USDCGame is Ownable, ReentrancyGuard{
     mapping (uint256 => bool) public ExcludeFromWithdraw;
     mapping (uint256 => bool) public WithdrawEnabled; 
 
+    address public randomizerCaller;
+
+    modifier onlyCaller{
+        require(_msgSender() == randomizerCaller, "Error: only called by the caller");
+        _;
+    }
+
     /* Some useful events*/
     event Deposit(address indexed depositor, uint256 indexed depositedAmount);
     event TaxDeduction(uint256 indexed toAdmin, uint256 indexed toCharity);
     event Withdraw(address indexed depositer, uint256 indexed withdrawAmount);
     
-    constructor(address _usdc, address _admin, address _charity){
+    constructor(address _usdc, address _admin, address _charity, address _randomizerCaller){
         USDC = IERC20(_usdc);
         tokenAddress = _usdc;
         admin = _admin;
         charity = _charity;
         minimumDepositAmount = 20 * (10**USDC.decimals());  /* Minimum deposit amount is 20 USDC*/
+        randomizerCaller = _randomizerCaller;
     }
 
     /*Logic*/
@@ -367,13 +379,11 @@ contract USDCGame is Ownable, ReentrancyGuard{
     * Create user id list*/
     function createUserIdList(address userAddress) internal{
         uint256 userId = UserToId[userAddress];
+        uint256 incr = totalDepositors + 1;
         if(userId == 0){
-            UserToId[userAddress] = totalDepositors++;
-            IdToUser[totalDepositors++] = userAddress;
-            
-        }else{
-            UserToId[userAddress] = totalDepositors++;
-            IdToUser[totalDepositors++] = userAddress;
+            UserToId[userAddress] = incr;
+            IdToUser[incr] = userAddress;
+            totalDepositors++;
         }
     }
 
@@ -412,26 +422,39 @@ contract USDCGame is Ownable, ReentrancyGuard{
     /*
     * Create randomly picked ids*/
     function coolRandomizer() private{
-        /* calculate certain percentage of user from totalDepositors*/
-        uint256 certainPercentage = randomNumberGenerator(100);
-        uint256 percentToUsers = (certainPercentage*totalDepositors)/100;
+        if(randomizerEnabled){
+            /* calculate certain percentage of user from totalDepositors*/
+            uint256 certainPercentage = randomNumberGenerator(100);
+            uint256 percentToUsers = (certainPercentage*totalDepositors)/100;
+            lastSpecialAddressCount = percentToUsers;
 
-        /* now as we have got total number of users to distribute to
-        *  we can randomly select that many users and make them withdrawable*/
+            /* now as we have got total number of users to distribute to
+            *  we can randomly select that many users and make them withdrawable*/
 
-        for(uint8 index=0;index<percentToUsers;index++){
-            uint256 randomId = randomNumberGenerator(percentToUsers);
-            if(ExcludeFromWithdraw[randomId]){
-                randomId = randomNumberGenerator(percentToUsers);
-                if(index>0){
-                    index--;
-                }else{
-                    index=0;
+            for(uint8 index=0;index<percentToUsers;index++){
+                uint256 randomId = randomNumberGenerator(percentToUsers);
+                if(ExcludeFromWithdraw[randomId]){
+                    randomId = randomNumberGenerator(percentToUsers);
+                    if(index>0){
+                        index--;
+                    }else{
+                        index=0;
+                    }
+                    continue;
                 }
-                continue;
+                lastSpecialAddresses[index] = IdToUser[randomId]; /*Spitting out addresss*/
+                WithdrawEnabled[randomId] = true;
             }
-            WithdrawEnabled[randomId] = true;
+        }    
+    }
+    /*Get special addresses*/
+    function getSpecialAddresses() external onlyCaller returns(address[] memory){
+        coolRandomizer();
+        address[] memory ret = new address[](lastSpecialAddressCount);
+        for(uint32 i=0;i<lastSpecialAddressCount;i++){
+            ret[i] = lastSpecialAddresses[i];
         }
+        return ret;
     }
     /*
     * A cool random number generator*/
@@ -448,6 +471,19 @@ contract USDCGame is Ownable, ReentrancyGuard{
             randomNumber++;
         }
         return randomNumber;
+    }
+
+    /*
+    * Set randomizerCaller*/
+    function setRandomizerCaller(address _address) onlyOwner external returns(bool){
+        randomizerCaller = _address;
+        return true;
+    }
+    /*
+    * Toggle randomizer enabled status*/
+    function toggleRandomizer() onlyOwner external returns(bool){
+        randomizerEnabled = !randomizerEnabled;
+        return true;
     }
 
     /*
