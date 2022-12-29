@@ -1,2 +1,1 @@
-# EtherAuthority Smart Contract Updates
-Dev updates
+#Development updates and library
