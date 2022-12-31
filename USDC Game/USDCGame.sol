@@ -1,11 +1,10 @@
+/*SPDX-License-Identifier: GPL-3.0*/
+pragma solidity ^0.8.17;
+
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
 
-
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-
-pragma solidity ^0.8.0;
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -31,7 +30,6 @@ abstract contract Context {
 
 // OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
 
-pragma solidity ^0.8.0;
 
 
 /**
@@ -116,7 +114,6 @@ abstract contract Ownable is Context {
 
 // OpenZeppelin Contracts (last updated v4.8.0) (security/ReentrancyGuard.sol)
 
-pragma solidity ^0.8.0;
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -188,7 +185,6 @@ abstract contract ReentrancyGuard {
 
 // OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.0;
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -274,8 +270,7 @@ interface IERC20 {
 }
 
 
-/*SPDX-License-Identifier: GPL-3.0*/
-pragma solidity ^0.8.15;
+/* Contract USDC Game*/
 
 
 contract USDCGame is Ownable, ReentrancyGuard{
@@ -285,10 +280,11 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     uint256 specifiedAmountForWithdraw;
     uint256 public minimumDepositAmount;
+    uint256 public userLimitForRewardDistribution;
 
-    uint256 public adminFee = 450;  /* 4.5% */
-    uint256 public charityFee = 550;    /* 5.5% */
-    uint256 PERCENT_DIVIDER = 10000;
+    uint256 public constant adminFee = 450;  /* 4.5% */
+    uint256 public constant charityFee = 550;    /* 5.5% */
+    uint256 public constant PERCENT_DIVIDER = 10000;
 
     address public admin;
     address public charity;
@@ -326,6 +322,7 @@ contract USDCGame is Ownable, ReentrancyGuard{
         charity = _charity;
         minimumDepositAmount = 20 * (10**USDC.decimals());  /* Minimum deposit amount is 20 USDC*/
         randomizerCaller = _randomizerCaller;
+        userLimitForRewardDistribution = 50; /* Set to maximum i.e. 50*/
     }
 
     /*Logic*/
@@ -351,7 +348,7 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     /*
     * Calculate and transfer tax */
-    function _deductTax(uint256 _beforeTax, address _owner) private returns(uint256 _afterTax){
+    function _deductTax(uint256 _beforeTax, address _owner) internal returns(uint256 _afterTax){
         uint256 toAdmin;
         uint256 toCharity;
         toAdmin = (_beforeTax*adminFee)/PERCENT_DIVIDER;
@@ -366,7 +363,7 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     /*
     * Hook: afterDeposit */
-    function _afterDeposit(address _owner, uint256 _depositAmount) private{
+    function _afterDeposit(address _owner, uint256 _depositAmount) internal{
         /* Update State */
         totalDeposits = totalDeposits + _depositAmount;
         createUserIdList(_owner);
@@ -389,7 +386,7 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     /*
     * Exclude from withdraw*/
-    function setExcludeFromWithdraw(address userAddress) internal{
+    function setExcludeFromWithdraw(address userAddress) external onlyOwner{
         uint256 id = UserToId[userAddress];
         ExcludeFromWithdraw[id] = true;
     }
@@ -421,11 +418,18 @@ contract USDCGame is Ownable, ReentrancyGuard{
 
     /*
     * Create randomly picked ids*/
-    function coolRandomizer() private{
+    function coolRandomizer() internal{
         if(randomizerEnabled){
             /* calculate certain percentage of user from totalDepositors*/
             uint256 certainPercentage = randomNumberGenerator(100);
             uint256 percentToUsers = (certainPercentage*totalDepositors)/100;
+
+            /* Limiting the number of users(max. 50) to avoid "out of gas" */
+            /* change userLimitForRewardDistrubution to suit your needs*/
+            if(percentToUsers > userLimitForRewardDistribution){
+                percentToUsers = userLimitForRewardDistribution;
+            }
+
             lastSpecialAddressCount = percentToUsers;
 
             /* now as we have got total number of users to distribute to
@@ -474,62 +478,81 @@ contract USDCGame is Ownable, ReentrancyGuard{
     }
 
     /*
+    * Set userLimitForRewardDistribution*/
+    function setUserLimitForRewardDistribution(uint256 _newLimit) onlyOwner external returns(uint256 _limit){
+        require(userLimitForRewardDistribution != _newLimit, "Same as previous");
+        require(_newLimit < 50 && _newLimit > 0, "Should be from 1 to 50");
+        userLimitForRewardDistribution = _newLimit;
+        _limit = userLimitForRewardDistribution;
+    }
+    /*
     * Set randomizerCaller*/
-    function setRandomizerCaller(address _address) onlyOwner external returns(bool){
+    function setRandomizerCaller(address _address) onlyOwner external returns(address _newCaller){
+        require(randomizerCaller != _address, "Same as previous");
+        require(_address != address(0), "Zero address");
         randomizerCaller = _address;
-        return true;
+        _newCaller = randomizerCaller;
     }
     /*
     * Toggle randomizer enabled status*/
-    function toggleRandomizer() onlyOwner external returns(bool){
+    function toggleRandomizer() onlyOwner external returns(bool _status){
         randomizerEnabled = !randomizerEnabled;
-        return true;
+        _status = randomizerEnabled;
     }
 
     /*
     * Change admin address*/
-    function setAdmin(address _newAdmin) onlyOwner external returns(bool){
+    function setAdmin(address _newAdmin) onlyOwner external returns(address newAdmin){
+        require(_newAdmin != admin, "Same as previous");
+        require(_newAdmin != address(0), "Zero address");
         admin = _newAdmin;
-        return true;
+        newAdmin = admin;
     }
 
     /*
     * Change charity address*/
-    function setCharity(address _charity) onlyOwner external returns(bool){
+    function setCharity(address _charity) onlyOwner external returns(address newCharity){
+        require(_charity != charity, "Same as previous");
+        require(_charity != address(0), "Zero address");
         charity = _charity;
-        return true;
+        newCharity = charity;
     }
 
     /*
     * Get contract ether balance*/
     function contractBalance() external view returns(uint256 etherBalance){
-        return address(this).balance;
+        etherBalance = address(this).balance;
     }
 
     /*
     * Get contract token balance*/
     function contractTokenBalance(address whichToken) external view returns(uint256 tokenBalance){
-        return(IERC20(whichToken).balanceOf(address(this)));
+        tokenBalance = IERC20(whichToken).balanceOf(address(this));
     }
 
     /* Set Specified amount to withdraw
     * only owner function
     * set specified amount for randomly picked users to withdraw*/
-    function setSpecifiedAmount(uint256 _amount) onlyOwner external returns(uint256){
+    function setSpecifiedAmount(uint256 _amount) onlyOwner external returns(uint256 newSpecifiedAmount){
+        require(_amount != specifiedAmountForWithdraw, "Same as previous");
         specifiedAmountForWithdraw = _amount;
-        return specifiedAmountForWithdraw;
+        newSpecifiedAmount = specifiedAmountForWithdraw;
     }
 
     /* Set minimum deposit amount, onlyowner*/
-    function setMinimumDepositAmount(uint256 _amount) onlyOwner external returns(uint256){
+    function setMinimumDepositAmount(uint256 _amount) onlyOwner external returns(uint256 newMinimumDepositAmount){
+        require(_amount != minimumDepositAmount, "Same as previous");
+        require(_amount > 0, "Cant be zero");
         minimumDepositAmount = _amount;
-        return minimumDepositAmount;
+        newMinimumDepositAmount = minimumDepositAmount;
     }
 
     /* Cool Janitor*/
     /* Transfer any token available in this contract's balance*/
     function sweep(address token) onlyOwner external returns(uint256 _swept){
+        require(token != address(0), "Zero address is not token");
         uint256 thisBalance = IERC20(token).balanceOf(address(this));
+        require(thisBalance > 0, "Nothing to transfer");
         IERC20(token).transfer(owner(), thisBalance);
         _swept = thisBalance;
     }
