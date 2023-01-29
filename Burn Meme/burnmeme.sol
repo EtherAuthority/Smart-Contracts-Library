@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol
@@ -534,7 +534,11 @@ abstract contract Ownable is Context {
 }
 
 contract Treasury is Ownable {
+    using Address for address;
+    using Address for address payable;
+    using Address for IERC20;
     using SafeERC20 for IERC20;
+    
 
     string public MEME;
 
@@ -546,7 +550,7 @@ contract Treasury is Ownable {
     
     uint256 public MaintainenceFee;
     uint256 public DeadFee;
-    uint256 public PERCENT_DIVIDER = 1e4;
+    uint256 public constant PERCENT_DIVIDER = 1e4;
 
     address public MaintainenceWallet;
     address public DeadWallet;
@@ -556,7 +560,6 @@ contract Treasury is Ownable {
     address internal SecondWinner;
     address internal ThirdWinner;
 
-    bool public paused;
     uint256 public totalDeposit;
 
     struct data {
@@ -573,6 +576,11 @@ contract Treasury is Ownable {
     event Deposit(address indexed MadeBy, uint256 indexed ForAmount, uint256 indexed LeftAfterTax);
     event Withdraw(address indexed DoneBy, uint256 OfAmount);
     event SignerChanged(address indexed PreviousSigner, address indexed NewSigner);
+    event MaintainenceWalletChanged(address indexed PreviousWallet, address indexed NewWallet);
+    event DeadWalletChanged(address indexed PreviousWallet, address indexed NewWallet);
+    event MaintainenceFeeChanged(uint256 indexed PreviousFee, uint256 indexed NewFee);
+    event DeadFeeChanged(uint256 indexed PreviousFee, uint256 indexed NewFee);
+    event TokenChanged(address indexed PreviousToken, address indexed NewToken);
 
     modifier onlySigner(){
         require(_msgSender() == Signer, "error: Not Signer");
@@ -580,19 +588,27 @@ contract Treasury is Ownable {
     }
 
     constructor(address _token, address _signer) {
+        require(_token != address(0) && _token.isContract(), "error: Invalid token address");
+        require(_signer != address(0), "error: Zero Value");
         XDC = IERC20(_token); 
+        emit TokenChanged(address(0), _token);
         Signer = _signer;
+        emit SignerChanged(address(0), Signer);
     }
     
     function deposit(uint _amount) external {
 
-        require(!paused,"Error: Contract is Paused Right Now!!");
-        require(_amount != 0,"Error: Invalid Amount!");
+        require(_amount > 0,"Error: Invalid Amount");
 
         address _to = msg.sender;
         uint256 currentLength = users.length;
         createUserIdList(_to);
+
+        uint256 beforeTokenBalance = XDC.balanceOf(address(this));
         XDC.safeTransferFrom(_to, address(this), _amount);
+        uint256 afterTokenBalance = XDC.balanceOf(address(this));
+
+        _amount = afterTokenBalance - beforeTokenBalance;
 
         if (userRecord[_to]._amount == 0) {
             maxUserChecker();
@@ -658,7 +674,13 @@ contract Treasury is Ownable {
         address owner = _msgSender();
         uint256 rewards = userRecord[owner].totalWithdrawables;
         userRecord[owner].totalWithdrawables = 0;
+        
+        if(XDC.balanceOf(address(this)) < rewards){
+            rewards = XDC.balanceOf(address(this));
+        }
+
         userRecord[owner].totalWithdrawals += rewards;
+
         XDC.safeTransfer(owner, rewards);
         emit Withdraw(owner, rewards);
         claimed = rewards;
@@ -703,40 +725,37 @@ contract Treasury is Ownable {
     *    These Function are for emergency senarios
     */
 
-    function rescueFunds() external onlyOwner {
-        require(address(this).balance > 0, "error: no funds to transfer");
-        (bool os,) = payable(owner()).call{value: address(this).balance}("");
-        require(os,"Transaction Failed!");
-    }
+    
 
-    function rescueTokens(IERC20 _token, address _recipient, uint256 _amount) external onlyOwner {
-        _token.safeTransfer(_recipient,_amount);
-    }
-
-    function togglePause() external onlyOwner returns(bool isPaused){
-        paused = !paused;
-        isPaused = paused;
-    }
+   
 
     function setMaxUserLimit(uint _newLimit) external onlyOwner {
         require(_newLimit > 0, "error: zero value");
         MAX_USER_LIMIT = _newLimit;
     }
 
-    function setMaintainenceFee(uint256 _fee) external onlyOwner returns(uint256 _mainstainenceFee){
+    function setMaintainenceFee(uint256 _fee) external onlyOwner returns(uint256 _maintainenceFee){
         require(_fee > 0, "error: zero value");
+        require(_fee + DeadFee <= PERCENT_DIVIDER, "error: Sum of all fees exceed denominator");
+        uint256 previousFee = MaintainenceFee;
         MaintainenceFee = _fee;
-        _mainstainenceFee = MaintainenceFee;
+        emit MaintainenceFeeChanged(previousFee, MaintainenceFee);
+        _maintainenceFee = MaintainenceFee;
     }
     function setDeadWalletFee(uint256 _fee) external onlyOwner returns(uint256 _deadFee){
         require(_fee > 0, "error: zero value");
+        require(MaintainenceFee + _fee <= PERCENT_DIVIDER, "error: Sum of all fees exceed denominator");
+        uint256 previousFee = DeadFee;
         DeadFee = _fee;
+        emit DeadFeeChanged(previousFee, DeadFee);
         _deadFee = DeadFee;
     }
     
     function setToken(address _token) external onlyOwner {
         require(_token != address(0), "error: zero address");
+        require(_token.isContract(), "error: Token mmust be a contract");
         XDC = IERC20(_token);
+        emit TokenChanged(address(XDC), _token);
     }
 
     function setSigner(address _address) external onlyOwner returns(address _signer) {
@@ -749,13 +768,17 @@ contract Treasury is Ownable {
 
     function setMaintainenceWallet(address _address) external onlyOwner returns(address maintainence){
         require(_address != address(0), "error: zero address");
+        address previousWallet = MaintainenceWallet;
         MaintainenceWallet = _address;
+        emit MaintainenceWalletChanged(previousWallet, MaintainenceWallet);
         maintainence = MaintainenceWallet;
     }
 
     function setDeadWallet(address _address) external onlyOwner returns(address deadWallet) {
         require(_address != address(0), "error: zero address");
+        address previousWallet = DeadWallet;
         DeadWallet = _address;
+        emit DeadWalletChanged(previousWallet, DeadWallet);
         deadWallet = DeadWallet;
     }
 
