@@ -695,7 +695,7 @@ contract Treasury is Ownable {
             address randomPicked = randomPicker(userLength);
             updateUserReward(randomPicked, tAmount);
         }
-        rewardPoolCheckpoint += rewardPool;
+        rewardPoolCheckpoint = rewardPool;
     }
 
     function getUserLength() external view returns(uint256 length) {
