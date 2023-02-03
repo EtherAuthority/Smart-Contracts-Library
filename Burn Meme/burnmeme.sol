@@ -580,7 +580,7 @@ contract Treasury is Ownable {
     address[] public users;
 
     event Deposit(address indexed MadeBy, uint256 indexed ForAmount, uint256 indexed LeftAfterTax);
-    event Withdraw(address indexed DoneBy, uint256 OfAmount);
+    event Withdraw(address indexed DoneBy, uint256 indexed OfAmount);
     event SignerChanged(address indexed PreviousSigner, address indexed NewSigner);
     event MaintainenceWalletChanged(address indexed PreviousWallet, address indexed NewWallet);
     event DeadWalletChanged(address indexed PreviousWallet, address indexed NewWallet);
@@ -588,10 +588,11 @@ contract Treasury is Ownable {
     event DeadFeeChanged(uint256 indexed PreviousFee, uint256 indexed NewFee);
     event TokenChanged(address indexed PreviousToken, address indexed NewToken);
     event MemeChanged(string indexed previousMeme, string indexed newMeme);
-    event RewardDistributionTimesThresholdChanged(uint256 OldThreshold, uint256 NewThreshold);
-    event FirstWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
-    event SecondWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
-    event ThirdWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
+    event RewardDistributionTimesThresholdChanged(uint256 indexed OldThreshold, uint256 indexed NewThreshold);
+    event FirstWinnerShareChanged(uint256 indexed PreviousShare, uint256 indexed NewShare);
+    event SecondWinnerShareChanged(uint256 indexed PreviousShare, uint256 indexed NewShare);
+    event ThirdWinnerShareChanged(uint256 indexed PreviousShare, uint256 indexed NewShare);
+    event MaxUserLimitChanged(uint256 indexed PreviousUserLimit, uint256 indexed NewUserLimit);
 
     modifier onlySigner(){
         require(_msgSender() == Signer, "error: Not Signer");
@@ -773,7 +774,9 @@ contract Treasury is Ownable {
 
     function setMaxUserLimit(uint _newLimit) external onlyOwner {
         require(_newLimit > 0, "error: zero value");
+        uint256 previousLimit = MAX_USER_LIMIT;
         MAX_USER_LIMIT = _newLimit;
+        emit MaxUserLimitChanged(previousLimit, MAX_USER_LIMIT);
     }
 
     function setMaintainenceFee(uint256 _fee) external onlyOwner returns(uint256 _maintainenceFee){
