@@ -550,7 +550,11 @@ contract Treasury is Ownable {
     
     uint256 public MaintainenceFee;
     uint256 public DeadFee;
+    uint256 public FirstWinnerShare = 1000;     /*10%*/
+    uint256 public SecondWinnerShare = 500;     /*5%*/
+    uint256 public ThirdWinnerShare = 250;      /*2.5%*/
     uint256 public constant PERCENT_DIVIDER = 1e4;
+    uint256 public RewardDistributionTimesThreshold;
 
     address public MaintainenceWallet;
     address public DeadWallet;
@@ -559,8 +563,10 @@ contract Treasury is Ownable {
     address internal FirstWinner;
     address internal SecondWinner;
     address internal ThirdWinner;
-
+    
     uint256 public totalDeposit;
+    uint256 public rewardPool;
+    uint256 public rewardPoolCheckpoint;
 
     struct data {
         uint256 _amount;
@@ -581,6 +587,11 @@ contract Treasury is Ownable {
     event MaintainenceFeeChanged(uint256 indexed PreviousFee, uint256 indexed NewFee);
     event DeadFeeChanged(uint256 indexed PreviousFee, uint256 indexed NewFee);
     event TokenChanged(address indexed PreviousToken, address indexed NewToken);
+    event MemeChanged(string indexed previousMeme, string indexed newMeme);
+    event RewardDistributionTimesThresholdChanged(uint256 OldThreshold, uint256 NewThreshold);
+    event FirstWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
+    event SecondWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
+    event ThirdWinnerShareChanged(uint256 indexed PreviousShare, uint256 NewShare);
 
     modifier onlySigner(){
         require(_msgSender() == Signer, "error: Not Signer");
@@ -594,6 +605,11 @@ contract Treasury is Ownable {
         emit TokenChanged(address(0), _token);
         Signer = _signer;
         emit SignerChanged(address(0), Signer);
+        MaintainenceFee = 400;
+        emit MaintainenceFeeChanged(0, MaintainenceFee);
+        DeadFee = 3000;
+        emit DeadFeeChanged(0, DeadFee);
+        RewardDistributionTimesThreshold = 3000; /* upto 3000 users*/
     }
     
     function deposit(uint _amount) external {
@@ -626,6 +642,7 @@ contract Treasury is Ownable {
         totalDeposit = totalDeposit + _amount;
         
         uint256 _afterTax = deductTax(_amount);
+        rewardPool += _afterTax;
         emit Deposit(_to, _amount, _afterTax);      
 
     }
@@ -648,6 +665,38 @@ contract Treasury is Ownable {
         }
     }
 
+    function settleRewardDistribution() external onlySigner {
+
+        /* Call this function to settle rewards, 
+        Loop will run upto a maximum for the value of RewardDistributionTimesThreshold(can be set by owner)*/
+
+        uint256 userLength = users.length;
+        if(userLength > RewardDistributionTimesThreshold){
+            userLength = RewardDistributionTimesThreshold;
+        }
+        require(userLength > 4, "revert: not enough users");
+        
+        uint256 lot = rewardPool - rewardPoolCheckpoint;
+        require(lot > 0, "revert: not enough deposits to distribute");
+
+        uint256 tAmount;
+        uint256 topWinnerAmounts;
+
+        for(uint256 count;count < userLength;count++){
+            if(count == 0) {tAmount = (lot * FirstWinnerShare) / PERCENT_DIVIDER; topWinnerAmounts += tAmount;}
+            else if(count == 1) {tAmount = (lot * SecondWinnerShare) / PERCENT_DIVIDER; topWinnerAmounts += tAmount;}
+            else if(count == 2) {tAmount = (lot * ThirdWinnerShare) / PERCENT_DIVIDER; topWinnerAmounts += tAmount;}
+            else {
+                uint256 remaining = userLength - count;
+                tAmount = (lot - topWinnerAmounts) / remaining;
+                
+            }
+            address randomPicked = randomPicker(userLength);
+            updateUserReward(randomPicked, tAmount);
+        }
+        rewardPoolCheckpoint += rewardPool;
+    }
+
     function getUserLength() external view returns(uint256 length) {
         length = users.length;
     }
@@ -658,14 +707,7 @@ contract Treasury is Ownable {
         _third = ThirdWinner;
     }
 
-    function setTopThreeWinner(address _first, address _second, address _third) external onlySigner {
-        require(_first != address(0) && _second != address(0) && _third != address(0), "error: zero values");
-        FirstWinner = _first;
-        SecondWinner = _second;
-        ThirdWinner = _third;
-    }
-
-    function updateUserReward(address _user, uint256 _reward) external onlySigner returns(uint256 rewardAfterUpdate){
+    function updateUserReward(address _user, uint256 _reward) internal returns(uint256 rewardAfterUpdate){
         userRecord[_user].totalWithdrawables += _reward;
         rewardAfterUpdate = userRecord[_user].totalWithdrawables;
     }
@@ -673,12 +715,12 @@ contract Treasury is Ownable {
     function withdraw() external returns(uint256 claimed) {
         address owner = _msgSender();
         uint256 rewards = userRecord[owner].totalWithdrawables;
-        userRecord[owner].totalWithdrawables = 0;
+        
         
         if(XDC.balanceOf(address(this)) < rewards){
             rewards = XDC.balanceOf(address(this));
         }
-
+        userRecord[owner].totalWithdrawables -= rewards;
         userRecord[owner].totalWithdrawals += rewards;
 
         XDC.safeTransfer(owner, rewards);
@@ -688,7 +730,7 @@ contract Treasury is Ownable {
 
     /*
     * Get random user*/
-    function randomPicker(uint256 limit) onlySigner external view returns(address _randomlyPicked) {
+    function randomPicker(uint256 limit) onlySigner internal view returns(address _randomlyPicked) {
         uint256 randomId = randomNumberGenerator(limit);
         _randomlyPicked = IdToUser[randomId];
     }
@@ -783,8 +825,47 @@ contract Treasury is Ownable {
     }
 
     function setmem(string memory _str) external onlyOwner returns(string memory _newMeme){
+        string memory previousMeme = MEME;
         MEME = _str;
+        emit MemeChanged(previousMeme, MEME);
         _newMeme = MEME;
+    }
+
+    function setRewardDistributionTimesThreshold(uint256 newValue) external onlyOwner returns(uint256 newThreshold){
+        /* Sets upto how many user rewards should be distrubuted*/
+        uint256 previousThreshold = RewardDistributionTimesThreshold;
+        require(newValue != 0, "revert: Zero Value");
+        require(previousThreshold != newValue, "revert: Same Value");
+        RewardDistributionTimesThreshold = newValue;
+        emit RewardDistributionTimesThresholdChanged(previousThreshold, newThreshold);
+        newThreshold = RewardDistributionTimesThreshold;
+    }
+
+    function setFirstWinnerShare(uint256 newValue) external onlyOwner returns(uint256 newShare){
+        require(newValue > 0, "error: zero value");
+        require(SecondWinnerShare + ThirdWinnerShare + newValue <= PERCENT_DIVIDER, "error: Sum of all fees exceed denominator");
+        uint256 previousShare = FirstWinnerShare;
+        FirstWinnerShare = newValue;
+        emit FirstWinnerShareChanged(previousShare, FirstWinnerShare);
+        newShare = FirstWinnerShare;
+    }
+
+    function setSecondWinnerShare(uint256 newValue) external onlyOwner returns(uint256 newShare){
+        require(newValue > 0, "error: zero value");
+        require(FirstWinnerShare + ThirdWinnerShare + newValue <= PERCENT_DIVIDER, "error: Sum of all fees exceed denominator");
+        uint256 previousShare = SecondWinnerShare;
+        SecondWinnerShare = newValue;
+        emit SecondWinnerShareChanged(previousShare, SecondWinnerShare);
+        newShare = SecondWinnerShare;
+    }
+
+    function setThirdWinnerShare(uint256 newValue) external onlyOwner returns(uint256 newShare){
+        require(newValue > 0, "error: zero value");
+        require(SecondWinnerShare + FirstWinnerShare + newValue <= PERCENT_DIVIDER, "error: Sum of all fees exceed denominator");
+        uint256 previousShare = ThirdWinnerShare;
+        ThirdWinnerShare = newValue;
+        emit ThirdWinnerShareChanged(previousShare, ThirdWinnerShare);
+        newShare = ThirdWinnerShare;
     }
 
 }
