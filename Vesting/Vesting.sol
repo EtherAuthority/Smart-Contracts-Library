@@ -104,16 +104,16 @@ contract Vesting {
       }
 
    
-     function ViewVestingAmount()public view returns (uint){ 
+     function ViewVestingAmount( address user )public view returns (uint){ 
         uint tempVer = 0; 
-             for(uint i=1;i<=VestingTime[msg.sender];i++) 
+             for(uint i=1;i<=VestingTime[user];i++) 
              { 
                  require(deployTimestamp+oneyear<=block.timestamp,"Unable to Withdraw"); 
                  if(block.timestamp>=deployTimestamp+(oneyear*i)) 
                  { 
-                     if(withdrawdetails[msg.sender][i].time==0) 
+                     if(withdrawdetails[user][i].time==0) 
                      { 
-                        tempVer+=lockingWallet[msg.sender]/VestingTime[msg.sender];                        
+                        tempVer+=lockingWallet[user]/VestingTime[user];                        
                      } 
                  } 
                  else 
