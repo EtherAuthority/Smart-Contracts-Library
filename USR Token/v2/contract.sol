@@ -1,9 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2022-03-27
-*/
-
-// SPDX-License-Identifier: NOLICENSE
-// USR TOKEN.cash
 pragma solidity 0.8.17;
 
 interface IERC20 {
