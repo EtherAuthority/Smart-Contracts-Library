@@ -1,3 +1,6 @@
+/**
+ *SPDX-License-Identifier: NOLICENSE
+*/
 pragma solidity 0.8.17;
 
 interface IERC20 {
@@ -716,8 +719,23 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
     function updateMarketingWallet(address newWallet) external onlyOwner{
         require(marketingAddress != newWallet ,'Wallet already set');
+        includeInFee(marketingAddress);
         marketingAddress = newWallet;
-        _isExcludedFromFee[marketingAddress];
+        excludeFromFee(marketingAddress);
+    }
+
+    function updateDevelopmentWallet(address newWallet) external onlyOwner{
+        require(developmentAddress != newWallet ,'Wallet already set');
+        includeInFee(developmentAddress);
+        developmentAddress = newWallet;
+        excludeFromFee(developmentAddress);
+    }
+
+    function updateStrategicPartnershipWallet(address newWallet) external onlyOwner{
+        require(strategicPartnershipAddress != newWallet ,'Wallet already set');
+        includeInFee(strategicPartnershipAddress);
+        strategicPartnershipAddress = newWallet;
+        excludeFromFee(strategicPartnershipAddress);
     }
 
     function updateAntiWhaleAmt(uint256 amount) external onlyOwner{
