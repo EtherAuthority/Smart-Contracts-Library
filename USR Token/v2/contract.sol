@@ -193,6 +193,8 @@ interface IRouter {
 
 contract USRToken is Context, IERC20, MultiSignWallet {
 
+    
+
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -228,7 +230,11 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
     mapping(address => UserLastSell) public userLastSell;
 
+    /* Marketing, Development, Strategic Parnerships */
+
     address public marketingAddress = 0x000000000000000000000000000000000000dEaD;
+    address public developmentAddress = 0x000000000000000000000000000000000000dEaD;
+    address public strategicPartnershipAddress = 0x000000000000000000000000000000000000dEaD;
     address public constant deadAddress = 0x000000000000000000000000000000000000dEaD;
 
     string private constant _name = "USRTOKEN";
@@ -240,17 +246,21 @@ contract USRToken is Context, IERC20, MultiSignWallet {
       uint256 marketing;
       uint256 liquidity;
       uint256 burn;
+      uint256 development;
+      uint256 strategicPartnership;
     }
 
-    Taxes public taxes = Taxes(0,0,0,0);
-    Taxes public buyTaxes = Taxes(0,0,0,0);
-    Taxes public sellTaxes = Taxes(1,0,3,0);
+    Taxes public taxes = Taxes(0,0,0,0,0,0);
+    Taxes public buyTaxes = Taxes(0,0,0,0,0,0);
+    Taxes public sellTaxes = Taxes(1,0,3,0,0,0);
 
     struct TotFeesPaidStruct{
         uint256 rfi;
         uint256 marketing;
         uint256 liquidity;
         uint256 burn;
+        uint256 development;
+        uint256 strategicPartnership;
     }
     TotFeesPaidStruct public totFeesPaid;
 
@@ -261,11 +271,17 @@ contract USRToken is Context, IERC20, MultiSignWallet {
       uint256 rMarketing;
       uint256 rLiquidity;
       uint256 rBurn;
+      uint256 rDevelopment;
+      uint256 rStrategicPartnership;
+
+
       uint256 tTransferAmount;
       uint256 tRfi;
       uint256 tMarketing;
       uint256 tLiquidity;
       uint256 tBurn;
+      uint256 tDevelopment;
+      uint256 tStrategicPartnership;
     }
 
     event FeesChanged();
@@ -292,6 +308,8 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _isExcludedFromFee[owners[0]] = true;
         _isExcludedFromFee[marketingAddress]=true;
         _isExcludedFromFee[deadAddress] = true;
+        _isExcludedFromFee[developmentAddress] = true;
+        _isExcludedFromFee[strategicPartnershipAddress] = true;
 
         emit Transfer(address(0), owners[0], _tTotal);
     }
@@ -418,30 +436,36 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         return _isExcludedFromFee[account];
     }
 
-    function setTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn <= 35, "Fees must be lower than 35%");
+    function setTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
+        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership<= 35, "Fees must be lower than 35%");
         taxes.rfi = _rfi;
         taxes.marketing = _marketing;
         taxes.liquidity = _liquidity;
         taxes.burn = _burn;
+        taxes.development = _development;
+        taxes.strategicPartnership = _strategicPartnership;
         emit FeesChanged();
     }
     
-    function setBuyTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn <= 35, "Fees must be lower than 35%");
+    function setBuyTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
+        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership <= 35, "Fees must be lower than 35%");
         buyTaxes.rfi = _rfi;
         buyTaxes.marketing = _marketing;
         buyTaxes.liquidity = _liquidity;
         buyTaxes.burn = _burn;
+        buyTaxes.development = _development;
+        buyTaxes.strategicPartnership = _strategicPartnership;
         emit FeesChanged();
     }
     
-    function setSellTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn <= 35, "Fees must be lower than 35%");
+    function setSellTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
+        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership <= 35, "Fees must be lower than 35%");
         sellTaxes.rfi = _rfi;
         sellTaxes.marketing = _marketing;
         sellTaxes.liquidity = _liquidity;
         sellTaxes.burn = _burn;
+        sellTaxes.development = _development;
+        sellTaxes.strategicPartnership = _strategicPartnership;
         emit FeesChanged();
     }
 
@@ -480,9 +504,30 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _rOwned[deadAddress] +=rBurn;
     }
 
+    function _takeDevelopment(uint256 rDevelopment, uint256 tDevelopment) private {
+        totFeesPaid.development += tDevelopment;
+
+        if(_isExcluded[developmentAddress])
+        {
+            _tOwned[developmentAddress]+=tDevelopment;
+        }
+        _rOwned[developmentAddress] +=rDevelopment;
+    }
+
+    function _takeStrategicPartnership(uint256 rStrategicPartnership, uint256 tStrategicPartnership) private {
+        totFeesPaid.strategicPartnership += tStrategicPartnership;
+
+        if(_isExcluded[strategicPartnershipAddress])
+        {
+            _tOwned[strategicPartnershipAddress]+=tStrategicPartnership;
+        }
+        _rOwned[strategicPartnershipAddress] +=rStrategicPartnership;
+    }
+
+
     function _getValues(uint256 tAmount, bool takeFee, uint8 category) private view returns (valuesFromGetValues memory to_return) {
         to_return = _getTValues(tAmount, takeFee, category);
-        (to_return.rAmount, to_return.rTransferAmount, to_return.rRfi, to_return.rMarketing, to_return.rLiquidity, to_return.rBurn) = _getRValues(to_return, tAmount, takeFee, _getRate());
+        (to_return.rAmount, to_return.rTransferAmount, to_return.rRfi, to_return.rMarketing, to_return.rLiquidity, to_return.rBurn, to_return.rDevelopment, to_return.rStrategicPartnership) = _getRValues(to_return, tAmount, takeFee, _getRate());
         return to_return;
     }
 
@@ -501,23 +546,29 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         s.tMarketing = tAmount*temp.marketing/100;
         s.tLiquidity = tAmount*temp.liquidity/100;
         s.tBurn = tAmount*temp.burn/100;
-        s.tTransferAmount = tAmount-s.tRfi-s.tMarketing-s.tLiquidity-s.tBurn;
+        s.tDevelopment = tAmount*temp.development/100;
+        s.tStrategicPartnership = tAmount*temp.strategicPartnership/100;
+      
+        s.tTransferAmount = tAmount-s.tRfi-s.tMarketing-s.tLiquidity-s.tBurn-s.tDevelopment-s.tStrategicPartnership;
         return s;
     }
 
-    function _getRValues(valuesFromGetValues memory s, uint256 tAmount, bool takeFee, uint256 currentRate) private pure returns (uint256 rAmount, uint256 rTransferAmount, uint256 rRfi,uint256 rMarketing, uint256 rLiquidity, uint256 rBurn) {
+    function _getRValues(valuesFromGetValues memory s, uint256 tAmount, bool takeFee, uint256 currentRate) private pure returns (uint256 rAmount, uint256 rTransferAmount, uint256 rRfi,uint256 rMarketing, uint256 rLiquidity, uint256 rBurn, uint256 rDevelopment, uint256 rStrategicPartnership) {
         rAmount = tAmount*currentRate;
 
         if(!takeFee) {
-          return(rAmount, rAmount, 0,0,0,0);
+          return(rAmount, rAmount, 0,0,0,0,0,0);
         }
 
         rRfi = s.tRfi*currentRate;
         rMarketing = s.tMarketing*currentRate;
         rLiquidity = s.tLiquidity*currentRate;
         rBurn = s.rBurn*currentRate;
+        rDevelopment = s.rDevelopment*currentRate;
+        rStrategicPartnership = s.rStrategicPartnership;
+
         rTransferAmount =  rAmount-rRfi-rMarketing-rLiquidity-rBurn;
-        return (rAmount, rTransferAmount, rRfi,rMarketing,rLiquidity, rBurn);
+        return (rAmount, rTransferAmount, rRfi,rMarketing,rLiquidity, rBurn, rDevelopment, rStrategicPartnership);
     }
 
     function _getRate() private view returns(uint256) {
@@ -611,6 +662,17 @@ contract USRToken is Context, IERC20, MultiSignWallet {
             _takeBurn(s.rBurn, s.tBurn);
             emit Transfer(sender, deadAddress, s.tBurn);
         }
+
+        if(s.rDevelopment > 0 || s.tDevelopment > 0){
+            _takeDevelopment(s.rDevelopment, s.tDevelopment);
+            emit Transfer(sender, developmentAddress, s.tDevelopment);
+        }
+
+        if(s.rStrategicPartnership > 0 || s.tStrategicPartnership > 0){
+            _takeStrategicPartnership(s.rStrategicPartnership, s.tStrategicPartnership);
+            emit Transfer(sender, strategicPartnershipAddress, s.tStrategicPartnership);
+        }
+
         emit Transfer(sender, recipient, s.tTransferAmount);
         
     }
