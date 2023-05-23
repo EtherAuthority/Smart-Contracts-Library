@@ -1,3 +1,6 @@
+/**
+ *SPDX-License-Identifier: NOLICENSE
+*/
 pragma solidity 0.8.17;
 
 interface IERC20 {
@@ -208,14 +211,17 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint8 private constant _decimals = 18;
     uint256 private constant MAX = ~uint256(0);
 
-    uint256 private _tTotal = 1e17 * 10**_decimals;
+    uint256 public HODL_PERIOD = 7 days;
+    uint256 public HODL_THRESHOLD = 1337 * (10**_decimals);       /* number of token to reach for it to start */
+
+    uint256 private _tTotal = 1e17 * (10**_decimals);
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
 
-    uint256 public antiWhaleAmt = 1000_000_000_000_000 * 10**_decimals;
-    uint256 public swapTokensAtAmount = 20_000_000_000_000 * 10**_decimals;
+    uint256 public antiWhaleAmt = 1000_000_000_000_000 * (10**_decimals);
+    uint256 public swapTokensAtAmount = 20_000_000_000_000 * (10**_decimals);
     
     // Anti Dump //
-    uint256 public maxSellAmountPerCycle = 1000_000_000_000_000 * 10**_decimals;
+    uint256 public maxSellAmountPerCycle = 1000_000_000_000_000 * (10**_decimals);
     uint256 public antiDumpCycle = 1 hours;
     
     struct UserLastSell  {
@@ -223,6 +229,8 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         uint256 lastSellTime;
     }
     mapping(address => UserLastSell) public userLastSell;
+
+    mapping(address => uint256) public userLastActivity;
 
     /* Marketing, Development, Strategic Parnerships */
 
@@ -668,7 +676,24 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         }
 
         emit Transfer(sender, recipient, s.tTransferAmount);
-        
+    
+
+    }
+
+    function updateUserLastActivity(address forUser) private {
+        uint256 lastActivityAt = userLastActivity[forUser];
+        if (block.timestamp > lastActivityAt){
+            userLastActivity[forUser] = uint256(block.timestamp);
+        }
+    }
+    
+    function handleHODL(address forUser) private view{
+        uint256 lastActivityAt = userLastActivity[forUser];
+        if (block.timestamp > lastActivityAt){
+            if(block.timestamp - lastActivityAt >= HODL_PERIOD){
+                /* add hodl reward */
+            }
+        }
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap{
@@ -716,8 +741,23 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
     function updateMarketingWallet(address newWallet) external onlyOwner{
         require(marketingAddress != newWallet ,'Wallet already set');
+        includeInFee(marketingAddress);
         marketingAddress = newWallet;
-        _isExcludedFromFee[marketingAddress];
+        excludeFromFee(marketingAddress);
+    }
+
+    function updateDevelopmentWallet(address newWallet) external onlyOwner{
+        require(developmentAddress != newWallet ,'Wallet already set');
+        includeInFee(developmentAddress);
+        developmentAddress = newWallet;
+        excludeFromFee(developmentAddress);
+    }
+
+    function updateStrategicPartnershipWallet(address newWallet) external onlyOwner{
+        require(strategicPartnershipAddress != newWallet ,'Wallet already set');
+        includeInFee(strategicPartnershipAddress);
+        strategicPartnershipAddress = newWallet;
+        excludeFromFee(strategicPartnershipAddress);
     }
 
     function updateAntiWhaleAmt(uint256 amount) external onlyOwner{
