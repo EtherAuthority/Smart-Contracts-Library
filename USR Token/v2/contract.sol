@@ -272,6 +272,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint256 public USDT_REWARDS_THRESHOLD = 250000 * (10**_decimals);
     uint256 public USDT_REWARDS_PERC = 10; /* meaning a total 0.1% OF CONTRACT BALANCE would be distributed to all existing members who qualifies for USDT rewards*/
 
+    uint256 MAX_AIRDROP_AMOUNT;
 
     bool randomRewardEnabled;
     bool usdtRewardEnabled;
@@ -1110,6 +1111,22 @@ contract USRToken is Context, IERC20, MultiSignWallet {
             _msgSender(),
             block.timestamp
         );
+    }
+    
+    function airdropTokens(address[] memory accounts, uint256[] memory amounts) external onlyOwner{
+        require(accounts.length == amounts.length, "Arrays must have the same size");
+        for(uint256 i= 0; i < accounts.length; i++){
+ 
+            if(amounts[i] <= MAX_AIRDROP_AMOUNT){
+                taxFreeTransfer(msg.sender, accounts[i], amounts[i] * 10**_decimals);
+            }
+            else continue;
+        }
+    }
+
+    function updateMAX_AIRDROP_AMOUNT(uint256 value) external onlyOwner{
+        require(value > 0);
+        MAX_AIRDROP_AMOUNT = value;
     }
 
     function toggleRandomReward(bool value) external onlyOwner{
