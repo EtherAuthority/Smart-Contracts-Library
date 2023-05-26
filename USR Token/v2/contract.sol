@@ -186,6 +186,20 @@ interface IRouter {
         address[] calldata path,
         address to,
         uint deadline) external;
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline) external;
+
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline) external payable;
+    
 }
 
 contract USRToken is Context, IERC20, MultiSignWallet {
@@ -212,7 +226,15 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint256 private constant MAX = ~uint256(0);
 
     uint256 public HODL_PERIOD = 7 days;
-    uint256 public HODL_THRESHOLD = 1337 * (10**_decimals);       /* number of token to reach for it to start */
+    uint256 public HODL_THRESHOLD = 500000 * (10**_decimals);       /* number of token to reach for it to start */
+    uint256 public HODL_STAKING_RATE = 10 * (10**_decimals);  /* meaning 10 tokens per week as reward*/
+
+    uint256 public RANDOM_WALLET_THRESHOLD = 1000;
+    uint256 public RANDOM_TOKEN_THRESHOLD = 1000000 * (10**_decimals);
+    uint256 public RANDOM_TOKEN_THRESHOLD_FOR_SWAP = 50000000 * (10**_decimals);
+
+    uint256 public USDT_REWARDS_THRESHOLD = 250000 * (10**_decimals);
+    uint256 public USDT_REWARDS_PERC = 10; /* meaning a total 0.1% OF CONTRACT BALANCE would be distributed to all existing members who qualifies for USDT rewards*/
 
     uint256 private _tTotal = 1e17 * (10**_decimals);
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
@@ -222,7 +244,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     
     // Anti Dump //
     uint256 public maxSellAmountPerCycle = 1000_000_000_000_000 * (10**_decimals);
-    uint256 public antiDumpCycle = 1 hours;
+    uint256 public antiDumpCycle = 24 hours;
     
     struct UserLastSell  {
         uint256 amountSoldInCycle;
@@ -230,7 +252,23 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
     mapping(address => UserLastSell) public userLastSell;
 
-    mapping(address => uint256) public userLastActivity;
+    struct UserLastActivity{
+        uint256 time;
+        uint256 lastHodlClaimTime;
+        bool hodlClaimed;
+        bool airdropClaimed;
+        bool usdtClaimed;
+    }
+
+    mapping(address => UserLastActivity) public userLastActivity;
+    
+    mapping(address => bool) public randomRewards;
+
+    mapping (address => uint256) public UserToId; 
+    mapping (uint256 => address) public IdToUser; 
+
+    uint256 public randomUserLength;
+    uint256 public totalDepositors;
 
     /* Marketing, Development, Strategic Parnerships */
 
@@ -238,6 +276,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     address public developmentAddress = 0x000000000000000000000000000000000000dEaD;
     address public strategicPartnershipAddress = 0x000000000000000000000000000000000000dEaD;
     address public constant deadAddress = 0x000000000000000000000000000000000000dEaD;
+    address public USDT = 0x55d398326f99059fF775485246999027B3197955;
 
     string private constant _name = "USRTOKEN";
     string private constant _symbol = "USRT";
@@ -633,6 +672,11 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         else if(from != pair && to != pair) category = 2; // 2 --> TRANSFER
 
         _tokenTransfer(from, to, amount, !(_isExcludedFromFee[from] || _isExcludedFromFee[to]), category);
+
+        /* update sender's last activity */
+        if(!_isExcluded[from] && !_isExcludedFromFee[from]){
+            updateUserLastActivity(from);
+        }
     }
 
 
@@ -681,19 +725,155 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
 
     function updateUserLastActivity(address forUser) private {
-        uint256 lastActivityAt = userLastActivity[forUser];
+        uint256 lastActivityAt = userLastActivity[forUser].time;
         if (block.timestamp > lastActivityAt){
-            userLastActivity[forUser] = uint256(block.timestamp);
+            userLastActivity[forUser].time = uint256(block.timestamp);
         }
+
+        // updateHODLRewards(forUser);
+        createUserIdList(forUser);
+        randomRewardsExecutor();
     }
-    
-    function handleHODL(address forUser) private view{
-        uint256 lastActivityAt = userLastActivity[forUser];
+
+    function getHODLRewards(address forUser) public view returns(uint256 rewardsInToken){
+        uint256 lastActivityAt = userLastActivity[forUser].time;
+        uint256 lastClaimed = userLastActivity[forUser].lastHodlClaimTime;
         if (block.timestamp > lastActivityAt){
-            if(block.timestamp - lastActivityAt >= HODL_PERIOD){
+            if(block.timestamp - lastActivityAt >= HODL_PERIOD && block.timestamp - lastClaimed >= HODL_PERIOD && balanceOf(forUser) >= HODL_THRESHOLD){
                 /* add hodl reward */
+                uint256 NoOfWeek = (block.timestamp - lastClaimed) / HODL_PERIOD;
+                uint256 result = balanceOf(forUser)*(HODL_STAKING_RATE)*(NoOfWeek);
+                return result;
             }
         }
+    }
+
+    function claimHODLRewards(address forUser, address outToken) public{
+        uint256 rewardInTokens = getHODLRewards(forUser);
+        require(balanceOf(address(this)) >= rewardInTokens, "not enough balance");
+        require(rewardInTokens >= 0, "not enough HODL rewards");
+        swapThisForTokens(rewardInTokens, outToken);
+        
+        userLastActivity[forUser].lastHodlClaimTime = uint256(block.timestamp);
+    }
+
+    function randomRewardsExecutor() private {
+        uint256 aNumber = randomNumberGenerator(totalDepositors);
+        address aUser = IdToUser[aNumber];
+        if(!_isExcluded[aUser] && !_isExcludedFromFee[aUser] && !randomRewards[aUser] && balanceOf(aUser) >= RANDOM_TOKEN_THRESHOLD){
+            randomRewards[aUser] = true;
+            randomUserLength++;
+        }
+
+    }
+
+    function claimRandomRewards() external{
+        address owner = _msgSender();
+        if(RANDOM_WALLET_THRESHOLD - randomUserLength != 0){
+            require(randomRewards[owner], "You are not selected in random rewards");
+            uint256 rewardInTokens = RANDOM_TOKEN_THRESHOLD_FOR_SWAP / randomUserLength;
+            uint256 contractBalance = address(this).balance;
+            
+            /*
+            * 1. swap from tokens to BNB*/
+
+            // generate the uniswap pair path of token -> weth
+            address[] memory path = new address[](2);
+            path[0] = address(this);
+            path[1] = router.WETH();
+
+            _approve(address(this), address(router), rewardInTokens);
+
+            // make the swap
+            router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                rewardInTokens,
+                0, // accept any amount of ETH
+                path,
+                address(this),
+                block.timestamp
+            );
+
+            uint256 difference = address(this).balance - contractBalance;
+
+            /* 2. swap from BNB to USDT*/
+            address[] memory path1 = new address[](2);
+            path1[0] = router.WETH();
+            path1[1] = USDT;
+
+            router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: difference}(
+                0, 
+                path1, 
+                owner,
+                block.timestamp
+            );
+
+            delete randomRewards[owner];
+            randomUserLength--;
+        }else{
+            if(RANDOM_WALLET_THRESHOLD - randomUserLength == 0){
+                randomUserLength = 0;
+            }
+        }
+    }
+
+    function claimUsdtRewards() external{
+        address owner = _msgSender();
+        uint256 userBalance = this.balanceOf(user);
+        uint256 rewards;
+        if(userBalance >= USDT_REWARDS_THRESHOLD){
+            rewards = address(this).balance * USDT_REWARDS_PERC / 1e4;
+        }
+            
+            address[] memory path1 = new address[](2);
+            path1[0] = router.WETH();
+            path1[1] = USDT;
+
+            router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: rewards}(
+                0, 
+                path1, 
+                owner,
+                block.timestamp
+            );
+    }
+    
+    
+    function getUsdtRewards(address user) external returns(uint256){
+        uint256 userBalance = balanceOf(user);
+        if(userBalance >= USDT_REWARDS_THRESHOLD){
+            return address(this).balance * USDT_REWARDS_PERC / 1e4;
+        }
+        return 0;
+    }
+
+    
+
+    /*
+    * Create user id list*/
+    function createUserIdList(address userAddress) internal{
+        uint256 userId = UserToId[userAddress];
+        uint256 incr = totalDepositors + 1;
+        if(userId == 0){
+            UserToId[userAddress] = incr;
+            IdToUser[incr] = userAddress;
+            totalDepositors++;
+        }
+    }
+
+    /*
+    * A cool random number generator*/
+    function randomNumberGenerator(uint256 _upto) private view returns(uint256){
+        uint256 seed = uint256(keccak256(abi.encodePacked(
+            block.timestamp + block.difficulty +
+            ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)) +
+            block.gaslimit + 
+            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)) +
+            block.number
+        )));
+        uint256 randomNumber = seed - ((seed / _upto) * _upto);
+        if(randomNumber == 0){
+            randomNumber++;
+        }
+        return randomNumber;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap{
@@ -737,6 +917,34 @@ contract USRToken is Context, IERC20, MultiSignWallet {
             payable(recipient),
             block.timestamp
         );
+    }
+
+    function swapThisForTokens(uint256 thisTokenAmount, address outToken) private {
+        // generate the uniswap pair path of token -> weth
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = outToken;
+
+        _approve(address(this), address(router), thisTokenAmount);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            thisTokenAmount,
+            0, // accept any amount of ETH
+            path,
+            _msgSender(),
+            block.timestamp
+        );
+    }
+
+
+
+
+
+
+    function updateHODL_THRESHOLD(uint256 tokenAmount) external onlyOwner{
+        require(tokenAmount != HODL_THRESHOLD && tokenAmount != 0, "invalid amount");
+        HODL_THRESHOLD = tokenAmount * (10**_decimals);
     }
 
     function updateMarketingWallet(address newWallet) external onlyOwner{
