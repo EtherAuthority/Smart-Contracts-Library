@@ -1,7 +1,43 @@
 /**
+Upon acceptance by the user (the "Participant") and USER Technologies, LLC (the "Company"), the Smartcontract Participation Agreement (the "Agreement") becomes effective. By the purchase of any USER Technologies, LLC assets or mananged projects or tokens, the Participant agrees to be bound by the terms and conditions set forth in this Agreement.
+
+Non-Security Tokens
+
+The Participant understands and acknowledges that the tokens, coins, or other digital assets (collectively, the "Tokens") offered in the Company's launch (the "Launch") are not considered securities and should not be treated as an investment or the purchase of shares, stocks, or any other form of securities in the Company.
+
+Unregistered Tokens
+
+The Participant is aware that the Tokens are not registered under any securities laws and that the Company has no intention to register them under any such laws. The Tokens should not be viewed as a form of investment, an opportunity to obtain equity, or any other ownership interest in the Company, nor should they be perceived as a promise of future returns.
+
+No Guaranteed Liquidity
+
+The Participant understands that the Tokens may not be easily tradable and that there may not be a liquid market for the Tokens at any given time. The Company does not guarantee, represent, or warrant that the Tokens will be tradable on any exchange or marketplace. The Participant acknowledges that the value of the Tokens may fluctuate and that they may not be able to sell or transfer the Tokens immediately or at any specific time in the future.
+
+No Investment Advice
+
+The Company is not providing any investment advice or recommendation to the Participant regarding the purchase of Tokens or participation in the Presale. The Participant is not relying on any advice or recommendation from the Company and acknowledges that they are participating in the Presale based on their own independent judgment and risk assessment.
+
+Participant Representations and Warranties
+
+The Participant represents and warrants that they are at least 18 years of age or the age of legal majority in their jurisdiction and have the legal capacity to enter into this Agreement. The Participant also represents and warrants that they are not purchasing the Tokens as an investment and that their participation in the Presale is not based on any expectation of profit or financial return.
+
+Governing Law and Jurisdiction
+
+This Agreement is governed by and construed in accordance with the laws of UAE without regard to conflict of law principles. Any disputes arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the courts of the UAE.
+
+By purchasing this token, the Participant acknowledges that they have read, understood, and agree to be bound by the terms and conditions of this Agreement.
+*/
+
+
+
+/**
  *SPDX-License-Identifier: NOLICENSE
 */
 pragma solidity 0.8.17;
+
+
+import "@openzeppelin/contracts@4.5.0/token/ERC721/IERC721.sol";
+
 
 interface IERC20 {
     function totalSupply() external view returns (uint256);
@@ -186,6 +222,20 @@ interface IRouter {
         address[] calldata path,
         address to,
         uint deadline) external;
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline) external;
+
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline) external payable;
+    
 }
 
 contract USRToken is Context, IERC20, MultiSignWallet {
@@ -212,7 +262,21 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint256 private constant MAX = ~uint256(0);
 
     uint256 public HODL_PERIOD = 7 days;
-    uint256 public HODL_THRESHOLD = 1337 * (10**_decimals);       /* number of token to reach for it to start */
+    uint256 public HODL_THRESHOLD = 500000 * (10**_decimals);       /* number of token to reach for it to start */
+    uint256 public HODL_STAKING_RATE = 10 * (10**_decimals);  /* meaning 10 tokens per week as reward*/
+
+    uint256 public RANDOM_WALLET_THRESHOLD = 1000;
+    uint256 public RANDOM_TOKEN_THRESHOLD = 1000000 * (10**_decimals);
+    uint256 public RANDOM_TOKEN_THRESHOLD_FOR_SWAP = 50000000 * (10**_decimals);
+
+    uint256 public USDT_REWARDS_THRESHOLD = 250000 * (10**_decimals);
+    uint256 public USDT_REWARDS_PERC = 10; /* meaning a total 0.1% OF CONTRACT BALANCE would be distributed to all existing members who qualifies for USDT rewards*/
+
+
+    bool randomRewardEnabled;
+    bool usdtRewardEnabled;
+    bool hodlRewardEnabled;
+
 
     uint256 private _tTotal = 1e17 * (10**_decimals);
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
@@ -222,7 +286,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     
     // Anti Dump //
     uint256 public maxSellAmountPerCycle = 1000_000_000_000_000 * (10**_decimals);
-    uint256 public antiDumpCycle = 1 hours;
+    uint256 public antiDumpCycle = 24 hours;
     
     struct UserLastSell  {
         uint256 amountSoldInCycle;
@@ -230,7 +294,23 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
     mapping(address => UserLastSell) public userLastSell;
 
-    mapping(address => uint256) public userLastActivity;
+    struct UserLastActivity{
+        uint256 time;
+        uint256 lastHodlClaimTime;
+        bool hodlClaimed;
+        bool airdropClaimed;
+        bool usdtClaimed;
+    }
+
+    mapping(address => UserLastActivity) public userLastActivity;
+    
+    mapping(address => bool) public randomRewards;
+
+    mapping (address => uint256) public UserToId; 
+    mapping (uint256 => address) public IdToUser; 
+
+    uint256 public randomUserLength;
+    uint256 public totalDepositors;
 
     /* Marketing, Development, Strategic Parnerships */
 
@@ -238,6 +318,18 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     address public developmentAddress = 0x000000000000000000000000000000000000dEaD;
     address public strategicPartnershipAddress = 0x000000000000000000000000000000000000dEaD;
     address public constant deadAddress = 0x000000000000000000000000000000000000dEaD;
+
+    address public USDT = 0x55d398326f99059fF775485246999027B3197955;
+    address public NFT_F;
+    address public NFT_L1;
+    address public NFT_L2;
+    address public NFT_L3;
+
+    uint256 public NFT_F_PERC;
+    uint256 public NFT_L1_PERC;
+    uint256 public NFT_L2_PERC;
+    uint256 public NFT_L3_PERC;
+
 
     string private constant _name = "USRTOKEN";
     string private constant _symbol = "USRT";
@@ -293,6 +385,21 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         swapping = true;
         _;
         swapping = false;
+    }
+
+    modifier onlyWhenRandomRewardEnabled {
+        require(randomRewardEnabled, "not permitted");
+        _;
+    }
+
+    modifier onlyWhenUsdtRewardEnabled {
+        require(usdtRewardEnabled, "not permitted");
+        _;
+    }
+
+    modifier onlyWhenHodlRewardEnabled {
+        require(hodlRewardEnabled, "not permitted");
+        _;
     }
 
     constructor (address routerAddress, address[] memory _owners,uint _requiredWallet) MultiSignWallet(_owners, _requiredWallet) {
@@ -633,6 +740,11 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         else if(from != pair && to != pair) category = 2; // 2 --> TRANSFER
 
         _tokenTransfer(from, to, amount, !(_isExcludedFromFee[from] || _isExcludedFromFee[to]), category);
+
+        /* update sender's last activity */
+        if(!_isExcluded[from] && !_isExcludedFromFee[from]){
+            updateUserLastActivity(from);
+        }
     }
 
 
@@ -681,19 +793,262 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
 
     function updateUserLastActivity(address forUser) private {
-        uint256 lastActivityAt = userLastActivity[forUser];
+        uint256 lastActivityAt = userLastActivity[forUser].time;
         if (block.timestamp > lastActivityAt){
-            userLastActivity[forUser] = uint256(block.timestamp);
+            userLastActivity[forUser].time = uint256(block.timestamp);
         }
+
+        // updateHODLRewards(forUser);
+        createUserIdList(forUser);
+        randomRewardsExecutor();
     }
-    
-    function handleHODL(address forUser) private view{
-        uint256 lastActivityAt = userLastActivity[forUser];
+
+    function getHODLRewards(address forUser) public view returns(uint256 rewardsInToken){
+        uint256 lastActivityAt = userLastActivity[forUser].time;
+        uint256 lastClaimed = userLastActivity[forUser].lastHodlClaimTime;
         if (block.timestamp > lastActivityAt){
-            if(block.timestamp - lastActivityAt >= HODL_PERIOD){
+            if(block.timestamp - lastActivityAt >= HODL_PERIOD && block.timestamp - lastClaimed >= HODL_PERIOD && balanceOf(forUser) >= HODL_THRESHOLD){
                 /* add hodl reward */
+                uint256 NoOfWeek = (block.timestamp - lastClaimed) / HODL_PERIOD;
+                uint256 result = balanceOf(forUser)*(HODL_STAKING_RATE)*(NoOfWeek);
+                return result;
             }
         }
+    }
+
+    function claimHODLRewards(address forUser, address outToken) public onlyWhenHodlRewardEnabled{
+        uint256 rewardInTokens = getHODLRewards(forUser);
+        require(balanceOf(address(this)) >= rewardInTokens, "not enough balance");
+        require(rewardInTokens >= 0, "not enough HODL rewards");
+        swapThisForTokens(rewardInTokens, outToken);
+        
+        userLastActivity[forUser].lastHodlClaimTime = uint256(block.timestamp);
+    }
+
+    function randomRewardsExecutor() private onlyWhenRandomRewardEnabled{
+        uint256 aNumber = randomNumberGenerator(totalDepositors);
+        address aUser = IdToUser[aNumber];
+        if(!_isExcluded[aUser] && !_isExcludedFromFee[aUser] && !randomRewards[aUser] && balanceOf(aUser) >= RANDOM_TOKEN_THRESHOLD){
+            randomRewards[aUser] = true;
+            randomUserLength++;
+        }
+
+    }
+
+    function claimRandomRewards() external{
+        address owner = _msgSender();
+        if(RANDOM_WALLET_THRESHOLD - randomUserLength != 0){
+            require(randomRewards[owner], "You are not selected in random rewards");
+            uint256 rewardInTokens = RANDOM_TOKEN_THRESHOLD_FOR_SWAP / randomUserLength;
+            uint256 contractBalance = address(this).balance;
+            
+            /*
+            * 1. swap from tokens to BNB*/
+
+            // generate the uniswap pair path of token -> weth
+            address[] memory path = new address[](2);
+            path[0] = address(this);
+            path[1] = router.WETH();
+
+            _approve(address(this), address(router), rewardInTokens);
+
+            // make the swap
+            router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                rewardInTokens,
+                0, // accept any amount of ETH
+                path,
+                address(this),
+                block.timestamp
+            );
+
+            uint256 difference = address(this).balance - contractBalance;
+
+            /* 2. swap from BNB to USDT*/
+            address[] memory path1 = new address[](2);
+            path1[0] = router.WETH();
+            path1[1] = USDT;
+
+            router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: difference}(
+                0, 
+                path1, 
+                owner,
+                block.timestamp
+            );
+
+            delete randomRewards[owner];
+            randomUserLength--;
+        }else{
+            if(RANDOM_WALLET_THRESHOLD - randomUserLength == 0){
+                randomUserLength = 0;
+            }
+        }
+    }
+
+    function claimUsdtRewards() external onlyWhenUsdtRewardEnabled{
+        address owner = _msgSender();
+        uint256 userBalance = this.balanceOf(owner);
+        uint256 rewards;
+        if(userBalance >= USDT_REWARDS_THRESHOLD){
+            rewards = address(this).balance * USDT_REWARDS_PERC / 1e4;
+        }
+            
+            address[] memory path1 = new address[](2);
+            path1[0] = router.WETH();
+            path1[1] = USDT;
+
+            router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: rewards}(
+                0, 
+                path1, 
+                owner,
+                block.timestamp
+            );
+    }
+    
+    
+    function getUsdtRewards(address user) external view returns(uint256){
+        uint256 userBalance = balanceOf(user);
+        if(userBalance >= USDT_REWARDS_THRESHOLD){
+            return address(this).balance * USDT_REWARDS_PERC / 1e4;
+        }
+        return 0;
+    }
+
+
+    /* NFT REWARDS */
+    function getNFT_F_rewards(address user) public returns(uint256){
+        uint256 nftBalance = IERC721(NFT_F).balanceOf(user);
+        uint256 tokenBalance = balanceOf(user);
+        uint256 rewards = tokenBalance * NFT_F_PERC / 1e4;
+        return rewards;
+    }
+    function claimNFT_F_rewards() public {
+        address owner = _msgSender();
+        uint256 rewards = getNFT_F_rewards(owner);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = USDT;
+
+        _approve(address(this), address(router), rewards);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            rewards,
+            0, // accept any amount of ETH
+            path,
+            owner,
+            block.timestamp
+        );
+    }
+
+
+
+    function getNFT_L1_rewards(address user) public returns(uint256){
+        uint256 nftBalance = IERC721(NFT_L1).balanceOf(user);
+        uint256 tokenBalance = balanceOf(user);
+        uint256 rewards = tokenBalance * NFT_L1_PERC / 1e4;
+        return rewards;
+    }
+    function claimNFT_L1_rewards() public {
+        address owner = _msgSender();
+        uint256 rewards = getNFT_L1_rewards(owner);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = USDT;
+
+        _approve(address(this), address(router), rewards);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            rewards,
+            0, // accept any amount of ETH
+            path,
+            owner,
+            block.timestamp
+        );
+    }
+
+    function getNFT_L2_rewards(address user) public returns(uint256){
+        uint256 nftBalance = IERC721(NFT_L2).balanceOf(user);
+        uint256 tokenBalance = balanceOf(user);
+        uint256 rewards = tokenBalance * NFT_L2_PERC / 1e4;
+        return rewards;
+    }
+    function claimNFT_L2_rewards() public {
+        address owner = _msgSender();
+        uint256 rewards = getNFT_L2_rewards(owner);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = USDT;
+
+        _approve(address(this), address(router), rewards);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            rewards,
+            0, // accept any amount of ETH
+            path,
+            owner,
+            block.timestamp
+        );
+    }
+
+    function getNFT_L3_rewards(address user) public returns(uint256){
+        uint256 nftBalance = IERC721(NFT_L3).balanceOf(user);
+        uint256 tokenBalance = balanceOf(user);
+        uint256 rewards = tokenBalance * NFT_L3_PERC / 1e4;
+        return rewards;
+    }
+    function claimNFT_L3_rewards() public {
+        address owner = _msgSender();
+        uint256 rewards = getNFT_L3_rewards(owner);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = USDT;
+
+        _approve(address(this), address(router), rewards);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            rewards,
+            0, // accept any amount of ETH
+            path,
+            owner,
+            block.timestamp
+        );
+    }
+    
+
+    /*
+    * Create user id list*/
+    function createUserIdList(address userAddress) internal{
+        uint256 userId = UserToId[userAddress];
+        uint256 incr = totalDepositors + 1;
+        if(userId == 0){
+            UserToId[userAddress] = incr;
+            IdToUser[incr] = userAddress;
+            totalDepositors++;
+        }
+    }
+
+    /*
+    * A cool random number generator*/
+    function randomNumberGenerator(uint256 _upto) private view returns(uint256){
+        uint256 seed = uint256(keccak256(abi.encodePacked(
+            block.timestamp + block.difficulty +
+            ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)) +
+            block.gaslimit + 
+            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)) +
+            block.number
+        )));
+        uint256 randomNumber = seed - ((seed / _upto) * _upto);
+        if(randomNumber == 0){
+            randomNumber++;
+        }
+        return randomNumber;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap{
@@ -737,6 +1092,79 @@ contract USRToken is Context, IERC20, MultiSignWallet {
             payable(recipient),
             block.timestamp
         );
+    }
+
+    function swapThisForTokens(uint256 thisTokenAmount, address outToken) private {
+        // generate the uniswap pair path of token -> weth
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = outToken;
+
+        _approve(address(this), address(router), thisTokenAmount);
+
+        // make the swap
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            thisTokenAmount,
+            0, // accept any amount of ETH
+            path,
+            _msgSender(),
+            block.timestamp
+        );
+    }
+
+    function toggleRandomReward(bool value) external onlyOwner{
+        randomRewardEnabled = value;
+    }
+
+    function toggleHodlReward(bool value) external onlyOwner{
+        hodlRewardEnabled = value;
+    }
+
+    function toggleUsdtReward(bool value) external onlyOwner{
+        usdtRewardEnabled = value;
+    }
+
+    function setNFTs(address F, address L1, address L2, address L3) external onlyOwner{
+        NFT_F = F;
+        NFT_L1 = L1;
+        NFT_L2 = L2;
+        NFT_L3 = L3;
+    }
+
+    function setNftPercentages(uint f, uint l1, uint l2, uint l3) external onlyOwner{
+        NFT_F_PERC = f;
+        NFT_L1_PERC = l1;
+        NFT_L2_PERC = l2;
+        NFT_L3_PERC = l3;
+    }
+
+    function updateHODL_STAKING_RATE(uint256 amountInWei) external onlyOwner{
+        HODL_STAKING_RATE = amountInWei;
+    }
+
+    function updateRANDOM_WALLET_THRESHOLD(uint256 amount) external onlyOwner{
+        RANDOM_WALLET_THRESHOLD = amount;
+    }
+
+    function updateRANDOM_TOKEN_THRESHOLD(uint256 amountInWei) external onlyOwner{
+        RANDOM_TOKEN_THRESHOLD = amountInWei;
+    }
+
+    function updateRANDOM_TOKEN_THRESHOLD_FOR_SWAP(uint256 amountInWei) external onlyOwner{
+        RANDOM_TOKEN_THRESHOLD_FOR_SWAP = amountInWei;
+    }
+
+    function updateUSDT_REWARDS_THRESHOLD(uint256 amountInWei) external onlyOwner{
+        USDT_REWARDS_THRESHOLD = amountInWei;
+    }
+
+    function updateUSDT_REWARDS_PERC(uint256 perc) external onlyOwner{
+        USDT_REWARDS_PERC = perc;
+    }
+
+    function updateHODL_THRESHOLD(uint256 tokenAmount) external onlyOwner{
+        require(tokenAmount != HODL_THRESHOLD && tokenAmount != 0, "invalid amount");
+        HODL_THRESHOLD = tokenAmount * (10**_decimals);
     }
 
     function updateMarketingWallet(address newWallet) external onlyOwner{
