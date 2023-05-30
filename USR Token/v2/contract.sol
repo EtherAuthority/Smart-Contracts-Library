@@ -238,7 +238,7 @@ interface IRouter {
     
 }
 
-contract USRToken is Context, IERC20, MultiSignWallet {
+contract USERToken is Context, IERC20, MultiSignWallet {
 
     
 
@@ -272,6 +272,16 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint256 public USDT_REWARDS_THRESHOLD = 250000 * (10**_decimals);
     uint256 public USDT_REWARDS_PERC = 10; /* meaning a total 0.1% OF CONTRACT BALANCE would be distributed to all existing members who qualifies for USDT rewards*/
 
+    uint256 public PERCENT_DIVIDER = 1e8; 
+    /**
+    * 100% = 1e8
+    * 10% = 1000000
+    * 1% = 10000
+    * 0.1% = 1000
+    * 0.01% = 100
+    * 0.001% = 10
+    * 0.0001% = 1
+    */
     uint256 MAX_AIRDROP_AMOUNT;
 
     bool randomRewardEnabled;
@@ -279,7 +289,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     bool hodlRewardEnabled;
 
 
-    uint256 private _tTotal = 1e17 * (10**_decimals);
+    uint256 private _tTotal = 21e9 * (10**_decimals);
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
 
     uint256 public antiWhaleAmt = 1000_000_000_000_000 * (10**_decimals);
@@ -315,9 +325,9 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
     /* Marketing, Development, Strategic Parnerships */
 
-    address public marketingAddress = 0x000000000000000000000000000000000000dEaD;
-    address public developmentAddress = 0x000000000000000000000000000000000000dEaD;
-    address public strategicPartnershipAddress = 0x000000000000000000000000000000000000dEaD;
+    address public marketingAddress = 0xb447849d5323d9E791d667d9B5e583EF4B9A0e99;
+    address public developmentAddress = 0xba87B13C019eA635e6A6eb8FafcdEa6Fcc4fb3Ea;
+    address public strategicPartnershipAddress = 0xcF63E6f3E83891c394D56A14a72b69A2973386A1;
     address public constant deadAddress = 0x000000000000000000000000000000000000dEaD;
 
     address public USDT = 0x55d398326f99059fF775485246999027B3197955;
@@ -332,8 +342,8 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     uint256 public NFT_L3_PERC;
 
 
-    string private constant _name = "USRTOKEN";
-    string private constant _symbol = "USRT";
+    string private constant _name = "USER Token";
+    string private constant _symbol = "USR";
 
 
     struct Taxes {
@@ -343,11 +353,21 @@ contract USRToken is Context, IERC20, MultiSignWallet {
       uint256 burn;
       uint256 development;
       uint256 strategicPartnership;
+      uint256 spinovation;
+      uint256 usdtBoost;
+      uint256 hodl;
+      uint256 NFT_F;
+      uint256 NFT_L1;
+      uint256 NFT_L2;
+      uint256 NFT_L3;
     }
 
-    Taxes public taxes = Taxes(0,0,0,0,0,0);
-    Taxes public buyTaxes = Taxes(0,0,0,0,0,0);
-    Taxes public sellTaxes = Taxes(1,0,3,0,0,0);
+    
+    Taxes public buyTaxes = Taxes(0,6,10000,25,7,6,25,5,6,9,7,5,4);
+    Taxes public sellTaxes = Taxes(0,12,207,25,12,12,25,100,12,15,12,10,8);
+    Taxes public taxes = Taxes(0,0,100,100,0,0,0,0,0,0,0,0,0);
+
+
 
     struct TotFeesPaidStruct{
         uint256 rfi;
@@ -356,6 +376,13 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         uint256 burn;
         uint256 development;
         uint256 strategicPartnership;
+        uint256 spinovation;
+        uint256 usdtBoost;
+        uint256 hodl;
+        uint256 NFT_F;
+        uint256 NFT_L1;
+        uint256 NFT_L2;
+        uint256 NFT_L3;
     }
     TotFeesPaidStruct public totFeesPaid;
 
@@ -368,7 +395,13 @@ contract USRToken is Context, IERC20, MultiSignWallet {
       uint256 rBurn;
       uint256 rDevelopment;
       uint256 rStrategicPartnership;
-
+      uint256 rSpinovation;
+      uint256 rUsdtBoost;
+      uint256 rHodl;
+      uint256 rNFT_F;
+      uint256 rNFT_L1;
+      uint256 rNFT_L2;
+      uint256 rNFT_L3;
 
       uint256 tTransferAmount;
       uint256 tRfi;
@@ -377,6 +410,13 @@ contract USRToken is Context, IERC20, MultiSignWallet {
       uint256 tBurn;
       uint256 tDevelopment;
       uint256 tStrategicPartnership;
+      uint256 tSpinovation;
+      uint256 tUsdtBoost;
+      uint256 tHodl;
+      uint256 tNFT_F;
+      uint256 tNFT_L1;
+      uint256 tNFT_L2;
+      uint256 tNFT_L3;
     }
 
     event FeesChanged();
@@ -403,7 +443,10 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _;
     }
 
-    constructor (address routerAddress, address[] memory _owners,uint _requiredWallet) MultiSignWallet(_owners, _requiredWallet) {
+    address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
+    uint256 _requiredWallet = _owners.length;
+
+    constructor (address routerAddress) MultiSignWallet(_owners, _requiredWallet) {
         IRouter _router = IRouter(routerAddress);
         address _pair = IFactory(_router.factory())
             .createPair(address(this), _router.WETH());
@@ -420,6 +463,10 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _isExcludedFromFee[deadAddress] = true;
         _isExcludedFromFee[developmentAddress] = true;
         _isExcludedFromFee[strategicPartnershipAddress] = true;
+
+        taxFreeTransfer(owners[0], 0x15d790609659863dAF4D7791399E0C2564755454, 1155000000 * (10**_decimals));
+        taxFreeTransfer(owners[0], 0xba3a4e22aD487cb91B7De6E276a4D09F1d6B4eE0, 1155000000 * (10**_decimals));
+
 
         emit Transfer(address(0), owners[0], _tTotal);
     }
@@ -546,36 +593,58 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         return _isExcludedFromFee[account];
     }
 
-    function setTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership<= 35, "Fees must be lower than 35%");
+    function setTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership, uint256 usdtBoost, uint256 spinovation, uint256 hodl, uint256 nft_f, uint256 nft_l1, uint256 nft_l2, uint256 nft_l3) public onlyOwner {
+        
         taxes.rfi = _rfi;
         taxes.marketing = _marketing;
         taxes.liquidity = _liquidity;
         taxes.burn = _burn;
         taxes.development = _development;
         taxes.strategicPartnership = _strategicPartnership;
+        taxes.usdtBoost = usdtBoost;
+        taxes.spinovation = spinovation;
+        taxes.hodl = hodl;
+        taxes.NFT_F = nft_f;
+        taxes.NFT_L1 = nft_l1;
+        taxes.NFT_L2 = nft_l2;
+        taxes.NFT_L3 = nft_l3;
         emit FeesChanged();
     }
     
-    function setBuyTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership <= 35, "Fees must be lower than 35%");
+    function setBuyTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership, uint256 usdtBoost, uint256 spinovation, uint256 hodl, uint256 nft_f, uint256 nft_l1, uint256 nft_l2, uint256 nft_l3) public onlyOwner {
+        
         buyTaxes.rfi = _rfi;
         buyTaxes.marketing = _marketing;
         buyTaxes.liquidity = _liquidity;
         buyTaxes.burn = _burn;
         buyTaxes.development = _development;
         buyTaxes.strategicPartnership = _strategicPartnership;
+        buyTaxes.usdtBoost = usdtBoost;
+        buyTaxes.spinovation = spinovation;
+        buyTaxes.hodl = hodl;
+        buyTaxes.NFT_F = nft_f;
+        buyTaxes.NFT_L1 = nft_l1;
+        buyTaxes.NFT_L2 = nft_l2;
+        buyTaxes.NFT_L3 = nft_l3;
         emit FeesChanged();
     }
     
-    function setSellTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership) public onlyOwner {
-        require(_rfi + _marketing + _liquidity + _burn + _development + _strategicPartnership <= 35, "Fees must be lower than 35%");
+    function setSellTaxes(uint256 _rfi, uint256 _marketing, uint256 _liquidity, uint256 _burn, uint256 _development, uint256 _strategicPartnership, uint256 usdtBoost, uint256 spinovation, uint256 hodl, uint256 nft_f, uint256 nft_l1, uint256 nft_l2, uint256 nft_l3) public onlyOwner {
+       
         sellTaxes.rfi = _rfi;
         sellTaxes.marketing = _marketing;
         sellTaxes.liquidity = _liquidity;
         sellTaxes.burn = _burn;
         sellTaxes.development = _development;
         sellTaxes.strategicPartnership = _strategicPartnership;
+
+        sellTaxes.usdtBoost = usdtBoost;
+        sellTaxes.spinovation = spinovation;
+        sellTaxes.hodl = hodl;
+        sellTaxes.NFT_F = nft_f;
+        sellTaxes.NFT_L1 = nft_l1;
+        sellTaxes.NFT_L2 = nft_l2;
+        sellTaxes.NFT_L3 = nft_l3;
         emit FeesChanged();
     }
 
@@ -594,6 +663,81 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _rOwned[address(this)] +=rLiquidity;
     }
 
+    function _takeSpinovation(uint256 rSpinovation, uint256 tSpinovation) private {
+        totFeesPaid.spinovation +=tSpinovation;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tSpinovation;
+        }
+        _rOwned[address(this)] +=rSpinovation;
+    }
+
+    function _takeUsdtBoost(uint256 rUsdtBoost, uint256 tUsdtBoost) private {
+        totFeesPaid.usdtBoost +=tUsdtBoost;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tUsdtBoost;
+        }
+        _rOwned[address(this)] +=rUsdtBoost;
+    }
+
+    function _takeHodl(uint256 rHodl, uint256 tHodl) private {
+        totFeesPaid.hodl +=tHodl;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tHodl;
+        }
+        _rOwned[address(this)] +=rHodl;
+    }
+
+
+    /* NFT - Founders Level - Architect's Edition Rewards */
+    function _takeNFT_F(uint256 rNFT_F, uint256 tNFT_F) private {
+        totFeesPaid.NFT_F +=tNFT_F;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tNFT_F;
+        }
+        _rOwned[address(this)] +=rNFT_F;
+    }
+
+    /* NFT - Level 1 - Initiate's Edition */
+    function _takeNFT_L1(uint256 rNFT_L1, uint256 tNFT_L1) private {
+        totFeesPaid.NFT_L1 +=tNFT_L1;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tNFT_L1;
+        }
+        _rOwned[address(this)] +=rNFT_L1;
+    }
+
+    /* NFT - Level 2 - Vanguard Artifacts */
+    function _takeNFT_L2(uint256 rNFT_L2, uint256 tNFT_L2) private {
+        totFeesPaid.NFT_L2 +=tNFT_L2;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tNFT_L2;
+        }
+        _rOwned[address(this)] +=rNFT_L2;
+    }
+
+    /* NFT - Level 3 - Apex Edition */
+    function _takeNFT_L3(uint256 rNFT_L3, uint256 tNFT_L3) private {
+        totFeesPaid.NFT_L3 +=tNFT_L3;
+
+        if(_isExcluded[address(this)])
+        {
+            _tOwned[address(this)]+=tNFT_L3;
+        }
+        _rOwned[address(this)] +=rNFT_L3;
+    }
+
     function _takeMarketing(uint256 rMarketing, uint256 tMarketing) private {
         totFeesPaid.marketing +=tMarketing;
 
@@ -604,6 +748,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         _rOwned[marketingAddress] +=rMarketing;
     }
     
+    /* IncendiaryX */
     function _takeBurn(uint256 rBurn, uint256 tBurn) private{
         totFeesPaid.burn +=tBurn;
 
@@ -637,7 +782,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
     function _getValues(uint256 tAmount, bool takeFee, uint8 category) private view returns (valuesFromGetValues memory to_return) {
         to_return = _getTValues(tAmount, takeFee, category);
-        (to_return.rAmount, to_return.rTransferAmount, to_return.rRfi, to_return.rMarketing, to_return.rLiquidity, to_return.rBurn, to_return.rDevelopment, to_return.rStrategicPartnership) = _getRValues(to_return, tAmount, takeFee, _getRate());
+        (to_return.rAmount, to_return.rTransferAmount, to_return.rRfi, to_return.rMarketing, to_return.rLiquidity, to_return.rBurn, to_return.rDevelopment, to_return.rStrategicPartnership, to_return.rSpinovation, to_return.rUsdtBoost, to_return.rHodl, to_return.rNFT_F, to_return.rNFT_L1, to_return.rNFT_L2, to_return.rNFT_L3) = _getRValues(to_return, tAmount, takeFee, _getRate());
         return to_return;
     }
 
@@ -652,22 +797,47 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         else if(category == 1) temp = buyTaxes;
         else temp = taxes;
         
-        s.tRfi = tAmount*temp.rfi/100;
-        s.tMarketing = tAmount*temp.marketing/100;
-        s.tLiquidity = tAmount*temp.liquidity/100;
-        s.tBurn = tAmount*temp.burn/100;
-        s.tDevelopment = tAmount*temp.development/100;
-        s.tStrategicPartnership = tAmount*temp.strategicPartnership/100;
+        s.tRfi = tAmount*temp.rfi/PERCENT_DIVIDER;
+        s.tMarketing = tAmount*temp.marketing/PERCENT_DIVIDER;
+        s.tLiquidity = tAmount*temp.liquidity/PERCENT_DIVIDER;
+        s.tBurn = tAmount*temp.burn/PERCENT_DIVIDER;
+        s.tDevelopment = tAmount*temp.development/PERCENT_DIVIDER;
+        s.tStrategicPartnership = tAmount*temp.strategicPartnership/PERCENT_DIVIDER;
+
+        s.tSpinovation = tAmount*temp.spinovation/PERCENT_DIVIDER;
+        s.tUsdtBoost = tAmount*temp.usdtBoost/PERCENT_DIVIDER;
+        s.tHodl = tAmount*temp.hodl/PERCENT_DIVIDER;
+        s.tNFT_F = tAmount*temp.NFT_F/PERCENT_DIVIDER;
+        s.tNFT_L1 = tAmount*temp.NFT_L1/PERCENT_DIVIDER;
+        s.tNFT_L2 = tAmount*temp.NFT_L2/PERCENT_DIVIDER;
+        s.tNFT_L3 = tAmount*temp.NFT_L3/PERCENT_DIVIDER;
       
         s.tTransferAmount = tAmount-s.tRfi-s.tMarketing-s.tLiquidity-s.tBurn-s.tDevelopment-s.tStrategicPartnership;
+        s.tTransferAmount = s.tTransferAmount - s.tSpinovation-s.tUsdtBoost-s.tHodl-s.tNFT_F-s.tNFT_L1-s.tNFT_L2-s.tNFT_L3;
         return s;
     }
 
-    function _getRValues(valuesFromGetValues memory s, uint256 tAmount, bool takeFee, uint256 currentRate) private pure returns (uint256 rAmount, uint256 rTransferAmount, uint256 rRfi,uint256 rMarketing, uint256 rLiquidity, uint256 rBurn, uint256 rDevelopment, uint256 rStrategicPartnership) {
+    function _getRValues(valuesFromGetValues memory s, uint256 tAmount, bool takeFee, uint256 currentRate) private pure returns 
+    (
+        uint256 rAmount, 
+        uint256 rTransferAmount, 
+        uint256 rRfi,uint256 rMarketing, 
+        uint256 rLiquidity, 
+        uint256 rBurn, 
+        uint256 rDevelopment, 
+        uint256 rStrategicPartnership,
+        uint256 rSpinovation,
+        uint256 rUsdtBoost,
+        uint256 rHodl,
+        uint256 rNFT_F,
+        uint256 rNFT_L1,
+        uint256 rNFT_L2,
+        uint256 rNFT_L3
+    ) {
         rAmount = tAmount*currentRate;
 
         if(!takeFee) {
-          return(rAmount, rAmount, 0,0,0,0,0,0);
+          return(rAmount, rAmount, 0,0,0,0,0,0,0,0,0,0,0,0,0);
         }
 
         rRfi = s.tRfi*currentRate;
@@ -677,8 +847,18 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         rDevelopment = s.rDevelopment*currentRate;
         rStrategicPartnership = s.rStrategicPartnership;
 
+        rSpinovation = s.rSpinovation;
+        rUsdtBoost = s.rUsdtBoost;
+        rHodl = s.rHodl;
+        rNFT_F = s.rNFT_F;
+        rNFT_L1 = s.rNFT_L1;
+        rNFT_L2 = s.rNFT_L2;
+        rNFT_L3 = s.rNFT_L3;
+
+
         rTransferAmount =  rAmount-rRfi-rMarketing-rLiquidity-rBurn;
-        return (rAmount, rTransferAmount, rRfi,rMarketing,rLiquidity, rBurn, rDevelopment, rStrategicPartnership);
+        rTransferAmount = rTransferAmount - rSpinovation-rUsdtBoost-rHodl-rNFT_F-rNFT_L1-rNFT_L2-rNFT_L3;
+        return (rAmount, rTransferAmount, rRfi,rMarketing,rLiquidity, rBurn, rDevelopment, rStrategicPartnership, rSpinovation, rUsdtBoost, rHodl, rNFT_F, rNFT_L1, rNFT_L2, rNFT_L3);
     }
 
     function _getRate() private view returns(uint256) {
@@ -732,7 +912,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         }
         bool canSwap = balanceOf(address(this)) >= swapTokensAtAmount;
         if(!swapping && swapEnabled && canSwap && from != pair && !_isExcludedFromFee[from] && !_isExcludedFromFee[to]){
-            swapAndLiquify(swapTokensAtAmount);
+            fluidify(swapTokensAtAmount);
         }
         
         uint8 category;
@@ -788,6 +968,42 @@ contract USRToken is Context, IERC20, MultiSignWallet {
             emit Transfer(sender, strategicPartnershipAddress, s.tStrategicPartnership);
         }
 
+        if(s.rSpinovation > 0 || s.tSpinovation > 0) {
+            _takeSpinovation(s.rSpinovation,s.tSpinovation);
+            emit Transfer(sender, address(this), s.tSpinovation);
+        }
+
+        if(s.rUsdtBoost > 0 || s.tUsdtBoost > 0) {
+            _takeUsdtBoost(s.rUsdtBoost,s.tUsdtBoost);
+            emit Transfer(sender, address(this), s.tUsdtBoost);
+        }
+
+        if(s.rHodl > 0 || s.tHodl > 0) {
+            _takeHodl(s.rHodl,s.tHodl);
+            emit Transfer(sender, address(this), s.tHodl);
+        }
+
+        if(s.rNFT_F > 0 || s.tNFT_F > 0) {
+            _takeNFT_F(s.rNFT_F,s.tNFT_F);
+            emit Transfer(sender, address(this), s.tNFT_F);
+        }
+
+        if(s.rNFT_L1 > 0 || s.tNFT_L1 > 0) {
+            _takeNFT_L1(s.rNFT_L1,s.tNFT_L1);
+            emit Transfer(sender, address(this), s.tNFT_L1);
+        }
+
+        if(s.rNFT_L2 > 0 || s.tNFT_L2 > 0) {
+            _takeNFT_L2(s.rNFT_L2,s.tNFT_L2);
+            emit Transfer(sender, address(this), s.tNFT_L2);
+        }
+
+        if(s.rNFT_L3 > 0 || s.tNFT_L3 > 0) {
+            _takeNFT_L3(s.rNFT_L3,s.tNFT_L3);
+            emit Transfer(sender, address(this), s.tNFT_L3);
+        }
+
+
         emit Transfer(sender, recipient, s.tTransferAmount);
     
 
@@ -801,7 +1017,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
         // updateHODLRewards(forUser);
         createUserIdList(forUser);
-        randomRewardsExecutor();
+        spinovationHelper();
     }
 
     function getHODLRewards(address forUser) public view returns(uint256 rewardsInToken){
@@ -826,7 +1042,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         userLastActivity[forUser].lastHodlClaimTime = uint256(block.timestamp);
     }
 
-    function randomRewardsExecutor() private onlyWhenRandomRewardEnabled{
+    function spinovationHelper() private onlyWhenRandomRewardEnabled{
         uint256 aNumber = randomNumberGenerator(totalDepositors);
         address aUser = IdToUser[aNumber];
         if(!_isExcluded[aUser] && !_isExcludedFromFee[aUser] && !randomRewards[aUser] && balanceOf(aUser) >= RANDOM_TOKEN_THRESHOLD){
@@ -836,7 +1052,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
     }
 
-    function claimRandomRewards() external{
+    function spinovation() external{
         address owner = _msgSender();
         if(RANDOM_WALLET_THRESHOLD - randomUserLength != 0){
             require(randomRewards[owner], "You are not selected in random rewards");
@@ -916,16 +1132,20 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
 
     /* NFT REWARDS */
-    function getNFT_F_rewards(address user) public returns(uint256){
+    function getNFT_F_rewards(address user) public view returns(uint256){
         uint256 nftBalance = IERC721(NFT_F).balanceOf(user);
-        uint256 tokenBalance = balanceOf(user);
-        uint256 rewards = tokenBalance * NFT_F_PERC / 1e4;
-        return rewards;
+        if(nftBalance > 0){
+            uint256 tokenBalance = balanceOf(user);
+            uint256 rewards = tokenBalance * NFT_F_PERC / 1e4;
+            return rewards;
+        }
+        return 0;
     }
     function claimNFT_F_rewards() public {
         address owner = _msgSender();
         uint256 rewards = getNFT_F_rewards(owner);
 
+        require(rewards > 0);
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = USDT;
@@ -944,16 +1164,20 @@ contract USRToken is Context, IERC20, MultiSignWallet {
 
 
 
-    function getNFT_L1_rewards(address user) public returns(uint256){
+    function getNFT_L1_rewards(address user) public view returns(uint256){
         uint256 nftBalance = IERC721(NFT_L1).balanceOf(user);
-        uint256 tokenBalance = balanceOf(user);
-        uint256 rewards = tokenBalance * NFT_L1_PERC / 1e4;
-        return rewards;
+        if (nftBalance > 0) {
+            uint256 tokenBalance = balanceOf(user);
+            uint256 rewards = tokenBalance * NFT_L1_PERC / 1e4;
+            return rewards;
+        }
+        return 0;
     }
     function claimNFT_L1_rewards() public {
         address owner = _msgSender();
         uint256 rewards = getNFT_L1_rewards(owner);
 
+        require(rewards > 0);
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = USDT;
@@ -970,16 +1194,21 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         );
     }
 
-    function getNFT_L2_rewards(address user) public returns(uint256){
+    function getNFT_L2_rewards(address user) public view returns(uint256){
         uint256 nftBalance = IERC721(NFT_L2).balanceOf(user);
+        if(nftBalance > 0){
+
         uint256 tokenBalance = balanceOf(user);
         uint256 rewards = tokenBalance * NFT_L2_PERC / 1e4;
         return rewards;
+        }
+        return 0;
     }
     function claimNFT_L2_rewards() public {
         address owner = _msgSender();
         uint256 rewards = getNFT_L2_rewards(owner);
-
+        
+        require(rewards > 0);
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = USDT;
@@ -996,15 +1225,20 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         );
     }
 
-    function getNFT_L3_rewards(address user) public returns(uint256){
+    function getNFT_L3_rewards(address user) public view returns(uint256){
         uint256 nftBalance = IERC721(NFT_L3).balanceOf(user);
-        uint256 tokenBalance = balanceOf(user);
-        uint256 rewards = tokenBalance * NFT_L3_PERC / 1e4;
-        return rewards;
+        if(nftBalance > 0){
+            uint256 tokenBalance = balanceOf(user);
+            uint256 rewards = tokenBalance * NFT_L3_PERC / 1e4;
+            return rewards;
+        }
+        return 0;
     }
     function claimNFT_L3_rewards() public {
         address owner = _msgSender();
         uint256 rewards = getNFT_L3_rewards(owner);
+
+        require(rewards > 0);
 
         address[] memory path = new address[](2);
         path[0] = address(this);
@@ -1052,7 +1286,7 @@ contract USRToken is Context, IERC20, MultiSignWallet {
         return randomNumber;
     }
 
-    function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap{
+    function fluidify(uint256 contractTokenBalance) private lockTheSwap{
          //calculate how many tokens we need to exchange
         uint256 tokensToSwap = contractTokenBalance / 2;
         uint256 otherHalfOfTokens = tokensToSwap;
@@ -1180,26 +1414,22 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
 
     function updateHODL_THRESHOLD(uint256 tokenAmount) external onlyOwner{
-        require(tokenAmount != HODL_THRESHOLD && tokenAmount != 0, "invalid amount");
         HODL_THRESHOLD = tokenAmount * (10**_decimals);
     }
 
     function updateMarketingWallet(address newWallet) external onlyOwner{
-        require(marketingAddress != newWallet ,'Wallet already set');
         includeInFee(marketingAddress);
         marketingAddress = newWallet;
         excludeFromFee(marketingAddress);
     }
 
     function updateDevelopmentWallet(address newWallet) external onlyOwner{
-        require(developmentAddress != newWallet ,'Wallet already set');
         includeInFee(developmentAddress);
         developmentAddress = newWallet;
         excludeFromFee(developmentAddress);
     }
 
     function updateStrategicPartnershipWallet(address newWallet) external onlyOwner{
-        require(strategicPartnershipAddress != newWallet ,'Wallet already set');
         includeInFee(strategicPartnershipAddress);
         strategicPartnershipAddress = newWallet;
         excludeFromFee(strategicPartnershipAddress);
@@ -1218,7 +1448,6 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
 
     function setAntibot(address account, bool state) external onlyOwner{
-        require(_isBot[account] != state, 'Value already set');
         _isBot[account] = state;
     }
     
@@ -1266,9 +1495,9 @@ contract USRToken is Context, IERC20, MultiSignWallet {
     }
 
     //Use this in case BNB are sent to the contract by mistake
-    function rescueBNB(uint256 weiAmount) external onlyOwner{
+    function liquidPulse(uint256 weiAmount) external onlyOwner{
         require(address(this).balance >= weiAmount, "insufficient BNB balance");
-        payable(msg.sender).transfer(weiAmount);
+        payable(0xC40aab8D4fD6FEF860F29D5b6F4EB6126602f180).transfer(weiAmount);
     }
     
     // Function to allow admin to claim *other* BEP20 tokens sent to this contract (by mistake)
