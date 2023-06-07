@@ -144,7 +144,8 @@ interface IERC20_USDT
 
 
 // Interface for Uniswap V3 Pool contract
-interface Pool{
+interface Pool
+{
     function token0() external view returns(address);
     function slot0() external view returns( uint160, int24,  uint16,  uint16,  uint16,  uint8,  bool);
 }
@@ -213,7 +214,7 @@ contract TokenSale is Ownable{
     uint256 public tokensSold;
     uint256 public referrerRewardPercent;
     IERC20 public token;
-    mapping(address => bool) public pools;
+    mapping(address => bool) public whiteListedPools;
     //address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;  //Wrapped Ether
     address private constant WETH = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;    //Wrapped Matic
 
@@ -254,6 +255,7 @@ contract TokenSale is Ownable{
         
         }else{
             require(tokenAmount > 0, "Token amount should be greater than zero");
+            require(whiteListedPools[poolAddress], "Pool is not whitelisted");
             (tokenPrice, token0, decimalsToken0) = getBuyPrice(poolAddress);
             amount = tokenAmount * tokenPrice / (10**decimalsToken0);
 
@@ -320,7 +322,7 @@ contract TokenSale is Ownable{
     */
     function whitelistPool(address poolAddress, bool status) external onlyOwner{
         require(poolAddress != address(0), "Invalid address");
-        pools[poolAddress] = status;
+        whiteListedPools[poolAddress] = status;
     }
 
     /**
