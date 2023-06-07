@@ -214,6 +214,8 @@ contract TokenSale is Ownable{
     uint256 public referrerRewardPercent;
     IERC20 public token;
     mapping(address => bool) public pools;
+    //address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;  //Wrapped Ether
+    address private constant WETH = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;    //Wrapped Matic
 
     // Events
     event TokensPurchased(address indexed buyer, address tokenAddress, uint256 amount);
@@ -241,7 +243,11 @@ contract TokenSale is Ownable{
         uint8 decimalsToken0;
         if(msg.value > 0){
             /* spend token is ETHER*/
-            (tokenPrice,,decimalsToken0) = getBuyPrice(poolAddress);
+            (tokenPrice,token0,decimalsToken0) = getBuyPrice(poolAddress);
+
+            //we want to make sure the buyers are not tricking by providing incorrect pool address
+            require(token0 == WETH, "Invalid Pool Address");
+
             amount = msg.value * tokenPrice / (10**decimalsToken0);
             token.transfer(msg.sender, amount);
             payable(owner()).transfer(msg.value);
@@ -250,6 +256,9 @@ contract TokenSale is Ownable{
             require(tokenAmount > 0, "Token amount should be greater than zero");
             (tokenPrice, token0, decimalsToken0) = getBuyPrice(poolAddress);
             amount = tokenAmount * tokenPrice / (10**decimalsToken0);
+
+            //we want to make sure the buyers are not tricking by providing incorrect pool address
+            require(token0 != WETH, "Invalid Pool Address");
             
             // This is special condition for USDT in ethereum network.
             // It does not follow ERC20 standard and thus it requires different interface
