@@ -105,11 +105,11 @@ contract TokenSale is Ownable{
         if(spendToken == address(0)){
             /* spend token is ETHER*/
             amount = getBuyPrice(msg.value, WETH9, 3000);
-            IERC20(address(token)).transferFrom(owner(), msg.sender, amount);
+            IERC20(address(token)).transfer(msg.sender, amount);
         }else{
             IERC20(spendToken).transferFrom(msg.sender, owner(), amount);
             amount = getBuyPrice(tokenAmount, spendToken, 3000);
-            IERC20(address(token)).transferFrom(owner(), msg.sender, amount);
+            IERC20(address(token)).transfer(msg.sender, amount);
 
         }
 
