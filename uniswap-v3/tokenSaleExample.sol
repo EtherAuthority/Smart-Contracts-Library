@@ -3,7 +3,6 @@
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
 pragma solidity 0.8.17;
-pragma abicoder v2;
 
 import "./memeverseToken.sol";
 import "https://github.com/Uniswap/uniswap-v3-periphery/blob/main/contracts/interfaces/ISwapRouter.sol";
