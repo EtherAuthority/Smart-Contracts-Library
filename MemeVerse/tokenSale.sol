@@ -126,7 +126,7 @@ library FullMath {
 }
 
 
-
+// IERC20 standard interface
 interface IERC20
 {
     function balanceOf(address user) external view returns(uint256);
@@ -136,13 +136,21 @@ interface IERC20
 } 
 
 
+//USDT contract in Ethereum does not follow ERC20 standard so it needs different interface
+interface IERC20_USDT
+{
+    function transferFrom(address _from, address _to, uint256 _amount) external;
+}
+
+
+// Interface for Uniswap V3 Pool contract
 interface Pool{
     function token0() external view returns(address);
     function slot0() external view returns( uint160, int24,  uint16,  uint16,  uint16,  uint8,  bool);
 }
 
 
-
+// Ownership smart contract
 abstract contract Ownable {
     address private _owner;
 
@@ -198,7 +206,7 @@ abstract contract Ownable {
 }
 
 
-
+// Main Token sale smart contract 
 contract TokenSale is Ownable{
 
     //public variables
@@ -242,7 +250,16 @@ contract TokenSale is Ownable{
             require(tokenAmount > 0, "Token amount should be greater than zero");
             (tokenPrice, token0, decimalsToken0) = getBuyPrice(poolAddress);
             amount = tokenAmount * tokenPrice / (10**decimalsToken0);
-            IERC20(token0).transferFrom(msg.sender, owner(), tokenAmount);
+            
+            // This is special condition for USDT in ethereum network.
+            // It does not follow ERC20 standard and thus it requires different interface
+            // This is a special case, and it only applies to following USDT address only
+            if(token0 == 0xdAC17F958D2ee523a2206206994597C13D831ec7){
+                IERC20_USDT(token0).transferFrom(msg.sender, owner(), tokenAmount);
+            }else{
+                IERC20(token0).transferFrom(msg.sender, owner(), tokenAmount);
+            }
+            
             token.transfer(msg.sender, amount);
 
         }
