@@ -119,7 +119,7 @@ contract TokenSale is Ownable{
 
         // Referral bonus
         if (referrer != address(0)) {
-            uint256 bonus = (amount * referrerRewardPercent) / 100; // Calculating the referral bonus 
+            uint256 bonus = (amount * referrerRewardPercent) / 1e4; // Calculating the referral bonus 
             token.transfer(referrer, bonus);
 
             emit TokensReferralRewarded(referrer, msg.sender, bonus);
