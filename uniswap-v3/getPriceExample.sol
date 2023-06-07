@@ -31,6 +31,37 @@ contract Uniswap3 {
         );
     }
 
+    function convertEthToExactToken(uint256 forHowMuchToken, address tokenIn) external payable {
+        require(forHowMuchToken > 0, "Must pass non 0 token amount");
+        require(msg.value > 0, "Must pass non 0 ETH amount");
+      
+        uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        address tokenOut = coolToken;
+        uint24 fee = 3000;
+        address recipient = msg.sender;
+        uint256 amountOut = forHowMuchToken;
+        uint256 amountInMaximum = msg.value;
+        uint160 sqrtPriceLimitX96 = 0;
+
+        ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams(
+            tokenIn,
+            tokenOut,
+            fee,
+            recipient,
+            deadline,
+            amountOut,
+            amountInMaximum,
+            sqrtPriceLimitX96
+        );
+
+        uniswapRouter.exactOutputSingle{ value: msg.value }(params);
+        uniswapRouter.refundETH();
+
+        // refund leftover ETH to user
+        (bool success,) = msg.sender.call{ value: address(this).balance }("");
+        require(success, "refund failed");
+    }
+
 
 
 
