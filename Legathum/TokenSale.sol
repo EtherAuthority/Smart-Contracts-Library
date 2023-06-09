@@ -240,8 +240,8 @@ contract TokenSale is Ownable {
 
     }
 
-    
-    function changeUSDTContract(address _usdtContractAddress) external onlyOwner returns(string memory){
+    /* Set usdt address */
+    function changeusdtContract(address _usdtContractAddress) external onlyOwner returns(string memory){
         usdtContract=_usdtContractAddress;
         return "Contract address updated";
     }
@@ -278,7 +278,7 @@ contract TokenSale is Ownable {
          return "Token contract updated successfully";
      }
     
-
+    /* Owner can withdraw Tokens from contract to specify address */ 
      function withdrawTRC20Token(address _tokenaddress,uint256 _amount) external onlyOwner returns(string memory){
          require(_tokenaddress!=address(0),"Invalid Address");
          require(_amount>0,"Invalid Amount"); 
@@ -286,6 +286,7 @@ contract TokenSale is Ownable {
          return "Tokens withdrawn successfully";
      }
 
+    /* Owner can withdraw TRX from contract to specify address */ 
      function withdrawTRX() external onlyOwner returns(string memory){
          payable(msg.sender).transfer(address(this).balance);
          return "TRX withdrawn successfully";
