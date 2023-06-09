@@ -631,7 +631,7 @@ abstract contract Ownable is Context {
 
 
 
-contract Token is TRC20, Ownable {
+contract VirtualLegathum is TRC20, Ownable {
 
     constructor() TRC20("Virtual Legathum", "vLEGA"){
         _mint(msg.sender, 2000000000 * (10**decimals()));
