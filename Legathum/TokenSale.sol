@@ -1,3 +1,17 @@
+/*
+
+
+██╗░░░░░███████╗░██████╗░░█████╗░████████╗██╗░░██╗██╗░░░██╗███╗░░░███╗
+██║░░░░░██╔════╝██╔════╝░██╔══██╗╚══██╔══╝██║░░██║██║░░░██║████╗░████║
+██║░░░░░█████╗░░██║░░██╗░███████║░░░██║░░░███████║██║░░░██║██╔████╔██║
+██║░░░░░██╔══╝░░██║░░╚██╗██╔══██║░░░██║░░░██╔══██║██║░░░██║██║╚██╔╝██║
+███████╗███████╗╚██████╔╝██║░░██║░░░██║░░░██║░░██║╚██████╔╝██║░╚═╝░██║
+╚══════╝╚══════╝░╚═════╝░╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░╚═╝░╚═════╝░╚═╝░░░░░╚═╝
+
+
+*/
+
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
@@ -200,6 +214,8 @@ contract TokenSale is Ownable {
     bool public safeguard;  //putting safeguard on will halt all non-owner functions
     uint256 public totalsale;
     uint256 public exchangeRate =  1000000;   // 1 Token = how many USDT?  It is in 6 decimals. so, 1000000 = 1
+    uint256 public refComissionPercent = 1000000;  // 1000000 = 1%
+    mapping(address => uint256) public refCommissionEarned;
 
     address public tokenContract;
     address public usdtContract;
@@ -221,7 +237,7 @@ contract TokenSale is Ownable {
      /**
      * Buy Tokens.
      */
-    function buyTokens(uint256 _token) external returns(string memory){
+    function buyTokens(uint256 _token, address referer) external returns(string memory){
         //checking for safeguard
         require(!safeguard, 'safeguard failed');
         
@@ -231,11 +247,18 @@ contract TokenSale is Ownable {
         ITRC20(usdtContract).transferFrom(msg.sender, owner(), usdtAmount);
 
         ITRC20(tokenContract).transfer(msg.sender,_token);
-       
-        //logging event and return_
+
+        //referral system code
+        if(referer != address(0) && refComissionPercent > 0 && referer != msg.sender){
+            uint256 refCommission = (_token * refComissionPercent) / (100 * 1e6);
+            ITRC20(tokenContract).transfer(referer,refCommission);
+            refCommissionEarned[referer] += refCommission;
+        }
+
+
+        //logging event and return
         totalsale += _token;
-       
-    	emit Buytoken(msg.sender,usdtAmount);	
+        emit Buytoken(msg.sender,usdtAmount);	
         return ("tokens are bought successfully");
 
     }
@@ -268,6 +291,15 @@ contract TokenSale is Ownable {
      function changeExchangeRate(uint256 _exchangeRate) external onlyOwner returns(string memory){
          exchangeRate = _exchangeRate;
          return "Token price updated successfully";
+     }
+
+
+     /**
+     * Change referrer commission percentage. 
+     */
+     function changeRefCommissionPercent(uint256 _refComissionPercent) external onlyOwner returns(string memory){
+         refComissionPercent = _refComissionPercent;
+         return "Referrer comission percent updated successfully";
      }
     
      /**
