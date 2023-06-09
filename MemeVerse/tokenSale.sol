@@ -125,6 +125,13 @@ library FullMath {
     }
 }
 
+/// @title FixedPoint96
+/// @notice A library for handling binary fixed point numbers, see https://en.wikipedia.org/wiki/Q_(number_format)
+/// @dev Used in SqrtPriceMath.sol
+library FixedPoint96 {
+    uint8 internal constant RESOLUTION = 96;
+    uint256 internal constant Q96 = 0x1000000000000000000000000;
+}
 
 // IERC20 standard interface
 interface IERC20
@@ -147,6 +154,8 @@ interface IERC20_USDT
 interface Pool
 {
     function token0() external view returns(address);
+    function token1() external view returns(address);
+    function liquidity() external view returns(uint168);
     function slot0() external view returns( uint160, int24,  uint16,  uint16,  uint16,  uint8,  bool);
 }
 
@@ -265,7 +274,8 @@ contract TokenSale is Ownable{
             // This is special condition for USDT in ethereum network.
             // It does not follow ERC20 standard and thus it requires different interface
             // This is a special case, and it only applies to following USDT address only
-            if(token0 == 0xdAC17F958D2ee523a2206206994597C13D831ec7){
+            // Below hardcoded address is only applicable for polygon mainnet chain
+            if(token0 == 0xc2132D05D31c914a87C6611C10748AEb04B58e8F){
                 IERC20_USDT(token0).transferFrom(msg.sender, owner(), tokenAmount);
             }else{
                 IERC20(token0).transferFrom(msg.sender, owner(), tokenAmount);
@@ -298,13 +308,32 @@ contract TokenSale is Ownable{
         returns (uint256, address, uint8)
     {
       
-        address token0 = Pool(poolAddress).token0();
-        uint8 decimalsToken0 = IERC20(token0).decimals();
+        (address token0, address token1) = getTokensFromPool(poolAddress);
+        address tokenIn;
         
+        uint256 amount0;
+        uint256 amount1;
+
         (uint160 sqrtPriceX96,,,,,,) =  Pool(poolAddress).slot0();
-        uint256 numerator1 = uint256(sqrtPriceX96) * uint256(sqrtPriceX96);
-        uint256 numerator2 = 10**decimalsToken0;
-        return ((FullMath.mulDiv(numerator1, numerator2, 1 << 192)),token0, decimalsToken0);
+
+        if(token0 == address(token)){
+            tokenIn = token1;
+            amount0 = FullMath.mulDiv(Pool(poolAddress).liquidity(), sqrtPriceX96, FixedPoint96.Q96);
+            amount1 = FullMath.mulDiv(Pool(poolAddress).liquidity(), FixedPoint96.Q96, sqrtPriceX96);
+        }else{
+            tokenIn = token0;
+            amount0 = FullMath.mulDiv(Pool(poolAddress).liquidity(), FixedPoint96.Q96, sqrtPriceX96);
+            amount1 = FullMath.mulDiv(Pool(poolAddress).liquidity(), sqrtPriceX96, FixedPoint96.Q96);
+        }
+
+        uint8 decimalsToken0 = IERC20(tokenIn).decimals();
+        return (((amount1 * 10**IERC20(tokenIn).decimals()) / amount0), tokenIn, decimalsToken0);
+
+    }
+
+    function getTokensFromPool(address poolAddress) internal view returns(address token0, address token1){
+        token0 = Pool(poolAddress).token0();
+        token1 = Pool(poolAddress).token1();
     }
 
     /**
