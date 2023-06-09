@@ -1,5 +1,5 @@
-//"SPDX-License-Identifier: UNLICENSED"
-pragma solidity 0.8.18; /*
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;/*
 
 ___________________________________________________________________
 
@@ -15,19 +15,15 @@ ___________________________________________________________________
 
 
 === Token contract with following features ===
-    => TRC20 Compliance
-    => Higher degree of control by owner - safeguard functionality
-    => SafeMath implementation 
-    => Burnable and minting 
+    => TRC20 Compliance  
     => user whitelisting 
-    => air drop (active and passive)
-    => in-built buy/sell functions 
+   
 
 
 ======================= Quick Stats ===================
     => Name        : Legathum Token
     => Symbol      : LEGA
-    => Total supply: 2,000,000,000 (2 Million)
+    => Total supply: 2,000,000,000 (2 Billion)
     => Decimals    : 6
 
 
@@ -35,11 +31,6 @@ ___________________________________________________________________
     => Multiple Freelancers Auditors
     => Community Audit by Bug Bounty program
 
-
--------------------------------------------------------------------
- Copyright (c) 2020 onwards EtherAuthority Inc. ( https://EtherAuthority.io )
- Contract designed with ❤ by EtherAuthority ( https://EtherAuthority.io )
--------------------------------------------------------------------
 */ 
 
 
@@ -651,7 +642,7 @@ contract Token is TRC20, Ownable {
     uint256 public releaseTime = 600;
 
     constructor(string memory tokenName, string memory tokenSymbol, uint256 totalSupply) TRC20(tokenName, tokenSymbol){
-        _mint(msg.sender, totalSupply * (10**decimals()));
+        _mint(msg.sender, totalSupply);
     }
 
     /* decimals used to get its user representation.
