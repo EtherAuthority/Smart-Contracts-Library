@@ -1,19 +1,48 @@
-// SPDX-License-Identifier: MIT
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
+//"SPDX-License-Identifier: UNLICENSED"
+pragma solidity 0.8.18; /*
 
-pragma solidity 0.8.18;
+___________________________________________________________________
 
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
+██╗░░░░░███████╗░██████╗░░█████╗░████████╗██╗░░██╗██╗░░░██╗███╗░░░███╗
+██║░░░░░██╔════╝██╔════╝░██╔══██╗╚══██╔══╝██║░░██║██║░░░██║████╗░████║
+██║░░░░░█████╗░░██║░░██╗░███████║░░░██║░░░███████║██║░░░██║██╔████╔██║
+██║░░░░░██╔══╝░░██║░░╚██╗██╔══██║░░░██║░░░██╔══██║██║░░░██║██║╚██╔╝██║
+███████╗███████╗╚██████╔╝██║░░██║░░░██║░░░██║░░██║╚██████╔╝██║░╚═╝░██║
+╚══════╝╚══════╝░╚═════╝░╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░╚═╝░╚═════╝░╚═╝░░░░░╚═╝
+
+
+
+
+
+=== Token contract with following features ===
+    => TRC20 Compliance
+    => Higher degree of control by owner - safeguard functionality
+    => SafeMath implementation 
+    => Burnable and minting 
+    => user whitelisting 
+    => air drop (active and passive)
+    => in-built buy/sell functions 
+
+
+======================= Quick Stats ===================
+    => Name        : Legathum Token
+    => Symbol      : LEGA
+    => Total supply: 2,000,000,000 (2 Million)
+    => Decimals    : 6
+
+
+============= Independant Audit of the code ============
+    => Multiple Freelancers Auditors
+    => Community Audit by Bug Bounty program
+
+
+-------------------------------------------------------------------
+ Copyright (c) 2020 onwards EtherAuthority Inc. ( https://EtherAuthority.io )
+ Contract designed with ❤ by EtherAuthority ( https://EtherAuthority.io )
+-------------------------------------------------------------------
+*/ 
+
+
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
@@ -221,7 +250,7 @@ contract TRC20 is Context, ITRC20, ITRC20Metadata {
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual override returns (uint8) {
-        return 18;
+        return 6;
     }
 
     /**
@@ -610,8 +639,14 @@ abstract contract Ownable is Context {
 
 contract Token is TRC20, Ownable {
 
+    string constant private _name = "Legathum";
+    string constant private _symbol = "LEGA";
+
     address public TokenSaleContract;
+
     mapping (address => bool) public whitelisted;
+
+    uint256  private _totalSupply = 2000000000 * (10**decimals());
     //uint public releaseTime = 2*(30*12*(24*60*60));
     uint256 public releaseTime = 600;
 
@@ -619,10 +654,16 @@ contract Token is TRC20, Ownable {
         _mint(msg.sender, totalSupply * (10**decimals()));
     }
 
+    /* decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5.05` (`505 / 10 ** 2`). */
+
     function decimals() override public pure returns(uint8){
         return 6;
     }
 
+
+    // Moves `amount` of tokens from `from` addresss to `to` address.
      function _transfer(
         address from,
         address to,
@@ -646,25 +687,28 @@ contract Token is TRC20, Ownable {
         
     }
 
-
+    // It is used for uodate token sale contract address which is link with token contravt
     function changeTokenSaleContract(address _add) public onlyOwner returns(string memory){
         require(_add!=address(0),"Invalid address");
         TokenSaleContract = _add;
         return "Tokensale Updates";
     }
 
+    // This function is used for allowed miners to transfer their locked tokens
     function whitelistAddress(address _add, bool status) public onlyOwner returns(string memory){
         require(_add!=address(0),"Invalid address");
         whitelisted[_add] = status;
         return "Whitelisted status updated";
     }
 
+    // `setReleaseTime` set time for locked tokens e.g 2*(30*12*(24*60*60)) Seconds
     function setReleaseTime(uint256 timeInSeconds) public onlyOwner returns(string memory){
         require(timeInSeconds != 0,"Invalid address");
         releaseTime = timeInSeconds;
         return "Release time has been updated";
     }
 
+    // Owner can withdraw token amount to the specify address 
     function withdrawTRC20Token(address _tokenaddress,uint256 _amount) external onlyOwner returns(string memory){
          require(_tokenaddress!=address(0),"Invalid Address");
          require(_amount>0,"Invalid Amount"); 
@@ -672,6 +716,7 @@ contract Token is TRC20, Ownable {
          return "Tokens withdrawn successfully";
      }
 
+    // To know current timestemp
     function currentTimeStamp() external view returns(uint256){
         return block.timestamp;
     }
