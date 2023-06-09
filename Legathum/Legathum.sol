@@ -1,8 +1,4 @@
-/**
- *Submitted for verification at Etherscan.io on 2023-06-08
-*/
-
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
@@ -623,6 +619,10 @@ contract Token is TRC20, Ownable {
         _mint(msg.sender, totalSupply * (10**decimals()));
     }
 
+    function decimals() override public pure returns(uint8){
+        return 6;
+    }
+
      function _transfer(
         address from,
         address to,
@@ -640,7 +640,7 @@ contract Token is TRC20, Ownable {
         }
         else{
 
-            revert();
+            revert("tokens are locked");
 
         }
         
@@ -665,7 +665,16 @@ contract Token is TRC20, Ownable {
         return "Release time has been updated";
     }
 
-  
+    function withdrawTRC20Token(address _tokenaddress,uint256 _amount) external onlyOwner returns(string memory){
+         require(_tokenaddress!=address(0),"Invalid Address");
+         require(_amount>0,"Invalid Amount"); 
+         ITRC20(_tokenaddress).transfer(msg.sender,_amount);
+         return "Tokens withdrawn successfully";
+     }
+
+    function currentTimeStamp() external view returns(uint256){
+        return block.timestamp;
+    }
 
     
 }
