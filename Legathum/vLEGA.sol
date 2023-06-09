@@ -18,8 +18,8 @@ ________________________________________________________________________________
 
 
 ======================= Quick Stats ===================
-    => Name        : Legathum Token
-    => Symbol      : LEGA
+    => Name        : Virtual Legathum
+    => Symbol      : vLEGA
     => Total supply: 2,000,000,000 (2 Billion)
     => Decimals    : 6
 
