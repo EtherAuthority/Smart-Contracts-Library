@@ -250,7 +250,7 @@ contract TRC20 is Context, ITRC20, ITRC20Metadata {
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual override returns (uint8) {
-        return 6;
+        return 18;
     }
 
     /**
