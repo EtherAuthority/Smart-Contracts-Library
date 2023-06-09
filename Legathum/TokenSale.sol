@@ -293,7 +293,7 @@ contract TokenSale is Ownable {
      }
     
 
-    //display current trx amount in smart contract
+    /* display current trx amount in smart contract */
     function viewTRXinContract() external view returns(uint256){
         return address(this).balance;
     }
