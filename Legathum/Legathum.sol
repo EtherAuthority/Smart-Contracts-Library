@@ -630,20 +630,17 @@ abstract contract Ownable is Context {
 
 contract Token is TRC20, Ownable {
 
-    string constant private _name = "Legathum";
-    string constant private _symbol = "LEGA";
+    constructor() TRC20("Legathum", "LEGA"){
+        _mint(msg.sender, 2000000000 * (10**decimals()));
+        releaseTime = block.timestamp + 2*(30*12*(24*60*60));
+        whitelisted[msg.sender] = true;
+    }
 
     address public TokenSaleContract;
-
     mapping (address => bool) public whitelisted;
+    uint256 public releaseTime;
 
-    uint256  private _totalSupply = 2000000000 * (10**decimals());
-    //uint public releaseTime = 2*(30*12*(24*60*60));
-    uint256 public releaseTime = 600;
-
-    constructor(string memory tokenName, string memory tokenSymbol, uint256 totalSupply) TRC20(tokenName, tokenSymbol){
-        _mint(msg.sender, totalSupply);
-    }
+    
 
     /* decimals used to get its user representation.
      * For example, if `decimals` equals `2`, a balance of `505` tokens should
@@ -661,15 +658,11 @@ contract Token is TRC20, Ownable {
         uint256 amount
     ) internal override virtual {
        
-        if(from == TokenSaleContract){
+        if(from == TokenSaleContract || releaseTime <= block.timestamp || whitelisted[from]){
         
             super._transfer(from,to,amount);
         
         }    
-        else if(releaseTime <= block.timestamp || whitelisted[from] ){       
-                
-                super._transfer(from,to,amount);
-        }
         else{
 
             revert("tokens are locked");
