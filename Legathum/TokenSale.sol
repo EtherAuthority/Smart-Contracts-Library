@@ -1,40 +1,6 @@
-pragma solidity 0.5.18;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;
 
-//*******************************************************************//
-//------------------------ SafeMath Library -------------------------//
-//*******************************************************************//
-/**
-    * @title SafeMath
-    * @dev Math operations with safety checks that throw on error
-    */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-        return 0;
-    }
-    uint256 c = a * b;
-    require(c / a == b, 'SafeMath mul failed');
-    return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a, 'SafeMath sub failed');
-    return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a, 'SafeMath add failed');
-    return c;
-    }
-}
 
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol
@@ -120,36 +86,107 @@ interface ITRC20 {
         uint256 amount
     ) external returns (bool);
 }
-//*******************************************************************//
-//------------------ Contract to Manage Ownership -------------------//
-//*******************************************************************//
 
-contract owned {
-    address payable public owner;
-    address payable internal newOwner;
 
-    constructor() public {
-        owner = msg.sender;
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address payable _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-
-    //this flow is to prevent transferring ownership to wrong wallet by mistake
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        //emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
     }
 }
 
+
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor() {
+        _transferOwnership(_msgSender());
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        _checkOwner();
+        _;
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if the sender is not the owner.
+     */
+    function _checkOwner() internal view virtual {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby disabling any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _transferOwnership(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Internal function without access restriction.
+     */
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+}
 
 
 
@@ -157,48 +194,30 @@ contract owned {
 //---------------------        MAIN CODE STARTS HERE     ---------------------//
 //****************************************************************************//
 
-contract TokenSale is owned {
+contract TokenSale is Ownable {
 
-    using SafeMath for uint256;
+    // public variables
     bool public safeguard;  //putting safeguard on will halt all non-owner functions
-   
-    
     uint256 public totalsale;
-    uint256 public tokenPrice =100;
-    uint256 public _decimals = 6;
-    
-   
-    mapping (address => uint256) public _balance;
-    mapping (address => uint256) public _balanceFreeze;
+    uint256 public exchangeRate =  1000000;   // 1 Token = how many USDT?  It is in 6 decimals. so, 1000000 = 1
 
     address public tokenContract;
-    address public usdtaccountAddress;
-    uint256 public usdtamt;
-
+    address public usdtContract;
     
     event Buytoken(address buyer, uint256 tokenAmount);
 
-
-    constructor(address _tokenContract) public {
-        require(_tokenContract!=address(0),"Invalid Address");        
+    constructor(address _tokenContract, address _usdtContract)  {
+        require(_tokenContract!=address(0),"Invalid Address"); 
+        require(_usdtContract!=address(0),"Invalid Address");        
         tokenContract=_tokenContract;
+        usdtContract = _usdtContract;
     }
 
     //fallback function just accepts incoming TRX
-    function() external payable{}
+    receive() external payable{}
 
 
-    //display current trx amount in smart contract
-    function viewTRXinContract() external view returns(uint256){
-        return address(this).balance;
-    }
 
-    /**
-     * Returns decimals of token
-     */
-    function decimals() public view returns(uint256){
-        return _decimals;
-    }
      /**
      * Buy Tokens.
      */
@@ -207,14 +226,14 @@ contract TokenSale is owned {
         require(!safeguard, 'safeguard failed');
         
         
-        uint256 usdtAmount = (_token * tokenPrice) / 1e6;       
+        uint256 usdtAmount = (_token * exchangeRate) / 1e6;       
         
-        ITRC20(usdtaccountAddress).transferFrom(msg.sender, owner, usdtAmount);
+        ITRC20(usdtContract).transferFrom(msg.sender, owner(), usdtAmount);
 
         ITRC20(tokenContract).transfer(msg.sender,_token);
        
         //logging event and return_
-        totalsale = totalsale.add(_token);
+        totalsale += _token;
        
     	emit Buytoken(msg.sender,usdtAmount);	
         return ("tokens are bought successfully");
@@ -222,15 +241,9 @@ contract TokenSale is owned {
     }
 
     
-    function changeDecimal(uint256 _dec) public onlyOwner returns(bool){
-        require(_dec>0,"Invalid Amount Passed");
-        _decimals=_dec;
-        return true;
-    }
-
-    function changeUSDTaccountAddress(address _usdtaccountAddress) public returns(bool){
-        usdtaccountAddress=_usdtaccountAddress;
-        return true;
+    function changeUSDTContract(address _usdtContractAddress) external onlyOwner returns(string memory){
+        usdtContract=_usdtContractAddress;
+        return "Contract address updated";
     }
 
      /**
@@ -239,25 +252,26 @@ contract TokenSale is owned {
         * When safeguard is true, then all the non-owner functions will stop working.
         * When safeguard is false, then all the functions will resume working back again!
         */
-    function changeSafeguardStatus() external onlyOwner {
+    function changeSafeguardStatus() external onlyOwner returns(string memory) {
         if (safeguard == false){
             safeguard = true;
         }
         else{
             safeguard = false;
         }
+        return "Safeguard status updated";
     }
   
     /**
-     * Change token price. 
+     * Change exchange rate. 
      */
-     function changeTokenPrice(uint256 _tokenPrice) external onlyOwner returns(string memory){
-         tokenPrice = _tokenPrice;
+     function changeExchangeRate(uint256 _exchangeRate) external onlyOwner returns(string memory){
+         exchangeRate = _exchangeRate;
          return "Token price updated successfully";
      }
     
      /**
-     * Change token price. 
+     * Change token contract. 
      */
      function changeTokenContract(address _tokenContract) external onlyOwner returns(string memory){
          tokenContract = _tokenContract;
@@ -265,15 +279,23 @@ contract TokenSale is owned {
      }
     
 
-    /* function withdrawTRC20Token(address _tokenaddress,uint256 _amount) public onlyOwner returns(bool){
+     function withdrawTRC20Token(address _tokenaddress,uint256 _amount) external onlyOwner returns(string memory){
          require(_tokenaddress!=address(0),"Invalid Address");
          require(_amount>0,"Invalid Amount"); 
          ITRC20(_tokenaddress).transfer(msg.sender,_amount);
-         return true;
+         return "Tokens withdrawn successfully";
      }
-    */
 
+     function withdrawTRX() external onlyOwner returns(string memory){
+         payable(msg.sender).transfer(address(this).balance);
+         return "TRX withdrawn successfully";
+     }
     
+
+    //display current trx amount in smart contract
+    function viewTRXinContract() external view returns(uint256){
+        return address(this).balance;
+    }
 
      
 
