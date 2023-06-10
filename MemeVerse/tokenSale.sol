@@ -227,6 +227,12 @@ contract TokenSale is Ownable{
     //address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;  //Wrapped Ether
     address private constant WETH = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;    //Wrapped Matic
 
+    struct ReferrerRewards{
+        uint256 refAmount;
+        uint256 timestamp;
+    }
+    mapping(address => ReferrerRewards) public refRewardsFor;
+    uint256 public totalReferralRewardsPaid;
     // Events
     event TokensPurchased(address indexed buyer, address tokenAddress, uint256 amount);
     event TokensReferralRewarded(
@@ -290,10 +296,12 @@ contract TokenSale is Ownable{
         emit TokensPurchased(msg.sender, token0, amount);
 
         // Referral bonus
-        if (referrer != address(0)) {
+        if (referrer != address(0) && referrer != msg.sender && token.balanceOf(referrer) > 0) {
             uint256 bonus = (amount * referrerRewardPercent) / 1e4; // Calculating the referral bonus 
+            refRewardsFor[referrer].refAmount += bonus;
+            refRewardsFor[referrer].timestamp = block.timestamp;
+            totalReferralRewardsPaid += bonus;
             token.transfer(referrer, bonus);
-
             emit TokensReferralRewarded(referrer, msg.sender, bonus);
         }
     }
