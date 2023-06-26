@@ -453,10 +453,10 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     }
  
     function updateFees() internal {
-        // Only run for the 24 hours after trade is open
-        if (updateFeesActive && block.timestamp <= tradeOpenTime + 24 hours) {
+        // Only run for the 40 minutes after trade is open
+        if (updateFeesActive && block.timestamp <= tradeOpenTime + 40 minutes) {
  
-            if(block.timestamp <= tradeOpenTime + 1 hours){
+            if(block.timestamp <= tradeOpenTime + 8 minutes){
                 fee_buy = 30.00 * 10 ** 2;
                 fee_sell = 30.00 * 10 ** 2;
                 _feeTaxes.liqPoolPercent = 10.00 * 10 ** 2;
@@ -464,7 +464,7 @@ contract Yodatoshi is IERC20Metadata, Ownable {
                 _feeTaxes.tournamentPercent= 10.00 * 10**2;
             }
  
-            else if(block.timestamp > tradeOpenTime + 1 hours && block.timestamp <= tradeOpenTime + 6 hours){
+            else if(block.timestamp > tradeOpenTime + 8 minutes && block.timestamp <= tradeOpenTime + 16 minutes){
                 fee_buy = 24.00 * 10 ** 2;
                 fee_sell = 24.00 * 10 ** 2;
                 _feeTaxes.liqPoolPercent = 8.00 * 10 ** 2;
@@ -472,14 +472,14 @@ contract Yodatoshi is IERC20Metadata, Ownable {
                 _feeTaxes.tournamentPercent= 8.00 * 10**2;
             }
  
-            else if(block.timestamp > tradeOpenTime + 6 hours && block.timestamp <= tradeOpenTime + 12 hours){
+            else if(block.timestamp > tradeOpenTime + 16 minutes && block.timestamp <= tradeOpenTime + 24 minutes){
                 fee_buy = 21.00 * 10 ** 2;
                 fee_sell = 21.00 * 10 ** 2;
                 _feeTaxes.liqPoolPercent = 7.00 * 10 ** 2;
                 _feeTaxes.marketingPercent = 7.00 * 10 ** 2;
                 _feeTaxes.tournamentPercent= 7.00 * 10**2;
             }
-            else if(block.timestamp > tradeOpenTime + 12 hours && block.timestamp <= tradeOpenTime + 24 hours){
+            else if(block.timestamp > tradeOpenTime + 24 minutes && block.timestamp <= tradeOpenTime + 32 minutes){
                 fee_buy = 15.00 * 10 ** 2;
                 fee_sell = 15.00 * 10 ** 2;
                 _feeTaxes.liqPoolPercent = 5.00 * 10 ** 2;
@@ -494,8 +494,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
                 _feeTaxes.tournamentPercent= 1.00 * 10**2;
             }
  
-            // Stop updating fees after 24 hours
-            if (block.timestamp > tradeOpenTime + 24 hours) {
+            // Stop updating fees after 40 minutes
+            if (block.timestamp > tradeOpenTime + 40 minutes) {
                 updateFeesActive = false;
             }
         }
