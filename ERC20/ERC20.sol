@@ -2,7 +2,7 @@
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -528,11 +528,14 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 
-contract Token is ERC20 {
+contract TestToken is ERC20 {
 
-    constructor(string memory tokenName, string memory tokenSymbol, uint256 totalSupply) ERC20(tokenName, tokenSymbol){
-
+    constructor() ERC20("TestToken", "TEST"){
+        
+        uint256 totalSupply = 1000000000;
+        
         _mint(msg.sender, totalSupply * (10**decimals()));
+
     }
 
 }
