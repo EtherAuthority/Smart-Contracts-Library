@@ -527,9 +527,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 
-contract Token is ERC20 {
+contract CXCtoken is ERC20 {
 
-    constructor() ERC20("TokenName", "TokenSymbol"){
+    constructor() ERC20("CXC Token", "CXC"){
         
         uint256 totalSupply = 300000000;
         
