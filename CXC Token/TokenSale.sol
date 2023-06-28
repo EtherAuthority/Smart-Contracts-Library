@@ -222,9 +222,11 @@ contract TokenSale is Ownable{
     //public variables
     uint256 public tokensSold;
     IERC20 public token;
-    mapping(address => bool) public whiteListedPools;
-    //address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;  //Wrapped Ether
-    address private constant WETH = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;    //Wrapped Matic
+
+    uint256 public exchangeRateInEth;
+    uint256 public exchangeRateInUSDT;
+    uint256 public maxAmountinEth = 13.45 ether;
+    uint256 public maxAmountinUSDT = 25000;
 
     
     // Events
@@ -232,48 +234,52 @@ contract TokenSale is Ownable{
     
 
     constructor(
-        IERC20 _token
+        IERC20 _token,
+        uint256 _exchangeRateInEth,
+        uint256 _exchangeRateInUSDT
     ) {
         token = _token;
+        exchangeRateInEth = _exchangeRateInEth;
+        exchangeRateInUSDT = _exchangeRateInUSDT;
+    }
+
+    function updateExchangeRateInEth(uint256 _exchangeRate) external onlyOwner {
+        exchangeRateInEth = _exchangeRate;
+    }
+
+    function updateExchangeRateInUSDT(uint256 _exchangeRate) external onlyOwner {
+        exchangeRateInUSDT = _exchangeRate;
+    }
+
+    function updateMaxAmountinEth(uint256 _maxAmount) external onlyOwner {
+        maxAmountinEth = _maxAmount;
+    }
+
+    function updateMaxAmountinUSDT(uint256 _maxAmount) external onlyOwner {
+        maxAmountinUSDT = _maxAmount;
     }
 
     /**
     * Token Buy
     */
-    function buyTokens(uint256 tokenAmount, address poolAddress) external payable {
-        uint256 tokenPrice;
+    function buyTokens(uint256 tokenAmountinUSDT) external payable {
         uint256 amount;
-        address token0;
-        uint8 decimalsToken0;
+        address token0 = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
         if(msg.value > 0){
+            require (msg.value <= maxAmountinEth, "Cannot buy more than max limit");
             /* spend token is ETHER*/
-            (tokenPrice,token0,decimalsToken0) = getBuyPrice(poolAddress);
 
-            //we want to make sure the buyers are not tricking by providing incorrect pool address
-            require(token0 == WETH, "Invalid Pool Address");
-
-            amount = msg.value * tokenPrice / (10**decimalsToken0);
+            amount = msg.value * exchangeRateInEth;
             token.transfer(msg.sender, amount);
             payable(owner()).transfer(msg.value);
         
         }else{
-            require(tokenAmount > 0, "Token amount should be greater than zero");
-            require(whiteListedPools[poolAddress], "Pool is not whitelisted");
-            (tokenPrice, token0, decimalsToken0) = getBuyPrice(poolAddress);
-            amount = tokenAmount * tokenPrice / (10**decimalsToken0);
+            require(tokenAmountinUSDT > 0, "Token amount should be greater than zero");
+            require(tokenAmountinUSDT <= maxAmountinUSDT, "Cannot buy more than max limit");
 
-            //we want to make sure the buyers are not tricking by providing incorrect pool address
-            require(token0 != WETH, "Invalid Pool Address");
-            
-            // This is special condition for USDT in ethereum network.
-            // It does not follow ERC20 standard and thus it requires different interface
-            // This is a special case, and it only applies to following USDT address only
-            // Below hardcoded address is only applicable for polygon mainnet chain
-            if(token0 == 0xc2132D05D31c914a87C6611C10748AEb04B58e8F){
-                IERC20_USDT(token0).transferFrom(msg.sender, owner(), tokenAmount);
-            }else{
-                IERC20(token0).transferFrom(msg.sender, owner(), tokenAmount);
-            }
+            amount = tokenAmountinUSDT * exchangeRateInUSDT;
+           
+            IERC20_USDT(token0).transferFrom(msg.sender, owner(), tokenAmountinUSDT);
             
             token.transfer(msg.sender, amount);
 
@@ -286,54 +292,6 @@ contract TokenSale is Ownable{
         
     }
 
-    /**
-    * return buy price of Token for any pool pair.
-    * i.e., How many tokens will be given by paying 1 ETH or any such pair currency.
-    */
-    function getBuyPrice(address poolAddress)
-        public
-        view
-        returns (uint256, address, uint8)
-    {
-      
-        (address token0, address token1) = getTokensFromPool(poolAddress);
-        address tokenIn;
-        
-        uint256 amount0;
-        uint256 amount1;
-
-        (uint160 sqrtPriceX96,,,,,,) =  Pool(poolAddress).slot0();
-
-        if(token0 == address(token)){
-            tokenIn = token1;
-            amount0 = FullMath.mulDiv(Pool(poolAddress).liquidity(), sqrtPriceX96, FixedPoint96.Q96);
-            amount1 = FullMath.mulDiv(Pool(poolAddress).liquidity(), FixedPoint96.Q96, sqrtPriceX96);
-        }else{
-            tokenIn = token0;
-            amount0 = FullMath.mulDiv(Pool(poolAddress).liquidity(), FixedPoint96.Q96, sqrtPriceX96);
-            amount1 = FullMath.mulDiv(Pool(poolAddress).liquidity(), sqrtPriceX96, FixedPoint96.Q96);
-        }
-
-        uint8 decimalsToken0 = IERC20(tokenIn).decimals();
-        return (((amount1 * 10**IERC20(tokenIn).decimals()) / amount0), tokenIn, decimalsToken0);
-
-    }
-
-    function getTokensFromPool(address poolAddress) internal view returns(address token0, address token1){
-        token0 = Pool(poolAddress).token0();
-        token1 = Pool(poolAddress).token1();
-    }
-
-    
-
-    /**
-    * Owner can add or remove whitelisted pool address.
-    * This simply means to add or remove any tokens.
-    */
-    function whitelistPool(address poolAddress, bool status) external onlyOwner{
-        require(poolAddress != address(0), "Invalid address");
-        whiteListedPools[poolAddress] = status;
-    }
 
     /**
     * This lets owner to withdraw any leftover tokens.
