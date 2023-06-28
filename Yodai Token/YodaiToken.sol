@@ -299,9 +299,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     uint256 public burn_last;
  
     //Maxes
-    uint256 public max_tx = 20_100_000 * 10 ** _decimals; //2%
-    uint256 public max_wallet = 20_100_000 * 10 ** _decimals; //2%
-    uint256 public swap_at_amount = 20_100_000 * 10 ** _decimals; //2%
+    uint256 public max_tx = 20_000_000 * 10 ** _decimals; //2%
+    uint256 public swap_at_amount = 20_000_000 * 10 ** _decimals; //2%
  
     //ERC20
     mapping(address => uint256) internal _balances;
@@ -329,8 +328,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
  
     constructor(address _marketingWallet, address _tournamentWallet) {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-            0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3 //BSC Testnet
+            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            //0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3 //BSC Testnet
             
         );
         uniswapV2Router = _uniswapV2Router;
@@ -357,14 +356,10 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         fee_sell = _fee_sell;
     }
  
-    //Set max tx, wallet
-    function SetMaxes(uint256 _max_tx, uint256 _max_wallet) public onlyOwner {
-        require(
-            _max_tx >= min_maxes && _max_wallet >= min_maxes,
-            "Too low max"
-        );
+    //Set max tx
+    function SetMaxes(uint256 _max_tx) public onlyOwner {
+        require(_max_tx >= min_maxes, "Too low max");
         max_tx = CalcPercent(_totalSupply, _max_tx);
-        max_wallet = CalcPercent(_totalSupply, _max_wallet);
     }
  
     function SetTokenSwap(
@@ -537,6 +532,7 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         //Calculate fee if conditions met
         //Buy
         if (isbuy) {
+            require (amount <= max_tx, "Cannot buy more than max limit");
             if (!ignore_fee[to]) {
                 fee_amount = CalcPercent(amount, fee_buy);
             }
@@ -556,18 +552,13 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         if (limits_active) {
             //Check maxes
             require(amount <= max_tx, "Max TX reached");
-            //Exclude lp pair
-            if (to != pair_addr) {
-                require(
-                    _balances[to] + amount <= max_wallet,
-                    "Max wallet reached"
-                );
-            }
         }
+
         //Transfer fee tokens to contract
         if (fee_amount > 0) {
             _transferTokens(from, address(this), fee_amount);
         }
+        
         //Transfer tokens
         _transferTokens(from, to, amount);
     }
