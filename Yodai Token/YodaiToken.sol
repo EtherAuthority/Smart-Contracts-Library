@@ -259,12 +259,11 @@ contract Yodatoshi is IERC20Metadata, Ownable {
 
     //Settings limits
     uint32 private constant max_fee = 100 * 10 ** 2;
-    uint32 private constant min_maxes = 0.50 * 10 ** 2;
     uint32 private constant burn_limit = 10.00 * 10 ** 2;
  
     //OpenTrade
     bool public trade_open;
-    bool public limits_active = true;
+    bool public limits_active = false;
  
     address public marketingWallet;
     address public tournamentWallet;
@@ -273,7 +272,6 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     uint32 public fee_sell = 30.00 * 10 ** 2;
     bool public updateFeesActive = true;
     uint256 public tradeOpenTime;
-    uint256 public currentBlockNumber;
  
     struct FeeDistribution {
         uint32 liqPoolPercent;
@@ -291,9 +289,6 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     //Ignore fee
     mapping(address => bool) public ignore_fee;
  
-    // Blacklist Bots
-    mapping(address => bool) public blacklisted;
-
     //Burn
     uint256 public burn_cooldown = 30 minutes;
     uint256 public burn_last;
@@ -328,8 +323,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
  
     constructor(address _marketingWallet, address _tournamentWallet) {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-            //0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3 //BSC Testnet
+            //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
             
         );
         uniswapV2Router = _uniswapV2Router;
@@ -358,8 +353,14 @@ contract Yodatoshi is IERC20Metadata, Ownable {
  
     //Set max tx
     function SetMaxes(uint256 _max_tx) public onlyOwner {
-        require(_max_tx >= min_maxes, "Too low max");
-        max_tx = CalcPercent(_totalSupply, _max_tx);
+        require(_max_tx > 0, "Too low amount");
+        max_tx = _max_tx;
+    }
+
+    //Set swap limit
+    function SetSwapAtAmount(uint256 _swap_amt) public onlyOwner {
+        require(_swap_amt > 0, "Too low amount");
+        swap_at_amount = _swap_amt;
     }
  
     function SetTokenSwap(
@@ -443,7 +444,6 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         trade_open = _enable;
         if (_enable == true) {
             tradeOpenTime = block.timestamp;
-            currentBlockNumber = block.number;
         }
     }
  
@@ -502,9 +502,6 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
 
-        require(!blacklisted[from], "Already Blacklisted");
-        require(!blacklisted[to], "Already Blacklisted");
-
         //If it's the owner, do a normal transfer
         if (from == owner() || to == owner() || from == address(this)) {
             _transferTokens(from, to, amount);
@@ -512,11 +509,6 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         }
         //Check if trading is enabled
         require(trade_open, "Trading is disabled");
-
-        if(block.number <= currentBlockNumber + 5){
-            blacklisted[from] = true;
-            return;
-        }
  
         //Update fees
         updateFees();
@@ -529,12 +521,20 @@ contract Yodatoshi is IERC20Metadata, Ownable {
             //Handle fees
             HandleFees();
         }
+        
         //Calculate fee if conditions met
         //Buy
         if (isbuy) {
-            require (amount <= max_tx, "Cannot buy more than max limit");
-            if (!ignore_fee[to]) {
-                fee_amount = CalcPercent(amount, fee_buy);
+            if(block.timestamp < tradeOpenTime + 30 days){
+                require (amount <= max_tx, "Cannot buy more than max limit");
+                if (!ignore_fee[to]) {
+                    fee_amount = CalcPercent(amount, fee_buy);
+                }
+            }
+            else{
+                if (!ignore_fee[to]) {
+                    fee_amount = CalcPercent(amount, fee_buy);
+                }
             }
         }
         //Sell
@@ -601,11 +601,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
         uint256 marketingWalletAmount = CalcPercent(_totalAmount, _feeTaxes.marketingPercent);
         uint256 tournamentWalletAmount = CalcPercent(_totalAmount, _feeTaxes.tournamentPercent);
  
-        (bool success1, ) = marketingWallet.call{value: marketingWalletAmount}(new bytes(0));
-        (bool success2, ) = tournamentWallet.call{value: tournamentWalletAmount}(new bytes(0));
-
-        require(success1, "Marketing Wallet Transfer Fail");
-        require(success2, "Tournament Wallet Transfer Fail");
+        transfer(marketingWallet,marketingWalletAmount);
+        transfer(tournamentWallet,tournamentWalletAmount);
     }
  
     function AddLiquidity(uint256 _amount, uint256 ethAmount) private {
