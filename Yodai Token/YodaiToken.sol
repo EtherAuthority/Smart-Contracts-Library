@@ -254,7 +254,7 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     string private constant _name = "Yodatoshi";
     string private constant _symbol = "YODAI";
     uint8 private constant _decimals = 18;
-    uint256 internal constant _totalSupply = 1_000_000_000 * 10 ** _decimals;
+    uint256 internal constant _totalSupply = 4_200_000_000 * 10 ** _decimals;
     uint32 private constant percent_helper = 100 * 10 ** 2;
 
     //Settings limits
@@ -294,8 +294,8 @@ contract Yodatoshi is IERC20Metadata, Ownable {
     uint256 public burn_last;
  
     //Maxes
-    uint256 public max_tx = 20_000_000 * 10 ** _decimals; //2%
-    uint256 public swap_at_amount = 20_000_000 * 10 ** _decimals; //2%
+    uint256 public max_tx = 84_000_000 * 10 ** _decimals; //2%
+    uint256 public swap_at_amount = 84_000_000 * 10 ** _decimals; //2%
  
     //ERC20
     mapping(address => uint256) internal _balances;
