@@ -471,7 +471,6 @@ contract Vesting is Ownable {
         year = DateTime.getYear(_timeStemp);
     }
 
-    // Years Ends with fab and 1st march we can withdraw maturity amount
     function timestampFromDateTime(uint256 _timeStemp)
         internal
         pure
@@ -506,7 +505,6 @@ contract Vesting is Ownable {
 
 
     function CompletedVestingYear(address user) public view returns (uint256) {
-        require(block.timestamp < unlockDate[user], "Vesting time completed");
         return (
             VestingTime[user].div(4).sub(getYear(unlockDate[user]).sub(getYear(block.timestamp))
             )
@@ -516,7 +514,6 @@ contract Vesting is Ownable {
     function ViewVestingAmount(address user) public view returns (uint256) {
         uint256 tempVer = 0;
         for (uint256 i = 1; i <= VestingTime[user]; i++) {
-            require(deployTimestamp + quarterly <= block.timestamp,"Unable to Withdraw");
 
             if (block.timestamp >= deployTimestamp + (quarterly * i)) {
                 if (withdrawdetails[user][i].time == 0) {
@@ -558,4 +555,3 @@ contract Vesting is Ownable {
         return true;
     }
 }
-
