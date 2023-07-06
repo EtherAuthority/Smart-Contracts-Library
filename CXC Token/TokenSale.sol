@@ -15,15 +15,6 @@ interface IERC20
 } 
 
 
-//USDT contract in Ethereum does not follow ERC20 standard so it needs different interface
-interface IERC20_USDT
-{
-    function transfer(address _to, uint256 _amount) external;
-    function transferFrom(address _from, address _to, uint _value) external;
-    function balanceOf(address who) external returns (uint);
-}
-
-
 
 // Ownership smart contract
 abstract contract Ownable {
@@ -111,6 +102,44 @@ contract TokenSale is Ownable{
         exchangeRateInUSDT = _exchangeRateInUSDT;
     }
 
+
+
+    /**
+    * Token Buy
+    */
+    function buyTokens(uint256 tokenAmountinUSDT) external payable {
+        uint256 amount;
+        if(msg.value > 0){
+            require (msg.value <= maxAmountinEth, "Cannot buy more than max limit");
+            /* spend token is ETHER*/
+
+            amount = msg.value * exchangeRateInEth;
+            token.transfer(msg.sender, amount);
+            payable(owner()).transfer(msg.value);
+        }
+        else{
+            require(IERC20(usdtToken).balanceOf(msg.sender) >= tokenAmountinUSDT, "Not sufficient balance");
+            require(tokenAmountinUSDT > 0, "Token amount should be greater than zero");
+            require(tokenAmountinUSDT <= maxAmountinUSDT, "Cannot buy more than max limit");
+
+            amount = tokenAmountinUSDT * exchangeRateInUSDT;
+           
+            IERC20(usdtToken).transferFrom(msg.sender, owner(), tokenAmountinUSDT);
+            
+            token.transfer(msg.sender, amount);
+
+        }
+
+        tokensSold += amount;
+
+        emit TokensPurchased(msg.sender, usdtToken, amount);
+        
+    }
+
+
+    /**
+    Owner functions
+    */
     function updateExchangeRateInEth(uint256 _exchangeRate) external onlyOwner {
         exchangeRateInEth = _exchangeRate;
     }
@@ -127,41 +156,6 @@ contract TokenSale is Ownable{
         maxAmountinUSDT = _maxAmount;
     }
 
-    /**
-    * Token Buy
-    */
-    function buyTokens(uint256 tokenAmountinUSDT) external payable {
-        uint256 amount;
-        if(msg.value > 0){
-            require (msg.value <= maxAmountinEth, "Cannot buy more than max limit");
-            /* spend token is ETHER*/
-
-            amount = msg.value * exchangeRateInEth;
-            token.transfer(msg.sender, amount);
-            payable(owner()).transfer(msg.value);
-        }
-        else{
-            require(IERC20_USDT(usdtToken).balanceOf(msg.sender) >= tokenAmountinUSDT, "Not sufficient balance");
-            require(tokenAmountinUSDT > 0, "Token amount should be greater than zero");
-            require(tokenAmountinUSDT <= maxAmountinUSDT, "Cannot buy more than max limit");
-
-            amount = tokenAmountinUSDT * exchangeRateInUSDT;
-           
-            IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), tokenAmountinUSDT);
-            
-            token.transfer(msg.sender, amount);
-
-        }
-
-        tokensSold += amount;
-
-        emit TokensPurchased(msg.sender, usdtToken, amount);
-        
-    }
-
-    /**
-    * This lets owner to withdraw any leftover tokens.
-    */
     function withdrawLeftoverTokens() external onlyOwner{
         uint256 balance = token.balanceOf(address(this));
         require(balance > 0, "No token balance to withdraw");
