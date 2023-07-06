@@ -80,8 +80,8 @@ contract TokenSale is Ownable{
     IERC20 public token;
     address public usdtToken;
 
-    uint256 public exchangeRateInEth;
-    uint256 public exchangeRateInUSDT;
+    uint256 public exchangeRateInEth = 2000;    // 1 ETH = how many tokens?
+    uint256 public exchangeRateInUSDT = 1;      // 1 USDT = how many tokens?
     uint256 public maxAmountinEth = 13.45 ether;
     uint256 public maxAmountinUSDT = 25000;
 
@@ -92,14 +92,10 @@ contract TokenSale is Ownable{
 
     constructor(
         IERC20 _token,
-        address _usdtToken,
-        uint256 _exchangeRateInEth,
-        uint256 _exchangeRateInUSDT
+        address _usdtToken
     ) {
         token = _token;
         usdtToken = _usdtToken;
-        exchangeRateInEth = _exchangeRateInEth;
-        exchangeRateInUSDT = _exchangeRateInUSDT;
     }
 
 
