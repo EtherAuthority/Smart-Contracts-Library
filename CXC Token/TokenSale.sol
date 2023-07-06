@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 
 // IERC20 standard interface
