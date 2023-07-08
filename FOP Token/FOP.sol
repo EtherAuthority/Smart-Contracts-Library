@@ -1,4 +1,3 @@
-
 /*
 
 
@@ -200,6 +199,8 @@ contract FOPToken is  Ownable {
 
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
+
+    mapping(address => bool) private blacklisted;
 
     mapping(address => bool) private _isExcludedFromFee;
     bool public _paused;
@@ -419,6 +420,23 @@ contract FOPToken is  Ownable {
         _liquidityThreshold = threshold;
     }
 
+    function addToBlacklist(address account) public onlyOwner{
+        require(!blacklisted[account], "Account is already blacklisted");
+        require(_msgSender() != account, "Cannot blacklist self");
+        blacklisted[account] = true;
+    }
+
+    function removeFromBlacklist(address account) public onlyOwner{
+        require(blacklisted[account], "Account is not blacklisted");
+        require(_msgSender() != account, "Cannot remove self from blacklist");
+        blacklisted[account] = false;
+    }
+
+    function isBlacklisted(address account) public view returns (bool) {
+        return blacklisted[account];
+    }
+
+
     //anyone can call this function. this is by design.
     function liquifyTokens() external{
          if (_liquidityCollected >= _liquidityThreshold ) {
@@ -492,6 +510,10 @@ contract FOPToken is  Ownable {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
+        
+        require(!blacklisted[sender], "Sender is blacklisted");
+        require(!blacklisted[recipient], "Recipient is blacklisted");
+       
         require(!_paused, "Trading is paused");
 
         uint256 taxAmount;
@@ -520,6 +542,8 @@ contract FOPToken is  Ownable {
             _transferTokens(sender, address(this), liquidityTax); // send liq tax to contract
         }
 
+
+        
         uint256 transferAmount = amount - (buyTax) - (sellTax) - (liquidityTax);
         _transferTokens(sender, recipient, transferAmount); // send to recipient
         
@@ -527,8 +551,10 @@ contract FOPToken is  Ownable {
         taxAmount = buyTax + sellTax;
         _transferTokens(sender, marketingWallet, taxAmount); // send tax to marketing wallet
 
-        _liquidityCollected += liquidityTax;       
+        _liquidityCollected += liquidityTax;
+
     }
+
 
 
     function _calculateTax(uint256 amount, uint256 taxPercentage) internal pure returns (uint256) {
