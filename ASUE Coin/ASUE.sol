@@ -545,7 +545,7 @@ contract ASUE is ERC20 {
 
     constructor() ERC20("ASUE Coin", "ASUE"){
         
-        uint256 totalSupply = 1000000;
+        uint256 totalSupply = 21000000;
         
         _mint(msg.sender, totalSupply * (10**decimals()));
 
