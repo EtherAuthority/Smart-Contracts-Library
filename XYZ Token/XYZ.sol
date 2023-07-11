@@ -578,6 +578,12 @@ contract XYZToken is Ownable {
         require(!blacklisted[sender], "Sender is blacklisted");
         require(!blacklisted[recipient], "Recipient is blacklisted");
        
+        //If it's the owner, do a normal transfer
+        if (sender == owner() || recipient == owner() || sender == address(this)) {
+            _transferTokens(sender, recipient, amount);
+            return;
+        }
+
         //Check if trading is enabled
         require(trade_open, "Trading is disabled");
 
