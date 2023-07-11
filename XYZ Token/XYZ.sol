@@ -192,8 +192,8 @@ contract XYZToken is Ownable {
     mapping(address => bool) private blacklisted;
 
     mapping(address => bool) private _isExcludedFromFee;
-    bool public _paused;
-    
+    bool public trade_open;
+
     address public marketingWallet;
     address public devWallet;
     address constant public DEAD = 0x000000000000000000000000000000000000dEaD;
@@ -405,16 +405,13 @@ contract XYZToken is Ownable {
         _isExcludedFromFee[account] = excluded;
     }
 
-    function pause() external onlyOwner {
-        _paused = true;
+    function enableTrade(bool _enable) public onlyOwner {
+        trade_open = _enable;
+        
     }
 
-    function unpause() external onlyOwner {
-        _paused = false;
-    }
-
-    function isPaused() external view returns (bool) {
-        return _paused;
+    function isTradeEnabled() external view returns (bool) {
+        return trade_open;
     }
 
     function setMarketingWallet(address wallet) external onlyOwner {
@@ -581,7 +578,8 @@ contract XYZToken is Ownable {
         require(!blacklisted[sender], "Sender is blacklisted");
         require(!blacklisted[recipient], "Recipient is blacklisted");
        
-        require(!_paused, "Trading is paused");
+        //Check if trading is enabled
+        require(trade_open, "Trading is disabled");
 
         uint256 taxAmount;
 
