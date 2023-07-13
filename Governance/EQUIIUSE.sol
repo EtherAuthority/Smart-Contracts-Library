@@ -610,7 +610,7 @@ contract EQUIIUS_E is ERC20, Ownable {
 
     uint256 public maxSupply;
 
-    constructor() ERC20("EQUIIUS 'E'", "EQE"){
+    constructor() ERC20("EQUIIUS E", "EQE"){
         
         uint256 totalSupply = 1000000000000000 * (10**decimals());
         maxSupply = totalSupply;
