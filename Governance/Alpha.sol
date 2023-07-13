@@ -609,11 +609,14 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 contract Alpha is ERC20, Ownable {
 
+    uint256 public maxSupply;
+
     constructor() ERC20("Alpha", "ALP"){
         
-        uint256 totalSupply = 1000000000000000;
+        uint256 totalSupply = 1000000000000000 * (10**decimals());
+        maxSupply = totalSupply;
         
-        _mint(msg.sender, totalSupply * (10**decimals()));
+        _mint(msg.sender, totalSupply);
 
     }
 
@@ -622,11 +625,15 @@ contract Alpha is ERC20, Ownable {
      * the total supply. Only accessible by the contract owner.
      */
     function mint(uint256 amount, address to) external onlyOwner {
+        require(totalSupply()+amount <= maxSupply, "Can not be minted more than max supply");
         _mint(to, amount);
     }
 
-    function burn(uint256 amount, address to) external onlyOwner {
-        _burn(to, amount);
+    /**
+     * @dev Burns `amount` tokens decreasing the total supply.
+     */
+    function burn(uint256 amount) external {
+        _burn(msg.sender, amount);
     }
 
 }
