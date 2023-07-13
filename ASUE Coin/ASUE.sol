@@ -189,10 +189,10 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
 
-contract ttt is Ownable {
+contract ASUE is Ownable {
 
-    string private constant _name = "ttt Coin";
-    string private constant _symbol = "ttt";
+    string private constant _name = "ASUE Coin";
+    string private constant _symbol = "ASUE";
     uint8 private constant _decimals = 18;
     uint256 private _totalSupply = 21000000 * 10**uint256(_decimals);
 
@@ -200,12 +200,11 @@ contract ttt is Ownable {
     mapping(address => mapping(address => uint256)) private _allowances;
 
     mapping(address => bool) private _isExcludedFromFee;
-    bool private trade_open;
 
     address public marketingWallet;
     address constant public DEAD = 0x000000000000000000000000000000000000dEaD;
 
-    uint256 public _buyTaxPercentage = 1000;        //1000 = 1%
+    uint256 public taxPercentage = 1000;        //1000 = 1%
 
     uint256 public _taxThreshold = 1000 * 10**uint256(_decimals); // Threshold for performing swapandliquify
 
@@ -389,14 +388,7 @@ contract ttt is Ownable {
         _isExcludedFromFee[account] = excluded;
     }
 
-    function enableTrade(bool _enable) public onlyOwner {
-        trade_open = _enable;
-        
-    }
-
-    function isTradeEnabled() external view returns (bool) {
-        return trade_open;
-    }
+   
 
     function setMarketingWallet(address wallet) external onlyOwner {
         marketingWallet = wallet;
@@ -471,31 +463,36 @@ contract ttt is Ownable {
         bool isBuy = sender == _uniswapPair;
         bool isSell = recipient == _uniswapPair;
 
-        uint256 buyTax;
+        uint256 tax;
+
 
         if(isBuy){
             if (!_isExcludedFromFee[recipient]){
-                buyTax = _calculateTax(amount, _buyTaxPercentage);
-                _transferTokens(sender, address(this), buyTax); // send buy tax and sell tax to contract
+                tax = _calculateTax(amount, taxPercentage);
+                _transferTokens(sender, address(this), tax); // send buy tax and sell tax to contract
             }
         }
 
-        if(isBuy || isSell){
-            //Check if trading is enabled
-            require(trade_open, "Trading is disabled");
+        if(isSell){
+            if (!_isExcludedFromFee[sender]){
+                tax = _calculateTax(amount, taxPercentage);
+                _transferTokens(sender, address(this), tax); // send buy tax and sell tax to contract
+            }
         }
 
-        _taxCollected += buyTax;
 
-        uint256 transferAmount = amount - (buyTax);
+
+        _taxCollected += tax;
+
+        uint256 transferAmount = amount - (tax);
         _transferTokens(sender, recipient, transferAmount); // send to recipient        
 
     }
 
 
 
-    function _calculateTax(uint256 amount, uint256 taxPercentage) internal pure returns (uint256) {
-        return amount * (taxPercentage) / (100000);
+    function _calculateTax(uint256 amount, uint256 _taxPercentage) internal pure returns (uint256) {
+        return amount * (_taxPercentage) / (100000);
     }
 
     fallback() external payable {}
