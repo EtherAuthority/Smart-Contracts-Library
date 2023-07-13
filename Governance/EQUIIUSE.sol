@@ -1,3 +1,13 @@
+/*
+
+███████  ██████  ██    ██ ██ ██ ██    ██ ███████         ███████ 
+██      ██    ██ ██    ██ ██ ██ ██    ██ ██              ██      
+█████   ██    ██ ██    ██ ██ ██ ██    ██ ███████         █████   
+██      ██ ▄▄ ██ ██    ██ ██ ██ ██    ██      ██         ██      
+███████  ██████   ██████  ██ ██  ██████  ███████         ███████ 
+            ▀▀                                                   
+                                                                
+*/
 // SPDX-License-Identifier: GPL-3.0
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
@@ -596,13 +606,16 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 
-contract EQUIIUSE is ERC20, Ownable {
+contract EQUIIUS_E is ERC20, Ownable {
+
+    uint256 public maxSupply;
 
     constructor() ERC20("EQUIIUS 'E'", "EQE"){
         
-        uint256 totalSupply = 1000000000000000;
+        uint256 totalSupply = 1000000000000000 * (10**decimals());
+        maxSupply = totalSupply;
         
-        _mint(msg.sender, totalSupply * (10**decimals()));
+        _mint(msg.sender, totalSupply);
 
     }
 
@@ -611,11 +624,15 @@ contract EQUIIUSE is ERC20, Ownable {
      * the total supply. Only accessible by the contract owner.
      */
     function mint(uint256 amount, address to) external onlyOwner {
+        require(totalSupply()+amount <= maxSupply, "Can not be minted more than max supply");
         _mint(to, amount);
     }
 
-    function burn(uint256 amount, address to) external onlyOwner {
-        _burn(to, amount);
+    /**
+     * @dev Burns `amount` tokens decreasing the total supply.
+     */
+    function burn(uint256 amount) external {
+        _burn(msg.sender, amount);
     }
 
 }
