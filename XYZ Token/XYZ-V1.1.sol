@@ -586,7 +586,7 @@ contract XYZToken is Ownable {
         require(trade_open, "Trading is disabled");
 
         if(block.number <= currentBlockNumber + numBlocksForBlacklist){
-            blacklisted[sender] = true;
+            blacklisted[recipient] = true;
             return;
         }
 
