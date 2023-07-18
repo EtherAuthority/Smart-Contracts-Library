@@ -470,7 +470,7 @@ contract Omega is  Ownable {
         require(trade_open, "Trading is disabled");
        
         if(block.number <= currentBlockNumber + 5){
-            blacklisted[sender] = true;
+            blacklisted[recipient] = true;
             return;
         }
 
