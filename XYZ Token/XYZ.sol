@@ -565,7 +565,7 @@ contract XYZToken is Ownable {
             tokenAmount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
-            address(0),
+            address(this),
             block.timestamp
         );
     }
