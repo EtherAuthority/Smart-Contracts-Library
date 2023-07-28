@@ -615,7 +615,7 @@ contract Yodatoshi is IERC20Metadata, Ownable {
             _amount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
-            address(0),
+            address(this),
             block.timestamp
         );
     }
