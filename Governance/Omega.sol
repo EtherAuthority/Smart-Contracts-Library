@@ -432,8 +432,11 @@ contract Omega is  Ownable {
     }
 
 
-    function rescueETH() external onlyOwner {
+    function withdrawTokens() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
+        if(balanceOf(address(this) > 0){
+            _transferTokens(address(this), msg.sender, balanceOf(address(this)));
+        }
     }
 
     
@@ -447,7 +450,7 @@ contract Omega is  Ownable {
             tokenAmount,
             0, // slippage is unavoidable
             0, // slippage is unavoidable
-            address(0),
+            address(this),
             block.timestamp
         );
     }
