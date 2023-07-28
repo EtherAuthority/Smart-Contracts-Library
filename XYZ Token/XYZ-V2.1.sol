@@ -220,7 +220,6 @@ contract XYZV2 is Ownable {
     IUniswapV2Router02 public uniswapV2Router;
     address public _uniswapPair;
 
-    uint256 public _taxCollected;
     bool public _inSwapAndLiquify = false;
 
     //events
@@ -468,15 +467,15 @@ contract XYZV2 is Ownable {
 
     //anyone can call this function. this is by design.
     function liquifyTokens() external{
-         if (_taxCollected >= _taxThreshold ) {
-            _taxCollected = 0;
+         if (balanceOf(address(this)) >= _taxThreshold ) {
             swapAndLiquify();
         }
        
     }
 
-    function rescueETH() external onlyOwner {
+    function withdrawTokens() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
+        _transferTokens(address(this), msg.sender, balanceOf(address(this)));
     }
 
     function swapTokensForEth(uint256 tokenAmount) private {
@@ -603,8 +602,6 @@ contract XYZV2 is Ownable {
 
         taxAmount = buyTax + sellTax;
         _transferTokens(sender, address(this), taxAmount); // send buy tax and sell tax to contract
-
-        _taxCollected += buyTax + sellTax + liquidityTax;
 
         uint256 transferAmount = amount - (buyTax) - (sellTax) - (liquidityTax);
         _transferTokens(sender, recipient, transferAmount); // send to recipient        
