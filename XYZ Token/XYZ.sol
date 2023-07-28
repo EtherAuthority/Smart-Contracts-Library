@@ -495,8 +495,10 @@ contract XYZToken is Ownable {
        
     }
 
-    function rescueETH() external onlyOwner {
+    function withdrawRemainingTokens() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
+        _taxCollected = 0;
+        _transferTokens(address(this), msg.sender, balanceOf(address(this)));
     }
 
     function swapTokensForEth(uint256 tokenAmount) private {
