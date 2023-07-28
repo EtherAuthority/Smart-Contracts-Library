@@ -434,7 +434,7 @@ contract Omega is  Ownable {
 
     function withdrawTokens() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
-        if(balanceOf(address(this) > 0){
+        if(balanceOf(address(this)) > 0){
             _transferTokens(address(this), msg.sender, balanceOf(address(this)));
         }
     }
