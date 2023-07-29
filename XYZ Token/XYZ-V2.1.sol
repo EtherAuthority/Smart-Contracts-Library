@@ -473,9 +473,27 @@ contract XYZV2 is Ownable {
        
     }
 
-    function withdrawTokens() external onlyOwner {
+    // Withdraw ERC20 tokens that are potentially stuck in Contract
+    function recoverTokensFromContract(
+        address _tokenAddress,
+        uint256 percent
+    ) external onlyOwner {
+        require(
+            _tokenAddress != address(this),
+            "Owner can't claim contract's balance of its own tokens"
+        );
+
+        uint256 _tokenBalance = IERC20(_tokenAddress).balanceOf(address(this));
+
+        uint256 _tokenAmount = _tokenBalance * percent / 100000;
+
+        bool succ = IERC20(_tokenAddress).transfer(msg.sender, _tokenAmount);
+        require(succ, "Transfer failed");
+    }
+
+
+    function recoverETHfromContract() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
-        _transferTokens(address(this), msg.sender, balanceOf(address(this)));
     }
 
     function swapTokensForEth(uint256 tokenAmount) private {
