@@ -1,3 +1,43 @@
+/**
+    Upon acceptance by the user (the "Participant") and USER Technologies, LLC (the "Company"), the Smartcontract Participation Agreement (the "Agreement") becomes effective. By the purchase of any USER Technologies, LLC assets or mananged projects or tokens, the Participant agrees to be bound by the terms and conditions set forth in this Agreement.
+
+    Non-Security Tokens
+
+    The Participant understands and acknowledges that the tokens, coins, or other digital assets (collectively, the "Tokens") offered in the Company's launch (the "Launch") are not considered securities and should not be treated as an investment or the purchase of shares, stocks, or any other form of securities in the Company.
+
+    Unregistered Tokens
+
+    The Participant is aware that the Tokens are not registered under any securities laws and that the Company has no intention to register them under any such laws. The Tokens should not be viewed as a form of investment, an opportunity to obtain equity, or any other ownership interest in the Company, nor should they be perceived as a promise of future returns.
+
+    No Guaranteed Liquidity
+
+    The Participant understands that the Tokens may not be easily tradable and that there may not be a liquid market for the Tokens at any given time. The Company does not guarantee, represent, or warrant that the Tokens will be tradable on any exchange or marketplace. The Participant acknowledges that the value of the Tokens may fluctuate and that they may not be able to sell or transfer the Tokens immediately or at any specific time in the future.
+
+    No Investment Advice
+
+    The Company is not providing any investment advice or recommendation to the Participant regarding the purchase of Tokens or participation in the Presale. The Participant is not relying on any advice or recommendation from the Company and acknowledges that they are participating in the Presale based on their own independent judgment and risk assessment.
+
+    Participant Representations and Warranties
+
+    The Participant represents and warrants that they are at least 18 years of age or the age of legal majority in their jurisdiction and have the legal capacity to enter into this Agreement. The Participant also represents and warrants that they are not purchasing the Tokens as an investment and that their participation in the Presale is not based on any expectation of profit or financial return.
+
+    Governing Law and Jurisdiction
+
+    This Agreement is governed by and construed in accordance with the laws of UAE without regard to conflict of law principles. Any disputes arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the courts of the UAE.
+
+    By purchasing this token, the Participant acknowledges that they have read, understood, and agree to be bound by the terms and conditions of this Agreement.
+*/
+
+
+/*
+    Taxes
+
+    Buy Tax      - 0.01% to USER Foundation, 0.01% to LP, 0.005% to be destroyed
+    Sell Tax     - 0.01% to USER Foundation, 0.03% to LP, 0.005% to be destroyed
+    Transfer Tax - 0.025% to LP, 0.005% to be destroyed
+
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
  
@@ -379,7 +419,8 @@ contract USRToken is Context, MultiSignWallet {
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);  
  
-    address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
+    //address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
+    address[] _owners = [0xFD153E3B7683f29fBE74EcA38992DE89F555113b, 0x93eCCa28c55555d1eb65001e9DE4a72917f3F9dc, 0x04Efd6422D5cf4Df2E363C8e7D390492a63f7a09];
     uint256 _requiredWallet = _owners.length;
  
     constructor(address _userFoundation) MultiSignWallet(_owners, _requiredWallet){
