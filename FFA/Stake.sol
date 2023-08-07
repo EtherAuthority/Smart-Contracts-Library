@@ -35,9 +35,11 @@ contract Stake {
        
        tokenAddress= _tokenContract; 
        //deployTimestamp = block.timestamp ;
-        RewardPercentage[3] = 3;
-        RewardPercentage[6] = 6;
-        RewardPercentage[12] = 15;
+        RewardPercentage[30] = 700;
+        RewardPercentage[90] = 7500;
+        RewardPercentage[180] = 3500;
+        RewardPercentage[360] = 160000;
+
        
     }  
 
@@ -80,14 +82,14 @@ contract Stake {
 
     function viewProfit() public view returns(uint){
         require(staking[msg.sender]._amount > 0,"Wallet Address is not Exist");
-        uint profit = staking[msg.sender]._amount *  RewardPercentage[staking[msg.sender]._stakingtime]/100;
+        uint profit = staking[msg.sender]._amount *  RewardPercentage[staking[msg.sender]._stakingtime]/10000;
         return profit;
     }
 
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
         require(staking[msg.sender]._amount == 0,"Wallet Address is already Exist");
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
-        uint profit = _stakeamount * RewardPercentage[_staketime]/100;
+        uint profit = _stakeamount * RewardPercentage[_staketime]/10000;
         staking[msg.sender] =  _staking(_staketime,block.timestamp,_stakeamount,profit);
 
         TokenI(tokenAddress).transfer(address(this), _stakeamount);
@@ -122,9 +124,22 @@ contract Stake {
             
              
             require(staking[msg.sender]._amount > 0,"Wallet Address is not Exist");
-            require(block.timestamp > locktime,"Tokens are Locked");
-            uint profit= staking[msg.sender]._profit;
-            uint totalAmt= staking[msg.sender]._amount+ profit;
+            uint totalAmt;
+            uint profit;
+            uint remainingProfit;
+
+            if(block.timestamp > locktime){
+            
+                profit= staking[msg.sender]._profit;
+                totalAmt= staking[msg.sender]._amount+ profit;
+
+            }else{
+
+                profit= staking[msg.sender]._profit;
+                remainingProfit=profit/2; //penalty
+                totalAmt= staking[msg.sender]._amount+ remainingProfit;
+
+            }
             staking[msg.sender]._amount=0;
             staking[msg.sender]._stakedtime=0;
             staking[msg.sender]._stakingtime=0;
