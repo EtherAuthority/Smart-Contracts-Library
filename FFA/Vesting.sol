@@ -56,8 +56,8 @@ contract Vesting {
     mapping(address=>mapping(uint=>_withdrawdetails)) public withdrawdetails;
     uint public deployTimestamp;
     address public tokenContract=address(0);
-    uint public oneyear = (31*12*(24*60*60));
-    //uint public oneyear = 60;
+   // uint public onemonth = (31*1*(24*60*60));
+    uint public onemonth = 60;
    
      function getYear(uint _timeStemp) internal  pure returns (uint256 year) {
         year = DateTime.getYear(_timeStemp);
@@ -78,16 +78,16 @@ contract Vesting {
        owner=msg.sender;       
        
        tokenContract= _tokenContract; 
-       deployTimestamp = timestampFromDateTime(block.timestamp);
-       //deployTimestamp = block.timestamp;
+       //deployTimestamp = timestampFromDateTime(block.timestamp);
+       deployTimestamp = block.timestamp;
        require(_wallet.length == _tokenamount.length && _wallet.length == _vestingTime.length,"Please check parameter values");
 
        for(uint i=0; i < _wallet.length; i++){      
        
          lockingWallet[_wallet[i]]=_tokenamount[i]; 
          VestingTime[_wallet[i]]=_vestingTime[i];
-         unlockDate[_wallet[i]] =  timestampFromDateTime(deployTimestamp + (_vestingTime[i] * (31*12*(24*60*60))));
-        
+       //  unlockDate[_wallet[i]] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+        unlockDate[_wallet[i]] =  deployTimestamp + (600);
 
         }
 
@@ -97,25 +97,20 @@ contract Vesting {
 
     event withdraw(address _to, uint _amount);
 
-    function CompletedVestingYear() public view  returns(uint){
-             require(block.timestamp < unlockDate[msg.sender],"Vesting time completed");
-            return (VestingTime[msg.sender].sub(getYear(unlockDate[msg.sender]).sub(getYear(block.timestamp))));
-        
-      }
-
+    
    
-     function ViewVestingAmount( address user )public view returns (uint){ 
+   function ViewVestingAmount( address user )public view returns (uint){ 
         uint tempVer = 0; 
-             for(uint i=1;i<=VestingTime[user];i++) 
+             for(uint i=1;i<=12;i++) 
              { 
-                 require(deployTimestamp+oneyear<=block.timestamp,"Unable to Withdraw"); 
-                 if(block.timestamp>=deployTimestamp+(oneyear*i)) 
+                 require(unlockDate[user]+onemonth<=block.timestamp,"Unable to Withdraw"); 
+                 if(block.timestamp>=unlockDate[user]+(onemonth*i)) 
                  { 
                      if(withdrawdetails[user][i].time==0) 
                      { 
-                        tempVer+=lockingWallet[user]/VestingTime[user];                        
+                        tempVer+=lockingWallet[user]/12;                        
                      } 
-                 } 
+                 }                                                                                                                                                                                                                          
                  else 
                  { 
                      break; 
@@ -124,41 +119,31 @@ contract Vesting {
              return tempVer; 
     }
     
-    // Years Ends with fab and 1st march we can withdraw maturity amount  
-    function withdrawTokens() public returns (bool){
-             require(lockingWallet[msg.sender] > 0,"Wallet Address is not Exist"); 
-             
-             uint tempVer = 0;
-             for(uint i=1;i<=VestingTime[msg.sender];i++)
-             {
-                 require(deployTimestamp+oneyear<=block.timestamp,"Unable to Withdraw");
-                 if(block.timestamp>=deployTimestamp+(oneyear*i))
-                 {
-                     if(withdrawdetails[msg.sender][i].time==0)
-                     {
-                        tempVer+=lockingWallet[msg.sender]/VestingTime[msg.sender];
-                        withdrawdetails[msg.sender][i]=_withdrawdetails(block.timestamp,lockingWallet[msg.sender]/VestingTime[msg.sender]);
-                     }
-                 }
-                 else
-                 {
-                     break;
-                 }
-             }
-
-             
-            
-                   
+     function withdrawTokens()public returns (bool){ 
+        uint tempVer = 0; 
+             for(uint i=1;i<=12;i++) 
+             { 
+                 require(unlockDate[msg.sender]+onemonth<=block.timestamp,"Unable to Withdraw"); 
+                 if(block.timestamp>=unlockDate[msg.sender]+(onemonth*i)) 
+                 { 
+                     if(withdrawdetails[msg.sender][i].time==0) 
+                     { 
+                        tempVer+=lockingWallet[msg.sender]/12; 
+                        withdrawdetails[msg.sender][i]=_withdrawdetails(block.timestamp,lockingWallet[msg.sender]/12);                       
+                     } 
+                 }                                                                                                                                                                                                                          
+                 else 
+                 { 
+                     break; 
+                 } 
+             } 
              Token(tokenContract).transfer(msg.sender, tempVer);
             
              emit withdraw(msg.sender,tempVer);
              return true;
-
-             
-           
     }
-
-   
+    
+ 
 
     
 }
