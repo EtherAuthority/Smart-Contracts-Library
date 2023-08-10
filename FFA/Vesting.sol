@@ -38,6 +38,7 @@ interface Token {
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
+    function decimals() external view returns (uint8);
 
 }
 
@@ -58,6 +59,7 @@ contract Vesting {
     address public tokenContract=address(0);
    // uint public onemonth = (31*1*(24*60*60));
     uint public onemonth = 60;
+    uint256 public decimals;
    
      function getYear(uint _timeStemp) internal  pure returns (uint256 year) {
         year = DateTime.getYear(_timeStemp);
@@ -73,25 +75,45 @@ contract Vesting {
         return DateTime.timestampFromDateTime(year, 3 , 1, 0, 0, 0);
     }
     
-    constructor(address[] memory _wallet,uint[] memory  _tokenamount, uint[] memory  _vestingTime, address _tokenContract) {
+    constructor( address _tokenContract) {
 
        owner=msg.sender;       
        
        tokenContract= _tokenContract; 
        //deployTimestamp = timestampFromDateTime(block.timestamp);
        deployTimestamp = block.timestamp;
-       require(_wallet.length == _tokenamount.length && _wallet.length == _vestingTime.length,"Please check parameter values");
+      
 
-       for(uint i=0; i < _wallet.length; i++){      
+          
+         decimals=Token(tokenContract).decimals();
+
        
-         lockingWallet[_wallet[i]]=_tokenamount[i]; 
-         VestingTime[_wallet[i]]=_vestingTime[i];
-       //  unlockDate[_wallet[i]] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
-        unlockDate[_wallet[i]] =  deployTimestamp + (600);
 
-        }
+         // A
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
 
-        
+     /*    // B
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+
+         // C
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+
+         //D       
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+
+        */
     } 
  
 
@@ -101,7 +123,7 @@ contract Vesting {
    
    function ViewVestingAmount( address user )public view returns (uint){ 
         uint tempVer = 0; 
-             for(uint i=1;i<=12;i++) 
+             for(uint i=0;i<12;i++) 
              { 
                  require(unlockDate[user]+onemonth<=block.timestamp,"Unable to Withdraw"); 
                  if(block.timestamp>=unlockDate[user]+(onemonth*i)) 
@@ -121,15 +143,15 @@ contract Vesting {
     
      function withdrawTokens()public returns (bool){ 
         uint tempVer = 0; 
-             for(uint i=1;i<=12;i++) 
+             for(uint i=0;i<12;i++) 
              { 
                  require(unlockDate[msg.sender]+onemonth<=block.timestamp,"Unable to Withdraw"); 
                  if(block.timestamp>=unlockDate[msg.sender]+(onemonth*i)) 
                  { 
-                     if(withdrawdetails[msg.sender][i].time==0) 
+                     if(withdrawdetails[msg.sender][i+1].time==0) 
                      { 
                         tempVer+=lockingWallet[msg.sender]/12; 
-                        withdrawdetails[msg.sender][i]=_withdrawdetails(block.timestamp,lockingWallet[msg.sender]/12);                       
+                        withdrawdetails[msg.sender][i+1]=_withdrawdetails(block.timestamp,lockingWallet[msg.sender]/12);                       
                      } 
                  }                                                                                                                                                                                                                          
                  else 
