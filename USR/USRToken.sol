@@ -75,7 +75,10 @@ abstract contract MultiSignWallet{
 
 
     struct Transaction{
-        bool  isExecuted;
+        address destination;
+        uint value;
+        bytes data;
+        bool isExecuted;
     }
 
 
@@ -127,10 +130,12 @@ abstract contract MultiSignWallet{
         _;
     }
 
-    function newTransaction() external onlyOwner returns(uint){
-
+    function newTransaction(address destination, uint value, bytes memory data) external onlyOwner returns(uint){
 
         transactions.push(Transaction({
+            destination:destination,
+            value:value,
+            data:data,
             isExecuted:false
         }));
 
@@ -170,8 +175,10 @@ abstract contract MultiSignWallet{
     // EXECUTE TRANSACTION 
     function executeTransaction(uint _trnxId) internal trnxExists(_trnxId) notExecuted(_trnxId){
         require(_getAprrovalCount(_trnxId)>=WalletRequired,"you don't have sufficient approval");
-        Transaction storage _transactions = transactions[_trnxId];
-        _transactions.isExecuted = true;
+        Transaction storage _transaction = transactions[_trnxId];
+        (bool success, ) = _transaction.destination.call{value: _transaction.value}(_transaction.data);
+        require(success, "Execution failed");
+        _transaction.isExecuted = true;
         emit Execute(_trnxId);
 
     }
@@ -418,8 +425,9 @@ contract USRToken is Context, MultiSignWallet {
      * a call to {approve}. `value` is the new allowance.
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);  
- 
-    address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
+    //address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
+
+    address[] _owners = [0xFd5CCCe6B6C57e0C789b2FA5081dAAa428DDfB48, 0x93eCCa28c55555d1eb65001e9DE4a72917f3F9dc, 0xFD153E3B7683f29fBE74EcA38992DE89F555113b];
     uint256 _requiredWallet = _owners.length;
  
     constructor(address _userFoundation) MultiSignWallet(_owners, _requiredWallet){
@@ -636,52 +644,52 @@ contract USRToken is Context, MultiSignWallet {
     }
 
     function setBuyUserFoundationPercentage(uint256 _userFoundationPercent) external onlyOwner {
-        require(_userFoundationPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_userFoundationPercent + _buyLiquidityTaxPercentage + _buyBurnTaxPercentage <= 5000, "Buy Tax percentage cannot exceed 5%");
         _buyUFTaxPercentage = _userFoundationPercent;
 
          updateShares();       
     }
 
     function setBuyLiquidityPercentage(uint256 _liquidityPercent) external onlyOwner {
-        require(_liquidityPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_liquidityPercent + _buyUFTaxPercentage + _buyBurnTaxPercentage <= 5000, " Buy Tax percentage cannot exceed 5%");
         _buyLiquidityTaxPercentage = _liquidityPercent;
 
          updateShares();       
     }
 
     function setBuyBurnPercentage(uint256 _burnPercent) external onlyOwner {
-        require(_burnPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_burnPercent + _buyUFTaxPercentage + _buyLiquidityTaxPercentage <= 5000, " Buy Tax percentage cannot exceed 5%");
         _buyBurnTaxPercentage = _burnPercent;
     }
 
     function setSellUserFoundationPercentage(uint256 _userFoundationPercent) external onlyOwner {
-        require(_userFoundationPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_userFoundationPercent + _sellLiquidityTaxPercentage + _sellBurnTaxPercentage <= 5000, " Sell Tax percentage cannot exceed 5%");
         _sellUFTaxPercentage = _userFoundationPercent;
 
          updateShares();       
     }
 
     function setSellLiquidityPercentage(uint256 _liquidityPercent) external onlyOwner {
-        require(_liquidityPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_liquidityPercent + _sellUFTaxPercentage + _sellBurnTaxPercentage <= 5000, " Sell Tax percentage cannot exceed 5%");
         _sellLiquidityTaxPercentage = _liquidityPercent;
 
          updateShares();       
     }
 
     function setSellBurnPercentage(uint256 _burnPercent) external onlyOwner {
-        require(_burnPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_burnPercent + _sellUFTaxPercentage + _sellLiquidityTaxPercentage <= 5000, "Sell Tax percentage cannot exceed 5%");
         _sellBurnTaxPercentage = _burnPercent;
     }
 
     function setTransferLiquidityPercentage(uint256 _liquidityPercent) external onlyOwner {
-        require(_liquidityPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_liquidityPercent + _transferBurnTaxPercentage <= 3000, "Transfer Tax percentage cannot exceed 3%");
         _transferLiquidityTaxPercentage = _liquidityPercent;
 
          updateShares();       
     }
 
     function setTransferBurnPercentage(uint256 _burnPercent) external onlyOwner {
-        require(_burnPercent <= 25000, "Tax percentage cannot exceed 25%");
+        require(_burnPercent + _transferLiquidityTaxPercentage <= 3000, "Transfer Tax percentage cannot exceed 3%");
         _transferBurnTaxPercentage = _burnPercent;
     }
  
@@ -702,11 +710,8 @@ contract USRToken is Context, MultiSignWallet {
         _taxThreshold = threshold;
     }
  
-    function setNumberOfBlocksForBlacklist(uint256 numBlocks) external onlyOwner {
-        numBlocksForBlacklist = numBlocks;
-    }
- 
     function setMaxAmount(uint256 amount) external onlyOwner {
+        require(amount >= totalSupply()/1000, "Maximum amount must be greater than 0.1% of total supply");
         maxAmount = amount;
     }
 
