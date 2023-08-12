@@ -425,9 +425,8 @@ contract USRToken is Context, MultiSignWallet {
      * a call to {approve}. `value` is the new allowance.
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);  
-    //address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
-
-    address[] _owners = [0xFd5CCCe6B6C57e0C789b2FA5081dAAa428DDfB48, 0x93eCCa28c55555d1eb65001e9DE4a72917f3F9dc, 0xFD153E3B7683f29fBE74EcA38992DE89F555113b];
+    
+    address[] _owners = [0xC3dff9607991016E49F929548e21FDF8Cd25a144, 0xec61cd7DC45fe88f5b00D5E2902F68afA3f4c06F, 0xeEfb77fE0c8A184F61D999b0BC92BeA77a800A1c];
     uint256 _requiredWallet = _owners.length;
  
     constructor(address _userFoundation) MultiSignWallet(_owners, _requiredWallet){
