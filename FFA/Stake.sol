@@ -1,5 +1,6 @@
-//"SPDX-License-Identifier: UNLICENSED"
-pragma solidity 0.8.2; 
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.19;
 
 
 
@@ -8,20 +9,24 @@ interface TokenI {
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
+    function approve(address spender, uint256 amount) external returns(bool);
 }
 
 contract Stake { 
     address public owner;  
 
     //_stakigntime=month; _stakedtime=on which block u staked;
-    struct _staking{
+    struct _staking{         
+        uint _days;
         uint _stakingStarttime;
         uint _stakingEndtime;
         uint _amount;
         uint _profit;
     }
 
-    mapping(address=>mapping(uint256=>_staking)) public staking;    
+    mapping(address=>mapping(uint256=>_staking)) public staking; 
+    mapping(address=>uint) public activeStake;
+   
     mapping(uint => uint) public RewardPercentage;
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
@@ -40,6 +45,7 @@ contract Stake {
         RewardPercentage[180] = 3500;
         RewardPercentage[360] = 160000;
 
+     
         
     }  
 
@@ -51,8 +57,14 @@ contract Stake {
    
   }
 
+    function viewTotalStake()public view returns(uint){
+        return activeStake[msg.sender]; //stake[msg.sender][1]= _staking(30,block.timestamp,block.timestamp,122,22);
+
+    } 
    
     event unstake(address _to, uint _amount);
+
+
 
     function changeRewardPoolAddress( address _rewardaddress) public {
         RewardPoolAddress = _rewardaddress;
@@ -68,6 +80,7 @@ contract Stake {
     }
 
     function setRewardToken(uint _amount) public {
+        TokenI(tokenAddress).approve(RewardPoolAddress, _amount);
         TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);
        
     }   
@@ -81,23 +94,28 @@ contract Stake {
     }
 
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
-        require(staking[msg.sender][_staketime]._amount == 0,"Wallet Address is already Exist");
+
+        require(msg.sender == address(0),"Wallet Address can not be address 0");  
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
         require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");
+        
         uint profit = _stakeamount * RewardPercentage[_staketime]/10000;
-        staking[msg.sender][_staketime] =  _staking(block.timestamp,block.timestamp + (_staketime*(24*60*60)),_stakeamount,profit);
+
+        staking[msg.sender][activeStake[msg.sender]] =  _staking(_staketime,block.timestamp,block.timestamp + (_staketime*(24*60*60)),_stakeamount,profit);       
 
         TokenI(tokenAddress).transfer(address(this), _stakeamount);
+
+        activeStake[msg.sender]=activeStake[msg.sender]+1;
+
         return true;
        
     }
 
 
- function unStake(uint256 _stakeDays) public returns (bool){            
+ function unStake(uint256 _stakeid) public returns (bool){            
             
-            require(staking[msg.sender][_stakeDays]._amount > 0,"Wallet Address is not Exist");
-            require(RewardPercentage[_stakeDays] > 0,"Please enter valid stack days");
-            uint locktime=staking[msg.sender][_stakeDays]._stakingStarttime+600;
+            require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");            
+            uint locktime=staking[msg.sender][_stakeid]._stakingStarttime+600;
             
              
             
@@ -107,25 +125,26 @@ contract Stake {
 
             if(block.timestamp > locktime){
             
-                profit= staking[msg.sender][_stakeDays]._profit;
-                totalAmt= staking[msg.sender][_stakeDays]._amount+ profit;
+                profit= staking[msg.sender][_stakeid]._profit;
+                totalAmt= staking[msg.sender][_stakeid]._amount+ profit;
 
             }else{
 
-                profit= staking[msg.sender][_stakeDays]._profit;
+                profit= staking[msg.sender][_stakeid]._profit;
                 remainingProfit=profit/2; //penalty
-                totalAmt= staking[msg.sender][_stakeDays]._amount+ remainingProfit;
+                totalAmt= staking[msg.sender][_stakeid]._amount+ remainingProfit;
 
             }
-            staking[msg.sender][_stakeDays]._amount=0;
-            staking[msg.sender][_stakeDays]._stakingStarttime=0;
-            staking[msg.sender][_stakeDays]._stakingEndtime=0;
-            staking[msg.sender][_stakeDays]._profit=0;
+            staking[msg.sender][_stakeid]._days=0;
+            staking[msg.sender][_stakeid]._amount=0;
+            staking[msg.sender][_stakeid]._stakingStarttime=0;
+            staking[msg.sender][_stakeid]._stakingEndtime=0;
+            staking[msg.sender][_stakeid]._profit=0;
                  
 
             TokenI(tokenAddress).transfer(msg.sender, totalAmt);
 
-            
+            activeStake[msg.sender]=activeStake[msg.sender]-1;
              emit unstake(msg.sender,totalAmt);
             return true;
 
