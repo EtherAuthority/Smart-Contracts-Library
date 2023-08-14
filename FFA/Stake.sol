@@ -57,14 +57,15 @@ contract Stake {
    
   }
 
-    function viewTotalStake()public view returns(uint){
-        return activeStake[msg.sender]; //stake[msg.sender][1]= _staking(30,block.timestamp,block.timestamp,122,22);
-
-    } 
+   
    
     event unstake(address _to, uint _amount);
 
 
+     function viewTotalNoOfStake()public view returns(uint){
+        return activeStake[msg.sender]; //stake[msg.sender][1]= _staking(30,block.timestamp,block.timestamp,122,22);
+
+    } 
 
     function changeRewardPoolAddress( address _rewardaddress) public {
         RewardPoolAddress = _rewardaddress;
@@ -83,13 +84,11 @@ contract Stake {
         TokenI(tokenAddress).approve(RewardPoolAddress, _amount);
         TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);
        
-    }   
+    }  
 
-   
-
-    function viewProfit(uint256 _stakeDays ) public view returns(uint){
-        require(staking[msg.sender][_stakeDays]._amount > 0,"Wallet Address is not Exist");
-        uint profit = staking[msg.sender][_stakeDays]._amount *  RewardPercentage[_stakeDays]/10000;
+    function viewProfit(uint256 _stakeid ) public view returns(uint){
+        require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");
+        uint profit = staking[msg.sender][_stakeid]._amount *  RewardPercentage[_stakeDays]/10000;
         return profit;
     }
 
