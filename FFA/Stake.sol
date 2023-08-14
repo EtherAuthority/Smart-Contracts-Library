@@ -94,7 +94,7 @@ contract Stake {
 
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
 
-        require(msg.sender == address(0),"Wallet Address can not be address 0");  
+        require(msg.sender != address(0),"Wallet Address can not be address 0");  
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
         require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");
         
