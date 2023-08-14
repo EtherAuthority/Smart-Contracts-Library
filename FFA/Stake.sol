@@ -15,7 +15,7 @@ interface TokenI {
 contract Stake { 
     address public owner;  
 
-    //_stakigntime=month; _stakedtime=on which block u staked;
+    
     struct _staking{         
         uint _days;
         uint _stakingStarttime;
@@ -25,9 +25,9 @@ contract Stake {
     }
 
     mapping(address=>mapping(uint256=>_staking)) public staking; 
-    mapping(address=>uint) public activeStake;
+    mapping(address=>uint256) public activeStake;
    
-    mapping(uint => uint) public RewardPercentage;
+    mapping(uint256 => uint256) public RewardPercentage;
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
     address public contractadd = address(this);
@@ -39,7 +39,7 @@ contract Stake {
        owner=msg.sender;       
        
        tokenAddress= _tokenContract; 
-       //deployTimestamp = block.timestamp ;
+       
         RewardPercentage[30] = 700;
         RewardPercentage[90] = 7500;
         RewardPercentage[180] = 3500;
@@ -57,41 +57,72 @@ contract Stake {
    
   }
 
-   
+    
    
     event unstake(address _to, uint _amount);
 
 
-     function viewTotalNoOfStake()public view returns(uint){
+    /**
+     * @dev returns number of stake, done by particular wallet .
+     */
+
+    function viewTotalStake()public view returns(uint){
         return activeStake[msg.sender]; //stake[msg.sender][1]= _staking(30,block.timestamp,block.timestamp,122,22);
 
     } 
 
-    function changeRewardPoolAddress( address _rewardaddress) public {
+    /**
+     * @dev This wallet is useful for maintain contract token balance.
+     * owner can manage profit distribution using rewardPool address.
+     */
+    function changeRewardPoolAddress( address _rewardaddress) public onlyOwner {
         RewardPoolAddress = _rewardaddress;
     }   
 
-    function RewardPercentageChange( uint _stakeDays , uint _percentage) public returns(uint) {
+    /**
+     * @dev return new days wise staking percentage.
+     * owner can change staking _percentage .
+     */
+    function RewardPercentageChange( uint256 _stakeDays , uint256 _percentage) public onlyOwner returns(uint256) {
         RewardPercentage[_stakeDays] = _percentage;
         return  RewardPercentage[_stakeDays];
     }
 
+    /**
+     * @dev return days wise staking percentage.
+     * 
+     */
     function viewPercentage(uint _stakeDays) public view returns(uint){
         return RewardPercentage[_stakeDays];
     }
 
-    function setRewardToken(uint _amount) public {
+    /**
+     * @dev set number of token from the RewardPoolAddress
+     *
+     */
+    function setRewardToken(uint _amount) public onlyOwner{
         TokenI(tokenAddress).approve(RewardPoolAddress, _amount);
         TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);
        
-    }  
+    }   
 
-    function viewProfit(uint256 _stakeid ) public view returns(uint){
-        require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");
-        uint profit = staking[msg.sender][_stakeid]._amount *  RewardPercentage[_stakeDays]/10000;
+   
+     /**
+     * @dev returns staking wallet profited amount
+     *
+     */
+    function viewProfit(uint256 _stakeDays ) public view returns(uint){
+        require(staking[msg.sender][_stakeDays]._amount > 0,"Wallet Address is not Exist");
+        uint profit = staking[msg.sender][_stakeDays]._amount *  RewardPercentage[_stakeDays]/10000;
         return profit;
     }
 
+    /**
+     * @dev stake amount for particular duration.
+     * parameters : _staketime in days (exp: 30, 90, 180 ,360 )
+     *              _stakeamount ( need to set token amount for stake)
+     * it will increase activeStake result of particular wallet.
+     */
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
 
         require(msg.sender != address(0),"Wallet Address can not be address 0");  
@@ -110,7 +141,14 @@ contract Stake {
        
     }
 
-
+     /**
+     * @dev stake amount for particular duration.
+     * parameters : _stakeid is active stake ids which is getting from activeStake-1
+     *              
+     * it will decrease activeStake result of particular wallet.
+     * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
+     *          to the staking wallet.
+     */
  function unStake(uint256 _stakeid) public returns (bool){            
             
             require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");            
