@@ -74,54 +74,54 @@ contract Vesting {
         returns (uint256 timestamp)
     {
         uint year=getYear(_timeStemp);
-        return DateTime.timestampFromDateTime(year, 3 , 1, 0, 0, 0);
+        return DateTime.timestampFromDateTime(year, 0 , 1, 0, 0, 0);
     }
     
     constructor( address _tokenContract) {
 
-       owner=msg.sender;       
-       
-       tokenContract= _tokenContract; 
-       //deployTimestamp = timestampFromDateTime(block.timestamp);
-       deployTimestamp = block.timestamp;
-      
-
-          
-         decimals=Token(tokenContract).decimals();
+        owner=msg.sender;
+        tokenContract= _tokenContract; 
+        //deployTimestamp = timestampFromDateTime(block.timestamp);
+        deployTimestamp = block.timestamp;          
+        decimals=Token(tokenContract).decimals();
 
        
 
-         // A
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         // Category A
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));// unlock start
+         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+            /*
+         // Category B
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));// unlock start
          unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
 
-     /*    // B
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         // Category c
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));// unlock start
          unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
 
-         // C
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
+         // Category D
+         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
+         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));// unlock start
          unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
 
-         //D       
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals); 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24;
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  timestampFromDateTime(deployTimestamp + (31*_vestingTime[i]*(24*60*60)));
-         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
-
-        */
+            */
     } 
  
 
     event withdraw(address _to, uint _amount);
 
-    
+      /**
+     * @dev ViewVestingAmount shows available Team Allocation amount of particular wallet
+     * parameters : user (wallet Address)
+     *              
+     */
    
    function ViewVestingAmount( address user )public view returns (uint){ 
         uint tempVer = 0; 
@@ -142,6 +142,10 @@ contract Vesting {
              } 
              return tempVer; 
     }
+      /**
+     * @dev Team Allocation amount release in particular category wallet.
+     *
+     */
     
      function withdrawTokens()public returns (bool){ 
         uint tempVer = 0; 
