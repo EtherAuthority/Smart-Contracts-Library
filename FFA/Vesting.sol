@@ -14,14 +14,11 @@ interface Token {
 }
 
 contract Vesting { 
-
-    address public owner;  
-   
-
     struct _withdrawdetails{
         uint time;
         uint amount;
     }
+    address public owner; 
     mapping(address => uint) public lockingWallet;
     mapping(address => uint) public VestingTime;
     mapping(address => uint) public unlockDate;
@@ -30,8 +27,7 @@ contract Vesting {
     address public tokenContract=address(0);
    // uint public onemonth = (31*1*(24*60*60));
     uint public onemonth = 60;
-    uint256 public decimals;
-   
+    uint256 public decimals;   
     
     constructor( address _tokenContract) {
         owner=msg.sender;
@@ -82,15 +78,12 @@ contract Vesting {
         for(uint i=0;i<12;i++) 
         { 
             if(unlockDate[user]+onemonth<=block.timestamp){
-                 if(block.timestamp>=unlockDate[user]+(onemonth*i)) 
-                 { 
+                 if(block.timestamp>=unlockDate[user]+(onemonth*i)) { 
                      if(withdrawdetails[user][i].time==0) 
                      { 
                         VestingAmount+=lockingWallet[user]/12;                        
                      } 
-                 }                                                                                                                                                                                                                          
-                 else 
-                 { 
+                 } else { 
                      break; 
                  } 
              }
@@ -106,16 +99,13 @@ contract Vesting {
              for(uint i=0;i<12;i++) 
              { 
                  require(unlockDate[msg.sender]+onemonth<=block.timestamp,"Unable to Withdraw"); 
-                 if(block.timestamp>=unlockDate[msg.sender]+(onemonth*i)) 
-                 { 
+                 if(block.timestamp>=unlockDate[msg.sender]+(onemonth*i)){ 
                      if(withdrawdetails[msg.sender][i+1].time==0) 
                      { 
                         VestingAmount+=lockingWallet[msg.sender]/12; 
                         withdrawdetails[msg.sender][i+1]=_withdrawdetails(block.timestamp,lockingWallet[msg.sender]/12);                       
                      } 
-                 }                                                                                                                                                                                                                          
-                 else 
-                 { 
+                 } else { 
                      break; 
                  } 
              } 
