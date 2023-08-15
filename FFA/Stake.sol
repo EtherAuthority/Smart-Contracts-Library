@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.19;
-
-
 
 interface TokenI {
     
@@ -13,9 +10,7 @@ interface TokenI {
 }
 
 contract Stake { 
-    address public owner;  
 
-    
     struct _staking{         
         uint _days;
         uint _stakingStarttime;
@@ -23,52 +18,41 @@ contract Stake {
         uint _amount;
         uint _profit;
     }
-
-    mapping(address=>mapping(uint256=>_staking)) public staking; 
-    mapping(address=>uint256) public activeStake;
-   
-    mapping(uint256 => uint256) public RewardPercentage;
+    address public owner;    
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
     address public contractadd = address(this);
-    
-    
+    mapping(address=>mapping(uint256=>_staking)) public staking; 
+    mapping(address=>uint256) private activeStake;
+    mapping(address=>uint256) private TotalProfit;   
+    mapping(uint256 => uint256) public RewardPercentage;        
     
     constructor(address _tokenContract) {
+        owner=msg.sender;
+        tokenAddress= _tokenContract; 
 
-       owner=msg.sender;       
-       
-       tokenAddress= _tokenContract; 
-       
+        //Days wise Percentage
         RewardPercentage[30] = 700;
         RewardPercentage[90] = 7500;
         RewardPercentage[180] = 3500;
         RewardPercentage[360] = 160000;
-
-     
-        
     }  
 
-    modifier onlyOwner() {
-    // owner is storage variable is set during constructor
-    if (msg.sender != owner) {      
-       _;
-    }
-   
-  }
-
-    
-   
+    modifier onlyOwner() {    
+        if (msg.sender == owner) {      
+             _;
+        }   
+    }    
+    /**
+     * @dev To show contract event  .
+     */
     event unstake(address _to, uint _amount);
-
 
     /**
      * @dev returns number of stake, done by particular wallet .
      */
-
-    function viewTotalStake()public view returns(uint){
-        return activeStake[msg.sender]; //stake[msg.sender][1]= _staking(30,block.timestamp,block.timestamp,122,22);
-
+    function ActiveStake()public view returns(uint){
+        return activeStake[msg.sender]; 
     } 
 
     /**
@@ -102,18 +86,26 @@ contract Stake {
      */
     function setRewardToken(uint _amount) public onlyOwner{
         TokenI(tokenAddress).approve(RewardPoolAddress, _amount);
-        TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);
-       
-    }   
+        TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);       
+    }
 
-   
      /**
      * @dev returns staking wallet profited amount
      *
      */
-    function viewProfit(uint256 _stakeDays ) public view returns(uint){
-        require(staking[msg.sender][_stakeDays]._amount > 0,"Wallet Address is not Exist");
-        uint profit = staking[msg.sender][_stakeDays]._amount *  RewardPercentage[_stakeDays]/10000;
+    function StakeWiseProfit(uint256 _stakeid, uint256 _stakeDays) public view returns(uint){
+        require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");
+        uint profit = staking[msg.sender][_stakeid]._amount *  RewardPercentage[_stakeDays]/10000;
+        return profit;
+    }
+
+     /**
+     * @dev returns total staking wallet profited amount
+     *
+     */
+    function TotalProfitedAmt() public view returns(uint){
+        require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");
+        uint profit = TotalProfit[msg.sender];
         return profit;
     }
 
@@ -124,72 +116,66 @@ contract Stake {
      * it will increase activeStake result of particular wallet.
      */
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
-
         require(msg.sender != address(0),"Wallet Address can not be address 0");  
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
-        require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");
+        require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");        
         
         uint profit = _stakeamount * RewardPercentage[_staketime]/10000;
+        
+        TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
 
         staking[msg.sender][activeStake[msg.sender]] =  _staking(_staketime,block.timestamp,block.timestamp + (_staketime*(24*60*60)),_stakeamount,profit);       
-
-        TokenI(tokenAddress).transfer(address(this), _stakeamount);
-
+        
+        TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
+        
         activeStake[msg.sender]=activeStake[msg.sender]+1;
-
-        return true;
-       
+        
+        return true;       
     }
 
      /**
-     * @dev stake amount for particular duration.
+     * @dev stake amount release.
      * parameters : _stakeid is active stake ids which is getting from activeStake-1
      *              
      * it will decrease activeStake result of particular wallet.
      * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
      *          to the staking wallet.
      */
- function unStake(uint256 _stakeid) public returns (bool){            
+    function unStake(uint256 _stakeid) public returns (bool){ 
+        require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");            
+        uint locktime=staking[msg.sender][_stakeid]._stakingStarttime+600; 
+        uint totalAmt;
+        uint profit;
+        uint remainingProfit;
+
+        if(block.timestamp > locktime){
+            profit= staking[msg.sender][_stakeid]._profit;
+            totalAmt= staking[msg.sender][_stakeid]._amount+ profit;
+        }else{
+            profit= staking[msg.sender][_stakeid]._profit;
+            remainingProfit=profit/2; //penalty
+            totalAmt= staking[msg.sender][_stakeid]._amount+ remainingProfit;
+        }
+
+        staking[msg.sender][_stakeid]._days=0;
+        staking[msg.sender][_stakeid]._amount=0;
+        staking[msg.sender][_stakeid]._stakingStarttime=0;
+        staking[msg.sender][_stakeid]._stakingEndtime=0;
+        staking[msg.sender][_stakeid]._profit=0;
+
+        staking[msg.sender][_stakeid]._days = staking[msg.sender][activeStake[msg.sender]]._days;
+        staking[msg.sender][_stakeid]._amount = staking[msg.sender][activeStake[msg.sender]]._amount;
+        staking[msg.sender][_stakeid]._stakingStarttime = staking[msg.sender][activeStake[msg.sender]]._stakingStarttime;
+        staking[msg.sender][_stakeid]._stakingEndtime = staking[msg.sender][activeStake[msg.sender]]._stakingEndtime;
+        staking[msg.sender][_stakeid]._profit = staking[msg.sender][activeStake[msg.sender]]._profit;                 
+
+        TokenI(tokenAddress).transfer(msg.sender, totalAmt);
             
-            require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");            
-            uint locktime=staking[msg.sender][_stakeid]._stakingStarttime+600;
+        activeStake[msg.sender]=activeStake[msg.sender]-1;
             
-             
+        emit unstake(msg.sender,totalAmt);
             
-            uint totalAmt;
-            uint profit;
-            uint remainingProfit;
-
-            if(block.timestamp > locktime){
-            
-                profit= staking[msg.sender][_stakeid]._profit;
-                totalAmt= staking[msg.sender][_stakeid]._amount+ profit;
-
-            }else{
-
-                profit= staking[msg.sender][_stakeid]._profit;
-                remainingProfit=profit/2; //penalty
-                totalAmt= staking[msg.sender][_stakeid]._amount+ remainingProfit;
-
-            }
-            staking[msg.sender][_stakeid]._days=0;
-            staking[msg.sender][_stakeid]._amount=0;
-            staking[msg.sender][_stakeid]._stakingStarttime=0;
-            staking[msg.sender][_stakeid]._stakingEndtime=0;
-            staking[msg.sender][_stakeid]._profit=0;
-                 
-
-            TokenI(tokenAddress).transfer(msg.sender, totalAmt);
-
-            activeStake[msg.sender]=activeStake[msg.sender]-1;
-             emit unstake(msg.sender,totalAmt);
-            return true;
-
-             
-           
+        return true; 
     }
-   
-
-    //function rescueTokens(){}
+ 
 }
-
