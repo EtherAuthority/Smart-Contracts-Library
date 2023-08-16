@@ -26,7 +26,7 @@ contract Stake {
     mapping(address=>uint256) private activeStake;
     mapping(address=>uint256) private TotalProfit;   
     mapping(uint256 => uint256) private RewardPercentage; 
-    uint256 public lastStake;       
+    uint256 private lastStake;       
     
     constructor(address _tokenContract) {
         owner=msg.sender;
