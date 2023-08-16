@@ -23,8 +23,8 @@ contract Stake {
     address public tokenAddress=address(0);
     address public contractadd = address(this);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
-    mapping(address=>uint256) private activeStake;
-    mapping(address=>uint256) private TotalProfit;   
+    mapping(address=>uint256) public activeStake;
+    mapping(address=>uint256) public TotalProfit;   
     mapping(uint256 => uint256) public RewardPercentage;        
     
     constructor(address _tokenContract) {
@@ -125,6 +125,8 @@ contract Stake {
         TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
 
         staking[msg.sender][activeStake[msg.sender]] =  _staking(_staketime,block.timestamp,block.timestamp + (_staketime*(24*60*60)),_stakeamount,profit);       
+
+        TokenI(tokenAddress).approve(address(this), _stakeamount);
         
         TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
         
@@ -167,7 +169,7 @@ contract Stake {
         staking[msg.sender][_stakeid]._amount = staking[msg.sender][activeStake[msg.sender]]._amount;
         staking[msg.sender][_stakeid]._stakingStarttime = staking[msg.sender][activeStake[msg.sender]]._stakingStarttime;
         staking[msg.sender][_stakeid]._stakingEndtime = staking[msg.sender][activeStake[msg.sender]]._stakingEndtime;
-        staking[msg.sender][_stakeid]._profit = staking[msg.sender][activeStake[msg.sender]]._profit;                 
+        staking[msg.sender][_stakeid]._profit = staking[msg.sender][activeStake[msg.sender]]._profit;               
 
         TokenI(tokenAddress).transfer(msg.sender, totalAmt);
             
