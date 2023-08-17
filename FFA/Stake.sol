@@ -21,7 +21,6 @@ contract Stake {
     address public owner;    
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
-    address public contractadd = address(this);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
     mapping(address=>uint256) private activeStake;
     mapping(address=>uint256) private TotalProfit;   
@@ -86,7 +85,7 @@ contract Stake {
      *
      */
     function setRewardToken(uint _amount) public onlyOwner{        
-        TokenI(tokenAddress).transferFrom(RewardPoolAddress,contractadd, _amount);       
+        TokenI(tokenAddress).transferFrom(RewardPoolAddress,address(this), _amount);       
     }
 
      /**
@@ -131,43 +130,46 @@ contract Stake {
      * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
      *          to the staking wallet.
      */
-    function unStake(uint256 _stakeid) public returns (bool){ 
-        require(staking[msg.sender][_stakeid]._amount > 0,"Wallet Address is not Exist");            
-        uint locktime=staking[msg.sender][_stakeid]._stakingStarttime+600; 
+    function unStake(uint256 _stakeid) public returns (bool){         
+        
         uint totalAmt;
         uint profit;
         uint remainingProfit;
+        address user=msg.sender;
+        uint locktime=staking[user][_stakeid]._stakingStarttime+600; 
+
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
 
         if(block.timestamp > locktime){
-            profit= staking[msg.sender][_stakeid]._profit;
-            totalAmt= staking[msg.sender][_stakeid]._amount+ profit;
+            profit= staking[user][_stakeid]._profit;
+            totalAmt= staking[user][_stakeid]._amount+ profit;
         }else{
-            profit= staking[msg.sender][_stakeid]._profit;
+            profit= staking[user][_stakeid]._profit;
             remainingProfit=profit/2; //penalty
-            totalAmt= staking[msg.sender][_stakeid]._amount+ remainingProfit;
+            totalAmt= staking[user][_stakeid]._amount+ remainingProfit;
         }
 
-        activeStake[msg.sender]=activeStake[msg.sender]-1;
+        activeStake[user]=activeStake[msg.sender]-1;
         lastStake=activeStake[msg.sender];
 
-        staking[msg.sender][_stakeid]._days = staking[msg.sender][lastStake]._days;
-        staking[msg.sender][_stakeid]._amount = staking[msg.sender][lastStake]._amount;
-        staking[msg.sender][_stakeid]._stakingStarttime = staking[msg.sender][lastStake]._stakingStarttime;
-        staking[msg.sender][_stakeid]._stakingEndtime = staking[msg.sender][lastStake]._stakingEndtime;
-        staking[msg.sender][_stakeid]._profit = staking[msg.sender][lastStake]._profit;
+        staking[user][_stakeid]._days = staking[user][lastStake]._days;
+        staking[user][_stakeid]._amount = staking[user][lastStake]._amount;
+        staking[user][_stakeid]._stakingStarttime = staking[user][lastStake]._stakingStarttime;
+        staking[user][_stakeid]._stakingEndtime = staking[user][lastStake]._stakingEndtime;
+        staking[user][_stakeid]._profit = staking[user][lastStake]._profit;
         
-        staking[msg.sender][lastStake]._days = 0;
-        staking[msg.sender][lastStake]._amount = 0;
-        staking[msg.sender][lastStake]._stakingStarttime = 0;
-        staking[msg.sender][lastStake]._stakingEndtime = 0;
-        staking[msg.sender][lastStake]._profit = 0;
+        staking[user][lastStake]._days = 0;
+        staking[user][lastStake]._amount = 0;
+        staking[user][lastStake]._stakingStarttime = 0;
+        staking[user][lastStake]._stakingEndtime = 0;
+        staking[user][lastStake]._profit = 0;
 
 
-        TokenI(tokenAddress).transfer(msg.sender, totalAmt);
+        TokenI(tokenAddress).transfer(user, totalAmt);
             
         
             
-        emit unstake(msg.sender,totalAmt);
+        emit unstake(user,totalAmt);
             
         return true; 
     }
