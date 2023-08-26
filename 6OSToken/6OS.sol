@@ -278,7 +278,7 @@ contract Token is Ownable {
     mapping(address => bool) public _isExcludedFromFee;
     
     uint256 private currentBlockNumber;
-    uint256 public numBlocksForBlacklist = 1;
+    uint256 public numBlocksForBlacklist = 5;
  
     IUniswapV2Router02 public uniswapV2Router;
     address public _uniswapPair;
