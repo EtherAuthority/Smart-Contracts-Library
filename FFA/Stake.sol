@@ -9,7 +9,44 @@ interface TokenI {
     function approve(address spender, uint256 amount) external returns(bool);
 }
 
-contract Stake { 
+//*******************************************************************//
+//------------------ Contract to Manage Ownership -------------------//
+//*******************************************************************//
+    
+contract owned {
+    address public owner;
+    address private newOwner;
+
+
+    event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner, 'Only owner can call this function');
+        _;
+    }
+
+
+    function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    //this flow is to prevent transferring ownership to wrong wallet by mistake
+    function acceptOwnership() public {
+        require(msg.sender == newOwner, 'Only new owner can call this function');
+        emit OwnershipTransferred(block.timestamp, owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+
+
+contract Stake is owned { 
 
     struct _staking{         
         uint _days;
@@ -18,7 +55,7 @@ contract Stake {
         uint _amount;
         uint _profit;
     }
-    address public owner;    
+  
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
@@ -38,11 +75,7 @@ contract Stake {
         RewardPercentage[360] = 160000;
     }  
 
-    modifier onlyOwner() {    
-        if (msg.sender == owner) {      
-             _;
-        }   
-    }    
+     
     /**
      * @dev To show contract event  .
      */
