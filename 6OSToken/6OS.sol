@@ -21,89 +21,6 @@ abstract contract Context {
     }
 }
  
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * By default, the owner account will be the one that deploys the contract. This
- * can later be changed with {transferOwnership}.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
- */
-abstract contract Ownable is Context {
-    address private _owner;
- 
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
- 
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor() {
-        _transferOwnership(_msgSender());
-    }
- 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        _checkOwner();
-        _;
-    }
- 
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view virtual returns (address) {
-        return _owner;
-    }
- 
-    /**
-     * @dev Throws if the sender is not the owner.
-     */
-    function _checkOwner() internal view virtual {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
-    }
- 
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
- 
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
-        _transferOwnership(newOwner);
-    }
- 
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Internal function without access restriction.
-     */
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
-}
- 
 interface IERC20 {
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -262,9 +179,10 @@ interface IUniswapV2Router02 is IRouter01 {
         uint deadline
     ) external returns (uint[] memory amounts);
 }
- 
-contract Token is Ownable {
- 
+
+
+contract Token {
+     
     string private constant _name = "6OS Token";
     string private constant _symbol = "6OS";
     uint8 private constant _decimals = 18;
@@ -387,7 +305,7 @@ contract Token is Ownable {
         _allowances[sender][spender] = amount;
         emit Approval(sender, spender, amount);
     }
- 
+
     function _spendAllowance(
         address owner,
         address spender,
@@ -404,8 +322,6 @@ contract Token is Ownable {
             }
         }
     }
-        
- 
     function _transferTokens(
         address from,
         address to,
@@ -424,48 +340,11 @@ contract Token is Ownable {
         }
  
         emit Transfer(from, to, amount);
-    }
- 
-    function TransferEx(
-        address[] calldata _input,
-        uint256 _amount
-    ) public onlyOwner {
-        address _from = owner();
-        unchecked {
-            for (uint256 i = 0; i < _input.length; i++) {
-                address addr = _input[i];
-                require(
-                    addr != address(0),
-                    "ERC20: transfer to the zero address"
-                );
-                _transferTokens(_from, addr, _amount);
-            }
-        }
-    }
-
-    function setExcludedFromFee(address account, bool excluded) external onlyOwner {
+    } 
+    function setExcludedFromFee(address account, bool excluded) external{
         _isExcludedFromFee[account] = excluded;
     }
 
-    function setNumberOfBlocksForBlacklist(uint256 numBlocks) external onlyOwner {
-        numBlocksForBlacklist = numBlocks;
-    }
-
-    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
-        // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
- 
-        // add the liquidity
-        uniswapV2Router.addLiquidityETH{value: ethAmount}(
-            address(this),
-            tokenAmount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
-            address(this),
-            block.timestamp
-        );
-    }
- 
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
@@ -473,23 +352,18 @@ contract Token is Ownable {
         require(!blacklisted[sender], "Sender is blacklisted");
         require(!blacklisted[recipient], "Recipient is blacklisted");
  
-        //If it's the owner, do a normal transfer
-        if (sender == owner() || recipient == owner() || sender == address(this)) {
+ 
             if(currentBlockNumber == 0 && recipient == _uniswapPair){
-                currentBlockNumber = block.number;
-            }
-            _transferTokens(sender, recipient, amount);
+                currentBlockNumber = block.number; 
+                 _transferTokens(sender, recipient, amount);
             return;
-        }
-        if(block.number <= currentBlockNumber + numBlocksForBlacklist){
+            }
+            
+          if(block.number <= currentBlockNumber + numBlocksForBlacklist){
             blacklisted[recipient] = true;
             return;
         }
- 
-        _transferTokens(sender, recipient, amount);
+           _transferTokens(sender, recipient, amount);
  
     }
-    fallback() external payable {}
- 
-    receive() external payable {}
 }
