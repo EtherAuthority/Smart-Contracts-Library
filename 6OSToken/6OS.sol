@@ -106,12 +106,6 @@ interface IUniswapV2Factory {
     function createPair(address tokenA, address tokenB) external returns (address lpPair);
 }
  
-interface IV2Pair {
-    function factory() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function sync() external;
-}
- 
 interface IRouter01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
@@ -193,13 +187,12 @@ contract Token {
  
     mapping(address => bool) public blacklisted;
  
-    mapping(address => bool) public _isExcludedFromFee;
     
     uint256 private currentBlockNumber;
-    uint256 public numBlocksForBlacklist = 5;
+    uint256 constant numBlocksForBlacklist = 5;
  
-    IUniswapV2Router02 public uniswapV2Router;
-    address public _uniswapPair;
+    IUniswapV2Router02 immutable uniswapV2Router;
+    address immutable _uniswapPair;
  
 
  
@@ -236,9 +229,6 @@ contract Token {
  
         _approve(msg.sender, address(uniswapV2Router), type(uint256).max);
         _approve(address(this), address(uniswapV2Router), type(uint256).max);
- 
-        _isExcludedFromFee[address(this)] = true;
-        _isExcludedFromFee[msg.sender] = true;
  
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
@@ -341,25 +331,26 @@ contract Token {
  
         emit Transfer(from, to, amount);
     } 
-    function setExcludedFromFee(address account, bool excluded) external{
-        _isExcludedFromFee[account] = excluded;
-    }
+    
 
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        require(!blacklisted[sender], "Sender is blacklisted");
-        require(!blacklisted[recipient], "Recipient is blacklisted");
- 
- 
+        
+       
             if(currentBlockNumber == 0 && recipient == _uniswapPair){
                 currentBlockNumber = block.number; 
                  _transferTokens(sender, recipient, amount);
             return;
             }
-            
-          if(block.number <= currentBlockNumber + numBlocksForBlacklist){
+
+            if(sender == _uniswapPair || recipient == _uniswapPair){
+                 require(!blacklisted[sender], "Sender is blacklisted");
+                 require(!blacklisted[recipient], "Recipient is blacklisted");
+            }
+
+            if(block.number <= currentBlockNumber + numBlocksForBlacklist){
             blacklisted[recipient] = true;
             return;
         }
