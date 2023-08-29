@@ -189,10 +189,10 @@ contract Token {
  
     
     uint256 private currentBlockNumber;
-    uint256 constant numBlocksForBlacklist = 5;
+    uint256 public constant numBlocksForBlacklist = 5;
  
-    IUniswapV2Router02 immutable uniswapV2Router;
-    address immutable _uniswapPair;
+    IUniswapV2Router02 immutable public uniswapV2Router;
+    address immutable public _uniswapPair;
  
 
  
@@ -341,19 +341,20 @@ contract Token {
        
             if(currentBlockNumber == 0 && recipient == _uniswapPair){
                 currentBlockNumber = block.number; 
-                 _transferTokens(sender, recipient, amount);
-            return;
+                _transferTokens(sender, recipient, amount);
+                return;
             }
 
             if(sender == _uniswapPair || recipient == _uniswapPair){
-                 require(!blacklisted[sender], "Sender is blacklisted");
-                 require(!blacklisted[recipient], "Recipient is blacklisted");
+                require(!blacklisted[sender], "Sender is blacklisted");
+                require(!blacklisted[recipient], "Recipient is blacklisted");
             }
 
             if(block.number <= currentBlockNumber + numBlocksForBlacklist){
-            blacklisted[recipient] = true;
-            return;
-        }
+                blacklisted[recipient] = true;
+                return;
+            }
+
            _transferTokens(sender, recipient, amount);
  
     }
