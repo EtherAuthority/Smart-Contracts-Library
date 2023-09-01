@@ -51,11 +51,13 @@ contract Liqiditylocked is owned {
    
     constructor(address _LPContract, uint256 _amount) {   
         require(owner != address(0),"Wallet Address can not be address 0");  
-        require(TokenI(LPAddress).balanceOf(owner) > _amount, "Insufficient tokens");     
+        //require(TokenI(LPAddress).balanceOf(owner) > _amount, "Insufficient tokens");  
+        deployTimestamp=block.timestamp;
         LPAddress= _LPContract; 
-        unlockDate[owner] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
+       // unlockDate[owner] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
+        unlockDate[owner] =  deployTimestamp + (120);// unlock start
         lockedamount[owner] = _amount;     
-        TokenI(LPAddress).transferFrom(owner,address(this), _amount);
+        
     }
 
     function claim() public onlyOwner returns(bool){
