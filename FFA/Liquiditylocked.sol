@@ -45,24 +45,31 @@ contract owned {
 contract Liqiditylocked is owned {
 
     address public LPAddress;
-    mapping(address => uint256) public unlockDate;
-    mapping(address => uint256) public lockedamount;
+    uint256 public unlockDate;
+    uint256 public lockedamount;
     uint public deployTimestamp;
    
+   /**
+    * @dev To show contract event  .
+    */
+    event claim(address _to, uint _amount);
+
     constructor(address _LPContract, uint256 _amount) {   
         require(owner != address(0),"Wallet Address can not be address 0");  
         //require(TokenI(LPAddress).balanceOf(owner) > _amount, "Insufficient tokens");  
         deployTimestamp=block.timestamp;
         LPAddress= _LPContract; 
        // unlockDate[owner] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
-        unlockDate[owner] =  deployTimestamp + (120);// unlock start
-        lockedamount[owner] = _amount;     
+        unlockDate =  deployTimestamp + (120);// unlock start
+        lockedamount = _amount;     
         
     }
 
-    function claim() public onlyOwner returns(bool){
-        require(unlockDate[owner]<=block.timestamp,"Liquidity locked!"); 
-        TokenI(LPAddress).transfer(owner, lockedamount[owner]);
+    function Claim() public onlyOwner returns(bool){
+        
+        require(unlockDate<=block.timestamp,"Liquidity locked!"); 
+        TokenI(LPAddress).transfer(owner, lockedamount);
+        emit claim(msg.sender,lockedamount);
         return true;       
 
     }
