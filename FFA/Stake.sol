@@ -79,6 +79,7 @@ contract Stake is owned {
     /**
      * @dev To show contract event  .
      */
+    event stake(address _to , uint _stakeamount);
     event unstake(address _to, uint _amount);
 
     /**
@@ -151,7 +152,8 @@ contract Stake is owned {
         TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
-        
+
+        emit unstake(address(this),_stakeamount);
         return true;       
     }
 
@@ -197,11 +199,7 @@ contract Stake is owned {
         staking[user][lastStake]._stakingEndtime = 0;
         staking[user][lastStake]._profit = 0;
 
-
-        TokenI(tokenAddress).transfer(user, totalAmt);
-            
-        
-            
+        TokenI(tokenAddress).transfer(user, totalAmt); 
         emit unstake(user,totalAmt);
             
         return true; 
