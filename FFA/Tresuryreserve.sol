@@ -4,13 +4,11 @@ pragma solidity 0.8.19;
 /**
 * @dev  ERC20 Token contract interface
 */
-interface Token {
-    
+interface Token {    
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
     function decimals() external view returns (uint8);
-
 }
 
 contract Tresuryreserve { 
@@ -27,8 +25,7 @@ contract Tresuryreserve {
     address public tokenContract=address(0);
    // uint public constant quarter = (31*3*(24*60*60));
     uint public constant quarter = 60;
-    uint256 public immutable decimals; 
-    
+    uint256 public immutable decimals;     
     
     constructor( address _tokenContract) {
         owner=msg.sender;
@@ -36,13 +33,11 @@ contract Tresuryreserve {
         //deployTimestamp = timestampFromDateTime(block.timestamp);
         deployTimestamp = block.timestamp;          
         decimals=Token(tokenContract).decimals();
-
       
         lockingWallet=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
         lockingWalletAmt=170000000000* (10**decimals);// Team Allocation Assigned Tokens 
         // unlockDate =  deployTimestamp + (31*6*(24*60*60));// unlock start
         unlockDate =  deployTimestamp + (120);// unlock start
-
     } 
 
     /**
@@ -51,7 +46,8 @@ contract Tresuryreserve {
     event withdraw(address _to, uint _amount);
 
     /**
-    *@dev The onlydefinedWallet modifier has one parameter, user, which is of type address. The modifier includes a require statement that checks the value of the user parameter and only allows the function to execute if the defined wallet is equal to user
+    * @dev The onlydefinedWallet modifier has one parameter, user, which is of type address. 
+    * The modifier includes a require statement that checks the value of the user parameter and only allows the function to execute if the defined wallet is equal to user.
     **/
     modifier onlydefinedWallet(address user) {
         require(lockingWallet == user);
