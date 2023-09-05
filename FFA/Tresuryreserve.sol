@@ -18,17 +18,16 @@ contract Tresuryreserve {
         uint time;
         uint amount;
     }
-    address public owner; 
-    mapping(address => uint) public lockingWallet;
-    mapping(address => uint) public VestingTime;
-    mapping(address => uint) public unlockDate;
-    mapping(address => uint) public RemainingAmt;
+    address public immutable owner; 
+    address public immutable lockingWallet;
+    uint256 public immutable lockingWalletAmt;
+    uint256 public immutable unlockDate;
     mapping(address=>mapping(uint=>_withdrawdetails)) public withdrawdetails;
-    uint public deployTimestamp;
+    uint public immutable deployTimestamp;
     address public tokenContract=address(0);
-   // uint public quarter = (31*3*(24*60*60));
-    uint public quarter = 60;
-    uint256 public decimals; 
+   // uint public constant quarter = (31*3*(24*60*60));
+    uint public constant quarter = 60;
+    uint256 public immutable decimals; 
     
     
     constructor( address _tokenContract) {
@@ -39,10 +38,10 @@ contract Tresuryreserve {
         decimals=Token(tokenContract).decimals();
 
       
-        lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=170000000000* (10**decimals);// Team Allocation Assigned Tokens 
-        VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=6; //lock months
-        // unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (31*VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]*(24*60*60));// unlock start
-        unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);// unlock start
+        lockingWallet=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
+        lockingWalletAmt=170000000000* (10**decimals);// Team Allocation Assigned Tokens 
+        // unlockDate =  deployTimestamp + (31*6*(24*60*60));// unlock start
+        unlockDate =  deployTimestamp + (120);// unlock start
 
     } 
 
@@ -52,16 +51,23 @@ contract Tresuryreserve {
     event withdraw(address _to, uint _amount);
 
     /**
+    *@dev The onlydefinedWallet modifier has one parameter, user, which is of type address. The modifier includes a require statement that checks the value of the user parameter and only allows the function to execute if the defined wallet is equal to user
+    **/
+    modifier onlydefinedWallet(address user) {
+        require(lockingWallet == user);
+        _;
+    }
+    /**
     * @dev ViewVestingAmount shows available Team Allocation amount of particular wallet
     * parameters : user (wallet Address)
     *              
     */   
-     function ViewVestingAmount( address user )public view returns (uint){ 
+     function ViewVestingAmount( address user )public view onlydefinedWallet(user) returns (uint){ 
         uint VestingAmount = 0; 
         for(uint i=0;i<17;i++) 
         { 
-            if(unlockDate[user]<=block.timestamp){
-                 if(block.timestamp>=unlockDate[user]+(quarter*i)) { 
+            if(unlockDate<=block.timestamp){
+                 if(block.timestamp>=unlockDate+(quarter*i)) { 
                      if(withdrawdetails[user][i+1].time==0) 
                      { 
                         VestingAmount+=10000000000 * (10**decimals);                        
@@ -77,11 +83,11 @@ contract Tresuryreserve {
      * @dev returns completed vesting month.
      *
      */
-    function completedMonth( address user) public view returns (uint){
+    function completedMonth( address user) public view onlydefinedWallet(user) returns (uint){
             uint compmonth=0;
              for(uint i=0;i<17;i++) 
              { 
-                if(block.timestamp>=unlockDate[user]+(quarter*i)){                 
+                if(block.timestamp>=unlockDate+(quarter*i)){                 
                      compmonth=(i+3+6); 
                 }  
              } 
@@ -92,12 +98,12 @@ contract Tresuryreserve {
      * @dev Team Allocation amount release in particular category wallet.
      *
      */
-    function withdrawTokens()public returns (bool){ 
+    function withdrawTokens() public onlydefinedWallet(msg.sender) returns (bool){ 
         uint VestingAmount = 0; 
              for(uint i=0;i<17;i++) 
              { 
-                 require(unlockDate[msg.sender]<=block.timestamp,"Unable to Withdraw"); 
-                 if(block.timestamp>=unlockDate[msg.sender]+(quarter*i)){ 
+                 require(unlockDate<=block.timestamp,"Unable to Withdraw"); 
+                 if(block.timestamp>=unlockDate+(quarter*i)){ 
                      if(withdrawdetails[msg.sender][i+1].time==0) 
                      { 
                         VestingAmount=10000000000 * (10**decimals); 
