@@ -551,9 +551,56 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         uint256 amount
     ) internal virtual {}
 }
-contract FFATtoken is ERC20 {
-constructor() ERC20("FFATtoken", "FFAT"){        
-        uint256 totalSupply = 1000000000000;        
-        _mint(msg.sender, totalSupply * (10**decimals()));
+
+//*******************************************************************//
+//------------------ Contract to Manage Ownership -------------------//
+//*******************************************************************//
+    
+contract owned {
+    address public owner;
+    address private newOwner;
+
+
+    event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
+
+    constructor() {
+        owner = msg.sender;
     }
+
+    modifier onlyOwner {
+        require(msg.sender == owner, 'Only owner can call this function');
+        _;
+    }
+
+
+    function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    //this flow is to prevent transferring ownership to wrong wallet by mistake
+    function acceptOwnership() public {
+        require(msg.sender == newOwner, 'Only new owner can call this function');
+        emit OwnershipTransferred(block.timestamp, owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+
+contract FFATtoken is ERC20, owned {
+
+    constructor() ERC20("FFATtoken", "FFAT"){
+        
+        uint256 totalSupply = 1000000000000;
+        
+        _mint(msg.sender, totalSupply * (10**decimals()));
+
+    }
+
+    function burn(uint256 amount) public onlyOwner returns(bool){
+         _burn(msg.sender,amount);
+         return true;
+    }
+
 }
