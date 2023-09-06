@@ -182,8 +182,8 @@ contract Stake is owned {
             totalAmt= staking[user][_stakeid]._amount+ remainingProfit;
         }
 
-        activeStake[user]=activeStake[msg.sender]-1;
-        lastStake=activeStake[msg.sender];
+        activeStake[user]=activeStake[user]-1;
+        lastStake=activeStake[user];
 
         staking[user][_stakeid]._days = staking[user][lastStake]._days;
         staking[user][_stakeid]._amount = staking[user][lastStake]._amount;
