@@ -586,18 +586,26 @@ contract owned {
     }
 }
 
-
-
+/**
+* @dev Define FFATtoken contract
+*/
 contract FFATtoken is ERC20, owned {
-
+    /**
+    * @dev constructor function for initialize the token
+    */ 
     constructor() ERC20("FFATtoken", "FFAT"){
-        
+
+        // total Supply for FFATtoken the token
         uint256 totalSupply = 1000000000000;
-        
+
+        // Mint the total supply and assign to the contract creator
         _mint(msg.sender, totalSupply * (10**decimals()));
 
     }
-
+    /**
+    * @dev function use for burn specific Amount of token.
+    * only contract owner can call this function
+    */
     function burn(uint256 amount) public onlyOwner returns(bool){
          _burn(msg.sender,amount);
          return true;
