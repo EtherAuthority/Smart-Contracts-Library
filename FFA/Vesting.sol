@@ -37,32 +37,29 @@ contract Vesting {
         deployTimestamp = block.timestamp;          
         decimals=Token(tokenContract).decimals();
 
-         // Category A
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
-        // unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (31*VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]*(24*60*60));// unlock start
-          unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (180);// unlock start
+        // Category A
+         lockingWallet[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]=24; //lock months
+        // unlockDate[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f] =  deployTimestamp + (31*VestingTime[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]*(24*60*60));// unlock start
+          unlockDate[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f] =  deployTimestamp + (180);// unlock start (testing)         
          
-            /*
          // Category B
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  deployTimestamp + (31*_vestingTime[i]*(24*60*60));// unlock start
-         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+         lockingWallet[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]=36; //lock months
+        // unlockDate[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4] =  deployTimestamp + (31*VestingTime[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]*(24*60*60));// unlock start
+         unlockDate[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4] =  deployTimestamp + (180);// unlock start (testing)
 
          // Category c
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  deployTimestamp + (31*_vestingTime[i]*(24*60*60));// unlock start
-         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
+         lockingWallet[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]=48; //lock months
+        // unlockDate[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da] =  deployTimestamp + (31*VestingTime[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]*(24*60*60));// unlock start
+         unlockDate[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da] =  deployTimestamp + (180);// unlock start (testing)
 
          // Category D
-         lockingWallet[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
-         VestingTime[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2]=24; //lock months
-         //unlockDate["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2"] =  deployTimestamp + (31*_vestingTime[i]*(24*60*60));// unlock start
-         unlockDate[0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2] =  deployTimestamp + (120);
-
-            */
+         lockingWallet[0xebAADb0768c45CCD8fbB721720a134Ed78474056]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
+         VestingTime[0xebAADb0768c45CCD8fbB721720a134Ed78474056]=60; //lock months
+        // unlockDate[0xebAADb0768c45CCD8fbB721720a134Ed78474056] =  deployTimestamp + (31*VestingTime[0xebAADb0768c45CCD8fbB721720a134Ed78474056]*(24*60*60));// unlock start
+         unlockDate[0xebAADb0768c45CCD8fbB721720a134Ed78474056] =  deployTimestamp + (180);// unlock start (testing)
     } 
 
     /**
