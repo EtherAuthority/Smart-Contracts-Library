@@ -43,7 +43,7 @@ contract owned {
         newOwner = address(0);
     }
 }
-contract Liqiditylocked is owned {
+contract Liquiditylocked is owned {
     address public immutable LPAddress;
     uint256 public immutable unlockDate;
     uint256 public immutable lockedamount;
