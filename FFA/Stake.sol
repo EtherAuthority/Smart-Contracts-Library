@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface TokenI {
-    
+interface TokenI {    
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
@@ -17,24 +16,27 @@ contract owned {
     address public owner;
     address private newOwner;
 
-
+    /**
+    * @dev To show contract event  .
+    */
     event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
 
     constructor() {
         owner = msg.sender;
     }
-
     modifier onlyOwner {
         require(msg.sender == owner, 'Only owner can call this function');
         _;
     }
-
-
     function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
         newOwner = _newOwner;
     }
 
-    //this flow is to prevent transferring ownership to wrong wallet by mistake
+    /**
+    *
+    * @dev This flow is to prevent transferring ownership to wrong wallet by mistake
+    *
+    */    
     function acceptOwnership() public {
         require(msg.sender == newOwner, 'Only new owner can call this function');
         emit OwnershipTransferred(block.timestamp, owner, newOwner);
@@ -42,10 +44,9 @@ contract owned {
         newOwner = address(0);
     }
 }
-
-
-
-
+/**
+* @dev To Main Stake contract  .
+*/
 contract Stake is owned { 
 
     struct _staking{         
@@ -54,8 +55,7 @@ contract Stake is owned {
         uint _stakingEndtime;
         uint _amount;
         uint _profit;
-    }
-  
+    }  
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
@@ -73,9 +73,7 @@ contract Stake is owned {
         RewardPercentage[90] = 7500;
         RewardPercentage[180] = 3500;
         RewardPercentage[360] = 160000;
-    }  
-
-     
+    }
     /**
      * @dev To show contract event  .
      */
@@ -153,7 +151,7 @@ contract Stake is owned {
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
 
-        emit unstake(address(this),_stakeamount);
+        emit stake(address(this),_stakeamount);
         return true;       
     }
 
