@@ -83,7 +83,7 @@ contract TokenSale is Ownable{
 
     uint256 public constant multiplier = 10**10;
     uint256 public eqeRateInBrise = 1865;               // 1 BRISE = how many EQE? 1865 = $0.0000001865 with multiplier devision
-    uint256 public eqqRateInBrise = 18;                 // 1 BRISE = how many EQQ?   18 = $0.0000000018 with multiplier devision
+    uint256 public eqqRateInBrise = 186500;             // 1 BRISE = how many EQQ? 186500 = $0.000018 with multiplier devision
     uint256 public eqqRateInUSDT = 100 * multiplier;    // 1 USDT = 100 EQQ
 
     
