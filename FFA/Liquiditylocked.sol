@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface TokenI {
-    
+interface TokenI {    
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
@@ -17,24 +16,26 @@ contract owned {
     address public owner;
     address private newOwner;
 
-
+    /**
+    * @dev To show contract event  .
+    */
     event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
 
     constructor() {
         owner = msg.sender;
     }
-
     modifier onlyOwner {
         require(msg.sender == owner, 'Only owner can call this function');
         _;
     }
-
-
     function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
         newOwner = _newOwner;
     }
-
-    //this flow is to prevent transferring ownership to wrong wallet by mistake
+    /**
+    *
+    * @dev This flow is to prevent transferring ownership to wrong wallet by mistake
+    *
+    */    
     function acceptOwnership() public {
         require(msg.sender == newOwner, 'Only new owner can call this function');
         emit OwnershipTransferred(block.timestamp, owner, newOwner);
@@ -43,14 +44,14 @@ contract owned {
     }
 }
 contract Liqiditylocked is owned {
-
-    address public LPAddress;
-    uint256 public unlockDate;
-    uint256 public lockedamount;
-    uint public deployTimestamp;
-   
+    address public immutable LPAddress;
+    uint256 public immutable unlockDate;
+    uint256 public immutable lockedamount;
+    uint256 public immutable deployTimestamp;   
    /**
+    *
     * @dev To show contract event  .
+    *
     */
     event claim(address _to, uint _amount);
 
@@ -60,18 +61,19 @@ contract Liqiditylocked is owned {
         deployTimestamp=block.timestamp;
         LPAddress= _LPContract; 
        // unlockDate[owner] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
-        unlockDate =  deployTimestamp + (120);// unlock start
-        lockedamount = _amount;     
-        
+        unlockDate =  deployTimestamp + (120);// unlock start (for testing)
+        lockedamount = _amount; 
     }
-
-    function Claim() public onlyOwner returns(bool){
-        
+     /**
+     *
+     * @dev Liquidity amount release in particular category wallet.
+     *
+     */
+    function Claim() public onlyOwner returns(bool){        
         require(unlockDate<=block.timestamp,"Liquidity locked!"); 
         TokenI(LPAddress).transfer(owner, lockedamount);
         emit claim(msg.sender,lockedamount);
-        return true;       
-
+        return true;
     }
 
  }
