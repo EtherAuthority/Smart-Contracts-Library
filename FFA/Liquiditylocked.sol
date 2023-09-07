@@ -8,42 +8,80 @@ interface TokenI {
     function approve(address spender, uint256 amount) external returns(bool);
 }
 
-//*******************************************************************//
-//------------------ Contract to Manage Ownership -------------------//
-//*******************************************************************//
-    
-contract owned {
-    address public owner;
-    address private newOwner;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-    * @dev To show contract event  .
-    */
-    event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
-
-    constructor() {
-        owner = msg.sender;
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor () {
+        _owner = msg.sender;
+        emit OwnershipTransferred(address(0), _owner);
     }
-    modifier onlyOwner {
-        require(msg.sender == owner, 'Only owner can call this function');
+
+    /**
+     * @return the address of the owner.
+     */
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(isOwner());
         _;
     }
-    function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
+
     /**
-    *
-    * @dev This flow is to prevent transferring ownership to wrong wallet by mistake
-    *
-    */    
-    function acceptOwnership() public {
-        require(msg.sender == newOwner, 'Only new owner can call this function');
-        emit OwnershipTransferred(block.timestamp, owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+     * @return true if `msg.sender` is the owner of the contract.
+     */
+    function isOwner() public view returns (bool) {
+        return msg.sender == _owner;
+    }
+
+    /**
+     * @dev Allows the current owner to relinquish control of the contract.
+     * It will not be possible to call the functions with the `onlyOwner`
+     * modifier anymore.
+     * @notice Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function _transferOwnership(address newOwner) internal {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
     }
 }
-contract Liquiditylocked is owned {
+
+contract Liquiditylocked is Ownable {
     address public immutable LPAddress;
     uint256 public immutable unlockDate;
     uint256 public immutable lockedamount;
@@ -55,14 +93,16 @@ contract Liquiditylocked is owned {
     */
     event claim(address _to, uint _amount);
 
-    constructor(address _LPContract, uint256 _amount) {   
-        require(owner != address(0),"Wallet Address can not be address 0");  
-        //require(TokenI(LPAddress).balanceOf(owner) > _amount, "Insufficient tokens");  
+    /**
+    * @dev constructor function for contract deployment timestemp  , Liquidity pool address, Unlock timestemp and locked amount
+    */ 
+    constructor(address _LPContract, uint256 _amount) {  
         deployTimestamp=block.timestamp;
-        LPAddress= _LPContract; 
-       // unlockDate[owner] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
-        unlockDate =  deployTimestamp + (120);// unlock start (for testing)
-        lockedamount = _amount; 
+        LPAddress= _LPContract;         
+        require(TokenI(LPAddress).balanceOf(msg.sender) > _amount, "Insufficient tokens");         
+       // unlockDate[msg.sender] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
+        unlockDate =  deployTimestamp + (120);// unlock start
+        lockedamount = _amount;
     }
      /**
      *
@@ -71,7 +111,7 @@ contract Liquiditylocked is owned {
      */
     function Claim() public onlyOwner returns(bool){        
         require(unlockDate<=block.timestamp,"Liquidity locked!"); 
-        TokenI(LPAddress).transfer(owner, lockedamount);
+        TokenI(LPAddress).transfer(msg.sender, lockedamount);
         emit claim(msg.sender,lockedamount);
         return true;
     }
