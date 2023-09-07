@@ -77,7 +77,7 @@ contract Stake is owned {
     /**
      * @dev To show contract event  .
      */
-    event stake(address _to , uint _stakeamount);
+    event StakeEvent(address _to , uint _stakeamount);
     event unstake(address _to, uint _amount);
 
     /**
@@ -151,7 +151,7 @@ contract Stake is owned {
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
 
-        emit stake(address(this),_stakeamount);
+        emit StakeEvent(address(this),_stakeamount);
         return true;       
     }
 
