@@ -23,8 +23,7 @@ contract Tresuryreserve {
     mapping(address=>mapping(uint=>_withdrawdetails)) public withdrawdetails;
     uint public immutable deployTimestamp;
     address public tokenContract=address(0);
-   // uint public constant quarter = (31*3*(24*60*60));
-    uint public constant quarter = 60; // (testing)
+    uint public constant quarter = (31*3*(24*60*60));   
     uint256 public immutable decimals;     
     
     constructor( address _tokenContract) {
@@ -36,8 +35,7 @@ contract Tresuryreserve {
       
         lockingWallet=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
         lockingWalletAmt=170000000000* (10**decimals);// Team Allocation Assigned Tokens 
-        // unlockDate =  deployTimestamp + (31*6*(24*60*60));// unlock start
-        unlockDate =  deployTimestamp + (120);// unlock start (testing)
+        unlockDate =  deployTimestamp + (31*6*(24*60*60));// unlock start        
     } 
 
     /**
