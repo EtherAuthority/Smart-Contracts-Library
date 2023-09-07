@@ -97,13 +97,12 @@ contract Vesting {
              for(uint i=0;i<12;i++) 
              { 
                  if(unlockDate[user]<=block.timestamp){
-                 if(block.timestamp>=unlockDate[user]+(onemonth*i)){ 
-                     compmonth+=1;  
-                 } else { 
-                     break; 
-                 }
-
-             }  
+                       if(block.timestamp>=unlockDate[user]+(onemonth*i)){ 
+                         compmonth+=1;  
+                     } else { 
+                         break; 
+                     }
+                 }  
              } 
             return 12-compmonth;
     } 
