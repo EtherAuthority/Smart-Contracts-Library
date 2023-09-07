@@ -109,7 +109,7 @@ contract Liquiditylocked is Ownable {
      * @dev Liquidity amount release in particular category wallet.
      *
      */
-    function Claim() public onlyOwner returns(bool){        
+     function Claim() public onlyOwner returns(bool){        
         require(unlockDate<=block.timestamp,"Liquidity locked!"); 
         TokenI(LPAddress).transfer(msg.sender, lockedamount);
         emit claim(msg.sender,lockedamount);
