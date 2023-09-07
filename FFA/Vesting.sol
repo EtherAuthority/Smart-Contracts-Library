@@ -5,12 +5,10 @@ pragma solidity 0.8.19;
 * @dev  ERC20 Token contract interface
 */
 interface Token {
-    
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
     function decimals() external view returns (uint8);
-
 }
 
 contract Vesting { 
@@ -25,8 +23,7 @@ contract Vesting {
     mapping(address=>mapping(uint=>_withdrawdetails)) public withdrawdetails;
     uint public deployTimestamp;
     address public tokenContract=address(0);
-   // uint public onemonth = (31*1*(24*60*60));
-    uint public onemonth = 60;
+    uint public onemonth = (31*1*(24*60*60));   
     uint256 public decimals; 
     mapping(address => uint) public completedMoth;  
     
@@ -40,26 +37,19 @@ contract Vesting {
         // Category A
          lockingWallet[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
          VestingTime[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]=24; //lock months
-        // unlockDate[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f] =  deployTimestamp + (31*VestingTime[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]*(24*60*60));// unlock start
-          unlockDate[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f] =  deployTimestamp + (180);// unlock start (testing)         
-         
+         unlockDate[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f] =  deployTimestamp + (31*VestingTime[0x1CEA248182955AE4f10700Ad51ABfBc901520b9f]*(24*60*60));// unlock start
          // Category B
          lockingWallet[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
          VestingTime[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]=36; //lock months
-        // unlockDate[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4] =  deployTimestamp + (31*VestingTime[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]*(24*60*60));// unlock start
-         unlockDate[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4] =  deployTimestamp + (180);// unlock start (testing)
-
+         unlockDate[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4] =  deployTimestamp + (31*VestingTime[0x7d8Eab143ab39B9fbE4d5c692eb908c8DF7f82a4]*(24*60*60));// unlock start
          // Category c
          lockingWallet[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
          VestingTime[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]=48; //lock months
-        // unlockDate[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da] =  deployTimestamp + (31*VestingTime[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]*(24*60*60));// unlock start
-         unlockDate[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da] =  deployTimestamp + (180);// unlock start (testing)
-
+         unlockDate[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da] =  deployTimestamp + (31*VestingTime[0xA71fEa77ED3b9Dc02855ba44A9d927AE0Be405da]*(24*60*60));// unlock start 
          // Category D
          lockingWallet[0xebAADb0768c45CCD8fbB721720a134Ed78474056]=37500000000* (10**decimals);// Team Allocation Assigned Tokens 
          VestingTime[0xebAADb0768c45CCD8fbB721720a134Ed78474056]=60; //lock months
-        // unlockDate[0xebAADb0768c45CCD8fbB721720a134Ed78474056] =  deployTimestamp + (31*VestingTime[0xebAADb0768c45CCD8fbB721720a134Ed78474056]*(24*60*60));// unlock start
-         unlockDate[0xebAADb0768c45CCD8fbB721720a134Ed78474056] =  deployTimestamp + (180);// unlock start (testing)
+         unlockDate[0xebAADb0768c45CCD8fbB721720a134Ed78474056] =  deployTimestamp + (31*VestingTime[0xebAADb0768c45CCD8fbB721720a134Ed78474056]*(24*60*60));// unlock start         
     } 
 
     /**
@@ -94,7 +84,7 @@ contract Vesting {
      * @dev returns left vesting amount.
      *
      */
-    function viewLeftAmount( address user) public view returns (uint){
+    function viewLeftAmount(address user) public view returns (uint){
             uint LeftAmount =viewLeftMonth(user);       
             return (lockingWallet[user]/12)*LeftAmount;
     } 
@@ -115,7 +105,6 @@ contract Vesting {
 
              }  
              } 
-
             return 12-compmonth;
     } 
     
