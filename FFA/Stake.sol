@@ -12,42 +12,82 @@ interface TokenI {
 //------------------ Contract to Manage Ownership -------------------//
 //*******************************************************************//
     
-contract owned {
-    address public owner;
-    address private newOwner;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-    * @dev To show contract event  .
-    */
-    event OwnershipTransferred(uint256 curTime, address indexed _from, address indexed _to);
-
-    constructor() {
-        owner = msg.sender;
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor () {
+        _owner = msg.sender;
+        emit OwnershipTransferred(address(0), _owner);
     }
-    modifier onlyOwner {
-        require(msg.sender == owner, 'Only owner can call this function');
+
+    /**
+     * @return the address of the owner.
+     */
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(isOwner());
         _;
     }
-    function onlyOwnerTransferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
+
+    /**
+     * @return true if `msg.sender` is the owner of the contract.
+     */
+    function isOwner() public view returns (bool) {
+        return msg.sender == _owner;
     }
 
     /**
-    *
-    * @dev This flow is to prevent transferring ownership to wrong wallet by mistake
-    *
-    */    
-    function acceptOwnership() public {
-        require(msg.sender == newOwner, 'Only new owner can call this function');
-        emit OwnershipTransferred(block.timestamp, owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+     * @dev Allows the current owner to relinquish control of the contract.
+     * It will not be possible to call the functions with the `onlyOwner`
+     * modifier anymore.
+     * @notice Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function _transferOwnership(address newOwner) internal {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
     }
 }
+
 /**
 * @dev To Main Stake contract  .
 */
-contract Stake is owned { 
+contract Stake is Ownable { 
 
     struct _staking{         
         uint _days;
@@ -65,9 +105,7 @@ contract Stake is owned {
     uint256 private lastStake;       
     
     constructor(address _tokenContract) {
-        owner=msg.sender;
-        tokenAddress= _tokenContract; 
-
+        tokenAddress= _tokenContract;
         //Days wise Percentage
         RewardPercentage[30] = 700;
         RewardPercentage[90] = 7500;
