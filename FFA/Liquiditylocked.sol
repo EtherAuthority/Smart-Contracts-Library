@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface TokenI {    
+interface TokenI {
+    
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
     function approve(address spender, uint256 amount) external returns(bool);
 }
 
+//*******************************************************************//
+//------------------ Contract to Manage Ownership -------------------//
+//*******************************************************************//
 
 /**
  * @title Ownable
@@ -82,34 +86,27 @@ contract Ownable {
 }
 
 contract Liquiditylocked is Ownable {
+
     address public immutable LPAddress;
     uint256 public immutable unlockDate;
     uint256 public immutable lockedamount;
-    uint256 public immutable deployTimestamp;   
+    uint256 public immutable deployTimestamp;
+   
    /**
-    *
     * @dev To show contract event  .
-    *
     */
     event claim(address _to, uint _amount);
 
-    /**
-    * @dev constructor function for contract deployment timestemp  , Liquidity pool address, Unlock timestemp and locked amount
-    */ 
     constructor(address _LPContract, uint256 _amount) {  
         deployTimestamp=block.timestamp;
-        LPAddress= _LPContract;         
+        LPAddress= _LPContract;   
+
         require(TokenI(LPAddress).balanceOf(msg.sender) > _amount, "Insufficient tokens");         
-       // unlockDate[msg.sender] =  deployTimestamp + (31*12*15*(24*60*60));// unlock start
-        unlockDate =  deployTimestamp + (120);// unlock start
+        unlockDate =  deployTimestamp + (31*12*15*(24*60*60));// unlock start        
         lockedamount = _amount;
     }
-     /**
-     *
-     * @dev Liquidity amount release in particular category wallet.
-     *
-     */
-     function Claim() public onlyOwner returns(bool){        
+
+    function Claim() public onlyOwner returns(bool){        
         require(unlockDate<=block.timestamp,"Liquidity locked!"); 
         TokenI(LPAddress).transfer(msg.sender, lockedamount);
         emit claim(msg.sender,lockedamount);
