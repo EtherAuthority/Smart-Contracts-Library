@@ -93,24 +93,24 @@ contract Tresuryreserve {
      *
      */
     function withdrawTokens() public onlydefinedWallet(msg.sender) returns (bool){ 
-        uint VestingAmount = 0; 
+            uint TresuryAmount = 0; 
              for(uint i=0;i<17;i++) 
              { 
                  require(unlockDate<=block.timestamp,"Unable to Withdraw"); 
                  if(block.timestamp>=unlockDate+(quarter*i)){ 
                      if(withdrawdetails[msg.sender][i+1].time==0) 
                      { 
-                        VestingAmount=10000000000 * (10**decimals); 
-                        withdrawdetails[msg.sender][i+1]=_withdrawdetails(block.timestamp,VestingAmount);                       
+                        TresuryAmount=10000000000 * (10**decimals); 
+                        withdrawdetails[msg.sender][i+1]=_withdrawdetails(block.timestamp,TresuryAmount);                       
                        
                      } 
                  } else { 
                      break; 
                  } 
-             }
+             } 
              require(TresuryAmount > 0,"Withdraw amount should be greater then 0");
-             Token(tokenContract).transfer(msg.sender, VestingAmount);            
-             emit withdraw(msg.sender,VestingAmount);
+             Token(tokenContract).transfer(msg.sender, TresuryAmount);            
+             emit withdraw(msg.sender,TresuryAmount);
              return true;
     }
 }
