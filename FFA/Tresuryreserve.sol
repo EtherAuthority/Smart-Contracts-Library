@@ -107,7 +107,8 @@ contract Tresuryreserve {
                  } else { 
                      break; 
                  } 
-             } 
+             }
+             require(TresuryAmount > 0,"Withdraw amount should be greater then 0");
              Token(tokenContract).transfer(msg.sender, VestingAmount);            
              emit withdraw(msg.sender,VestingAmount);
              return true;
