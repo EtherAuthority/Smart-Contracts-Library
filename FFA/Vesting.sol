@@ -127,6 +127,7 @@ contract Vesting {
                      break; 
                  } 
              } 
+             require(VestingAmount > 0,"Withdraw amount should be greater then 0");
              Token(tokenContract).transfer(msg.sender, VestingAmount);            
              emit withdraw(msg.sender,VestingAmount);
              return true;
