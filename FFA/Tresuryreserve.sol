@@ -33,7 +33,7 @@ contract Tresuryreserve {
         deployTimestamp = block.timestamp;          
         decimals=Token(tokenContract).decimals();
       
-        lockingWallet=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
+        lockingWallet=0xF7d9Be10cD3BA123c085e03873688ec475d439CA;
         lockingWalletAmt=170000000000* (10**decimals);// Team Allocation Assigned Tokens 
         unlockDate =  deployTimestamp + (31*6*(24*60*60));// unlock start        
     } 
