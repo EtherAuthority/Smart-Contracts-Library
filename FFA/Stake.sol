@@ -138,6 +138,7 @@ contract Stake is Ownable {
      * owner can change staking _percentage .
      */
     function RewardPercentageChange( uint256 _stakeDays , uint256 _percentage) public onlyOwner returns(uint256) {
+        require(_percentage > 0 &&  _percentage < 100,"Invalid parameter set for change percentage.");
         RewardPercentage[_stakeDays] = _percentage;
         return  RewardPercentage[_stakeDays];
     }
@@ -154,7 +155,8 @@ contract Stake is Ownable {
      * @dev set number of token from the RewardPoolAddress
      *
      */
-    function setRewardToken(uint _amount) public onlyOwner{        
+    function setRewardToken(uint _amount) public onlyOwner{     
+        require(_amount > 0,"Amount should be greater then 0");
         TokenI(tokenAddress).transferFrom(RewardPoolAddress,address(this), _amount);       
     }
 
@@ -177,7 +179,8 @@ contract Stake is Ownable {
     function stake(uint _staketime , uint _stakeamount) public returns (bool){
         require(msg.sender != address(0),"Wallet Address can not be address 0");  
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
-        require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");        
+        require(RewardPercentage[_staketime] > 0,"Please enter valid stack days");
+        require(_stakeamount > 0,"Amount should be greater then 0");        
         
         uint profit = _stakeamount * RewardPercentage[_staketime]/10000;
         
