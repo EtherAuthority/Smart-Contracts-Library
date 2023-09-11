@@ -115,8 +115,8 @@ contract Stake is Ownable {
     /**
      * @dev To show contract event  .
      */
-    event StakeEvent(address _to , uint _stakeamount);
-    event unstake(address _to, uint _amount);
+    event StakeEvent(uint256 _stakeid,address _to , uint _stakeamount);
+    event unstake(uint256 _stakeid,address _to, uint _amount);
 
     /**
      * @dev returns number of stake, done by particular wallet .
@@ -192,7 +192,7 @@ contract Stake is Ownable {
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
 
-        emit StakeEvent(address(this),_stakeamount);
+        emit StakeEvent(activeStake[msg.sender],address(this),_stakeamount);
         return true;       
     }
 
@@ -239,7 +239,7 @@ contract Stake is Ownable {
         staking[user][lastStake]._profit = 0;
 
         TokenI(tokenAddress).transfer(user, totalAmt); 
-        emit unstake(user,totalAmt);
+         emit unstake(_stakeid,user,totalAmt);
             
         return true; 
     }
