@@ -52,11 +52,11 @@ contract Tresuryreserve {
         _;
     }
     /**
-    * @dev ViewVestingAmount shows available Team Allocation amount of particular wallet
+    * @dev ViewUnlockAmount  shows available Team Allocation amount of particular wallet
     * parameters : user (wallet Address)
     *              
     */   
-     function ViewVestingAmount( address user )public view onlydefinedWallet(user) returns (uint){ 
+     function ViewUnlockAmount( address user )public view onlydefinedWallet(user) returns (uint){ 
         uint VestingAmount = 0; 
         for(uint i=0;i<17;i++) 
         { 
