@@ -10,7 +10,6 @@ interface IERC20
     function decimals() external view returns(uint8);
     function transfer(address _to, uint256 _amount) external returns (bool);
     function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
-    function allowance(address owner, address spender) external view returns (uint256);
 } 
 
 //USDT contract in Ethereum does not follow ERC20 standard so it needs different interface
@@ -19,7 +18,6 @@ interface IERC20_USDT
     function transfer(address _to, uint256 _amount) external;
     function transferFrom(address _from, address _to, uint _value) external;
     function balanceOf(address who) external returns (uint);
-    function allowance(address owner, address spender) external view returns (uint256);
 }
 
 
@@ -139,9 +137,9 @@ contract TokenSale is Ownable{
 
         uint256 amount = msg.value * exchangeRateInEth;
 
-        require(token.allowance(owner(), address(this)) >= amount, "Not enough tokens left for sale");
+        require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
 
-        token.transferFrom(owner(), msg.sender, amount);
+        token.transfer(msg.sender, amount);
         payable(owner()).transfer(msg.value);
 
         emit TokensPurchasedWithETH(msg.sender, msg.value, amount);
@@ -156,11 +154,11 @@ contract TokenSale is Ownable{
 
         uint256 amount = usdtAmount * exchangeRateInUSDT;
 
-        require(token.allowance(owner(), address(this)) >= amount, "Not enough tokens left for sale");
+        require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
            
         IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), usdtAmount);
             
-        token.transferFrom(owner(), msg.sender, amount);
+        token.transfer(msg.sender, amount);
 
         emit TokensPurchasedWithUSDT(msg.sender, usdtToken, amount);
         
@@ -169,9 +167,9 @@ contract TokenSale is Ownable{
     /**
     * This lets owner to withdraw any leftover tokens.
     */
-    function withdrawLeftoverTokens() external onlyOwner{
-        uint256 balance = token.balanceOf(address(this));
+    function withdrawLeftoverTokens(address tokenAddress) external onlyOwner{
+        uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
         require(balance > 0, "No token balance to withdraw");
-        token.transfer(msg.sender, balance);
+        IERC20(tokenAddress).transfer(msg.sender, balance);
     }
 }
