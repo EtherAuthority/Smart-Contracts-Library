@@ -210,7 +210,7 @@ contract Stake is Ownable {
         uint profit;
         uint remainingProfit;
         address user=msg.sender;
-        uint locktime=staking[user][_stakeid]._stakingStarttime+600; 
+        uint locktime=staking[user][_stakeid]._stakingEndtime; 
 
         require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
 
