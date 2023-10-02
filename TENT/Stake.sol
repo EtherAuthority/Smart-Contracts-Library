@@ -164,10 +164,24 @@ contract Stake is Ownable {
      * @dev returns total staking wallet profited amount
      *
      */
-    function TotalProfitedAmt() public view returns(uint){
+    function TotalProfitedAmt(uint256 _stakeid) public view returns(uint){
         require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");
-        uint profit = TotalProfit[msg.sender];
-        return profit;
+        uint totalAmt;
+        uint profit;       
+        address user=msg.sender;
+        uint locktime=staking[user][_stakeid]._stakingEndtime;        
+        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;        
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
+
+        if(block.timestamp > locktime){
+            profit= staking[user][_stakeid]._profit;
+            totalAmt= staking[user][_stakeid]._amount+ profit;
+        }else if(block.timestamp > oneMonthLocktime){
+            uint256 compmonth=CompletedMonth(_stakeid,user);
+            uint256 monthlyprofit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
+            totalAmt= staking[user][_stakeid]._amount+ monthlyprofit;
+        }
+        return totalAmt;
     }
 
     /**
@@ -200,7 +214,7 @@ contract Stake is Ownable {
      * @dev returns left vesting month.
      *
      */
-    function viewMonth(uint256 _stakeid, address user) public view returns (uint){
+    function CompletedMonth(uint256 _stakeid, address user) public view returns (uint){
 
             uint compmonth=0;
 
@@ -229,26 +243,12 @@ contract Stake is Ownable {
      * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
      *          to the staking wallet.
      */
-    function unStake(uint256 _stakeid) public returns (bool){         
+    function unStake(uint256 _stakeid) public returns (bool){        
         
-        uint totalAmt;
-        uint profit;       
+        uint totalAmt;   
         address user=msg.sender;
-        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint locktime=staking[user][_stakeid]._stakingStarttime+600;
-        //uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth; 
-        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;
-        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
-
-        if(block.timestamp > locktime){
-            profit= staking[user][_stakeid]._profit;
-            totalAmt= staking[user][_stakeid]._amount+ profit;
-        }else if(block.timestamp > oneMonthLocktime){
-            uint256 compmonth=viewMonth(_stakeid,user);
-            uint256 monthlyprofit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
-            totalAmt= staking[user][_stakeid]._amount+ monthlyprofit;
-        }
-
+                   
+        totalAmt= TotalProfitedAmt(_stakeid); 
         activeStake[user]=activeStake[user]-1;
         lastStake=activeStake[user];
 
@@ -265,7 +265,7 @@ contract Stake is Ownable {
         staking[user][lastStake]._profit = 0;
 
         TokenI(tokenAddress).transfer(user, totalAmt); 
-         emit unstake(_stakeid,user,totalAmt);
+        emit unstake(_stakeid,user,totalAmt);
             
         return true; 
     }
