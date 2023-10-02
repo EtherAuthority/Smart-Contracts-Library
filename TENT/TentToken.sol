@@ -606,6 +606,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 contract TentTolen is ERC20, Ownable {
+     /**
+    * @dev constructor function for initialize the token
+    */ 
     constructor() ERC20("TENT", "TENT"){
         
     }
