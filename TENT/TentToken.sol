@@ -606,9 +606,6 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 contract TentTolen is ERC20, Ownable {
-
-    uint256 public maxSupply;
-
     constructor() ERC20("TENT", "TENT"){
         
     }
