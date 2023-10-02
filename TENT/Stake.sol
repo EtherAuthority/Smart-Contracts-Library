@@ -164,24 +164,25 @@ contract Stake is Ownable {
      * @dev returns total staking wallet profited amount
      *
      */
-    function TotalProfitedAmt(uint256 _stakeid) public view returns(uint){
-        require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");
-        uint totalAmt;
+    function TotalProfitedAmt(address user,uint256 _stakeid) public view returns(uint){
+        require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");               
         uint profit;       
-        address user=msg.sender;
-        uint locktime=staking[user][_stakeid]._stakingEndtime;        
-        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;        
+       
+        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint locktime=staking[user][_stakeid]._stakingStarttime+600;
+        //uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth; 
+        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;
         require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
 
         if(block.timestamp > locktime){
             profit= staking[user][_stakeid]._profit;
-            totalAmt= staking[user][_stakeid]._amount+ profit;
+            
         }else if(block.timestamp > oneMonthLocktime){
             uint256 compmonth=CompletedMonth(_stakeid,user);
-            uint256 monthlyprofit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
-            totalAmt= staking[user][_stakeid]._amount+ monthlyprofit;
+            profit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
+           
         }
-        return totalAmt;
+        return profit;
     }
 
     /**
@@ -245,10 +246,23 @@ contract Stake is Ownable {
      */
     function unStake(uint256 _stakeid) public returns (bool){        
         
-        uint totalAmt;   
+        uint totalAmt;
+        uint profit;       
         address user=msg.sender;
-                   
-        totalAmt= TotalProfitedAmt(_stakeid); 
+        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint locktime=staking[user][_stakeid]._stakingStarttime+600;
+        //uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth; 
+        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
+
+        if(block.timestamp > locktime){
+            profit= staking[user][_stakeid]._profit;
+            totalAmt= staking[user][_stakeid]._amount+ profit;
+        }else if(block.timestamp > oneMonthLocktime){
+            uint256 compmonth=CompletedMonth(_stakeid,user);
+            profit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
+            totalAmt= staking[user][_stakeid]._amount+ profit;
+        } 
         activeStake[user]=activeStake[user]-1;
         lastStake=activeStake[user];
 
