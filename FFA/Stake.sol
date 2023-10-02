@@ -138,7 +138,7 @@ contract Stake is Ownable {
      * owner can change staking _percentage .
      */
     function RewardPercentageChange( uint256 _stakeDays , uint256 _percentage) public onlyOwner returns(uint256) {
-        require(_percentage > 0 &&  _percentage < 100,"Invalid parameter set for change percentage.");
+       require(_percentage > 10000 &&  _percentage < 1000000,"Invalid parameter set for change percentage.");
         RewardPercentage[_stakeDays] = _percentage;
         return  RewardPercentage[_stakeDays];
     }
