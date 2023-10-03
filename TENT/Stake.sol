@@ -109,8 +109,8 @@ contract Stake is Ownable {
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
         //Days wise Percentage        
-        RewardPercentage[6] = 70000;
-        RewardPercentage[12] = 160000;
+        RewardPercentage[6] = 700; // 7%
+        RewardPercentage[12] = 1600; // 16%
     }
     /**
      * @dev To show contract event  .
@@ -137,8 +137,9 @@ contract Stake is Ownable {
      * @dev return new days wise staking percentage.
      * owner can change staking _percentage .
      */
-    function RewardPercentageChange( uint256 _stakeMonth , uint256 _percentage) public onlyOwner returns(uint256) {
-        require(_percentage > 10000 &&  _percentage < 1000000,"Invalid parameter set for change percentage.");
+
+    // put two extra zeros to adjust decimal values for ex for 6% it will be 600 for 0.06% it will be 6
+    function RewardPercentageChange( uint256 _stakeMonth , uint256 _percentage) public onlyOwner returns(uint256) {        
         RewardPercentage[_stakeMonth] = _percentage;
         return  RewardPercentage[_stakeMonth];
     }
@@ -177,7 +178,8 @@ contract Stake is Ownable {
             
         }else if(block.timestamp > oneMonthLocktime){
             uint256 compmonth=CompletedMonth(_stakeid,user);
-            profit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
+    	    require(RewardPercentage[compmonth] > 0, "Percentage not defined for current month");
+            profit = staking[user][_stakeid]._amount * RewardPercentage[compmonth] / 10000;            
            
         }
         return profit;
@@ -248,17 +250,17 @@ contract Stake is Ownable {
         uint profit;       
         address user=msg.sender;
         uint locktime=staking[user][_stakeid]._stakingEndtime;         
-        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth; 
-        
-        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");            
+        uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;         
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
 
         if(block.timestamp > locktime){
             profit= staking[user][_stakeid]._profit;
             totalAmt= staking[user][_stakeid]._amount+ profit;
         }else if(block.timestamp > oneMonthLocktime){
-            uint256 compmonth=CompletedMonth(_stakeid,user);
-            profit = staking[user][_stakeid]._amount * ((compmonth*10000)/10000);            
-            totalAmt= staking[user][_stakeid]._amount+ profit;
+          uint256 compmonth=CompletedMonth(_stakeid,user);
+            require(RewardPercentage[compmonth] > 0, "percentage not defined for this month");
+            uint256 monthlyprofit = staking[user][_stakeid]._amount * RewardPercentage[compmonth] / 10000;            
+            totalAmt= staking[user][_stakeid]._amount+ monthlyprofit;
         } 
         activeStake[user]=activeStake[user]-1;
         lastStake=activeStake[user];
