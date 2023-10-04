@@ -2,10 +2,13 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Marketplace is ReentrancyGuard {
 
     mapping(uint256 => Listing) public listings;
+    mapping(uint256 => bool) public requiresTokens;
+
     address payable public immutable owner;
     uint256 public minAmount = 1000 wei;
     uint256 public maxMarketplaceFee = 100; // 1% fee
@@ -39,12 +42,12 @@ contract Marketplace is ReentrancyGuard {
         address ownerof;
         address payable sellerAddress;
         address payable buyerAddress;
+        address tokenAddress;
         address marketplaceAddress;
         uint256 amount;
         string currency;
         uint256 marketplaceFee;
         bool isPayed;
-        string transactionHash;
         bool initialized;
         bool isCompleted;
     }
@@ -52,15 +55,17 @@ contract Marketplace is ReentrancyGuard {
     function createListing(
         uint256 listingID,
         address sellerAddress,
+        address buyerAddress,
         address marketplaceAddress,
         uint256 amount,
         string memory currency,
-        uint256 marketplaceFee
+        uint256 marketplaceFee,
+        address tokenAddress
     ) public returns (bool) {
 
         require(listingID > 0, "Invalid listingID");
-        require(sellerAddress != address(0), "Invalid sellerAddress");
-        //require(buyerAddress != address(0), "Invalid buyerAddress");
+        require(sellerAddress != owner, "Invalid sellerAddress");
+        require(buyerAddress != address(0), "Invalid buyerAddress");
         require(marketplaceAddress != address(0), "Invalid marketplaceAddress");
         require(amount > 0, "Invalid amount");
         require(amount >= minAmount, "Amount must be greater than or equal to the minimum amount");
@@ -68,19 +73,23 @@ contract Marketplace is ReentrancyGuard {
         require(marketplaceFee <= maxMarketplaceFee, "Marketplace fee exceeds maximum allowed");
         require(listings[listingID].listingID != listingID, "Listing already exists");
 
+        if (tokenAddress != address(0)) {
+            requiresTokens[listingID] = true;
+        }
+        
         listings[listingID] = Listing({
             listingID: listingID,
             ownerof: msg.sender,
             sellerAddress: payable(sellerAddress),
-            buyerAddress:  payable(address(0)),
+            buyerAddress:  payable(buyerAddress),
             marketplaceAddress: marketplaceAddress,
             amount: amount,
             currency: currency,
             marketplaceFee: marketplaceFee,
             isPayed: false,
-            transactionHash: "",
             initialized: false,
-            isCompleted: false
+            isCompleted: false,
+            tokenAddress: tokenAddress
         });
 
         // Emit the event
@@ -123,27 +132,52 @@ contract Marketplace is ReentrancyGuard {
     }
 
     // function to pay for Listnig Id from buyer to seller
-    function paySeller(uint256 listingID, address sellerAddress, string memory currency, string memory transactionHash) public payable returns (bool) {
+    function paySeller(uint256 listingID, address sellerAddress, string memory currency) public payable returns (bool) {
         Listing storage listing = listings[listingID];
-        require(listing.ownerof != msg.sender, "You cannot be the buyer");
         require(listing.sellerAddress == sellerAddress, "Invalid seller address");
         require(listing.initialized == true, "Listing not initialized");
         require(listing.isCompleted == false, "Listing already completed");
         require(keccak256(abi.encodePacked(listing.currency)) == keccak256(abi.encodePacked(currency)), "Invalid currency");
-        require(msg.value == listing.amount, "Incorrect amount to buy listing");
 
-        uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000; // 10000 = 100% 
-        listing.sellerAddress.transfer(listing.amount - marketplaceFee);
-        owner.transfer(marketplaceFee);
-
-        listing.buyerAddress = payable(msg.sender);
+        if (requiresTokens[listingID]) {
+            // Retrieve the ERC20 token contract
+            IERC20 token = IERC20(listing.tokenAddress);
+            require(token.transferFrom(msg.sender, address(this), listing.amount), "Token transfer failed");
+            uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000;
+            require(token.transfer(owner, marketplaceFee), "Token transfer failed");
+            require(token.transfer(listing.sellerAddress, listing.amount - marketplaceFee), "Token transfer failed");
+        } else {
+            require(msg.value == listing.amount, "Incorrect amount to buy listing");
+            uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000; // 10000 = 100% 
+            listing.sellerAddress.transfer(listing.amount - marketplaceFee);
+            owner.transfer(marketplaceFee);
+        }
+        
         listing.ownerof = msg.sender;
         listing.isPayed = true;
         listing.isCompleted = true;
-        listing.transactionHash = transactionHash;
-
-        emit PaymentProcessed(listingID, msg.sender, listing.sellerAddress, msg.value);
         
+        emit PaymentProcessed(listingID, msg.sender, listing.sellerAddress, listing.amount);
+
         return true;
+    }
+
+    // Function to check token balance
+    function getTokenBalance(address tokenAddress, address accountAddress) external view returns (uint256) {
+        // Retrieve the ERC20 token contract
+        IERC20 token = IERC20(tokenAddress);
+        // Get the token balance of the specified account
+        uint256 balance = token.balanceOf(accountAddress);
+        return balance;
+    }
+
+    // Function to withdraw or transfer tokens to another address
+    function withdrawTokens(address tokenAddress, address to, uint256 amount) external onlyOwner {
+        // Retrieve the ERC20 token contract
+        IERC20 token = IERC20(tokenAddress);
+        // Ensure the contract has enough balance
+        require(token.balanceOf(address(this)) >= amount, "Insufficient balance");
+        // Transfer tokens to the specified address
+        require(token.transfer(to, amount), "Token transfer failed");
     }
 }
