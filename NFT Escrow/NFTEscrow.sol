@@ -135,6 +135,7 @@ contract Marketplace is ReentrancyGuard {
     function paySeller(uint256 listingID, address sellerAddress, string memory currency) public payable returns (bool) {
         Listing storage listing = listings[listingID];
         require(listing.sellerAddress == sellerAddress, "Invalid seller address");
+        require(listing.buyerAddress == msg.sender, "You are not a buyer");
         require(listing.initialized == true, "Listing not initialized");
         require(listing.isCompleted == false, "Listing already completed");
         require(keccak256(abi.encodePacked(listing.currency)) == keccak256(abi.encodePacked(currency)), "Invalid currency");
