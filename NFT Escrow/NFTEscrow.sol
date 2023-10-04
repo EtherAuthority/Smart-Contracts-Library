@@ -4,13 +4,19 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Marketplace is ReentrancyGuard {
+interface NonERCToken {
+    function transfer(address recipient, uint256 amount) external;
+    function transferFrom(address sender, address recipient, uint256 amount) external;
+    function balanceOf(address account) external view returns (uint256);
+    
+}
+
+contract NFTEscrow is ReentrancyGuard {
 
     mapping(uint256 => Listing) public listings;
     mapping(uint256 => bool) public requiresTokens;
 
     address payable public immutable owner;
-    uint256 public minAmount = 1000 wei;
     uint256 public maxMarketplaceFee = 100; // 1% fee
 
     constructor() {
@@ -32,7 +38,6 @@ contract Marketplace is ReentrancyGuard {
         string currency,
         uint256 marketplaceFee
     );
-    event listingInitialized(uint256 indexed listingID);
     event listingStatusSet(uint256 indexed listingID, bool status);
     event listingRemoved(uint256 indexed listingID);
     event marketplaceFeeSet(uint256 indexed listingID, uint256 newFee);
@@ -48,8 +53,8 @@ contract Marketplace is ReentrancyGuard {
         string currency;
         uint256 marketplaceFee;
         bool isPayed;
-        bool initialized;
         bool isCompleted;
+        bool IsTokenNonErc20;
     }
 
     function createListing(
@@ -60,15 +65,14 @@ contract Marketplace is ReentrancyGuard {
         uint256 amount,
         string memory currency,
         uint256 marketplaceFee,
-        address tokenAddress
+        address tokenAddress,
+        bool IsTokenNonErc20
     ) public returns (bool) {
 
         require(listingID > 0, "Invalid listingID");
-        require(sellerAddress != owner, "Invalid sellerAddress");
         require(buyerAddress != address(0), "Invalid buyerAddress");
         require(marketplaceAddress != address(0), "Invalid marketplaceAddress");
         require(amount > 0, "Invalid amount");
-        require(amount >= minAmount, "Amount must be greater than or equal to the minimum amount");
         require(bytes(currency).length > 0, "Invalid currency");
         require(marketplaceFee <= maxMarketplaceFee, "Marketplace fee exceeds maximum allowed");
         require(listings[listingID].listingID != listingID, "Listing already exists");
@@ -87,9 +91,9 @@ contract Marketplace is ReentrancyGuard {
             currency: currency,
             marketplaceFee: marketplaceFee,
             isPayed: false,
-            initialized: false,
             isCompleted: false,
-            tokenAddress: tokenAddress
+            tokenAddress: tokenAddress,
+            IsTokenNonErc20: IsTokenNonErc20
         });
 
         // Emit the event
@@ -98,17 +102,6 @@ contract Marketplace is ReentrancyGuard {
         return true;
     }
     
-    // function to initialize listing
-    function initializeListing(uint256 listingID) public onlyOwner {
-        Listing storage listing = listings[listingID];
-
-        require(listing.listingID > 0, "Invalid listing ID");
-        require(listing.initialized == false, "Listing already initialized");
-
-        listing.initialized = true;
-        emit listingInitialized(listingID);
-    }
-
     // function to set the status
     function setListingStatus(uint256 listingID, bool status) public onlyOwner {
         require(listings[listingID].isCompleted = false, "Listing already completed");
@@ -136,17 +129,26 @@ contract Marketplace is ReentrancyGuard {
         Listing storage listing = listings[listingID];
         require(listing.sellerAddress == sellerAddress, "Invalid seller address");
         require(listing.buyerAddress == msg.sender, "You are not a buyer");
-        require(listing.initialized == true, "Listing not initialized");
         require(listing.isCompleted == false, "Listing already completed");
         require(keccak256(abi.encodePacked(listing.currency)) == keccak256(abi.encodePacked(currency)), "Invalid currency");
 
         if (requiresTokens[listingID]) {
-            // Retrieve the ERC20 token contract
-            IERC20 token = IERC20(listing.tokenAddress);
-            require(token.transferFrom(msg.sender, address(this), listing.amount), "Token transfer failed");
-            uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000;
-            require(token.transfer(owner, marketplaceFee), "Token transfer failed");
-            require(token.transfer(listing.sellerAddress, listing.amount - marketplaceFee), "Token transfer failed");
+
+            if(listing.IsTokenNonErc20){
+                NonERCToken token = NonERCToken(listing.tokenAddress);
+                token.transferFrom(msg.sender, address(this), listing.amount);
+                uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000;
+                token.transfer(listing.marketplaceAddress, marketplaceFee);
+                token.transfer(listing.sellerAddress, listing.amount - marketplaceFee);
+            } else {    
+                // Retrieve the ERC20 token contract
+                IERC20 token = IERC20(listing.tokenAddress);
+                require(token.transferFrom(msg.sender, address(this), listing.amount), "Token transfer failed");
+                uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000;
+                require(token.transfer(listing.marketplaceAddress, marketplaceFee), "Token transfer failed");
+                require(token.transfer(listing.sellerAddress, listing.amount - marketplaceFee), "Token transfer failed");
+            }
+            
         } else {
             require(msg.value == listing.amount, "Incorrect amount to buy listing");
             uint256 marketplaceFee = (listing.amount * listing.marketplaceFee) / 10000; // 10000 = 100% 
@@ -165,20 +167,48 @@ contract Marketplace is ReentrancyGuard {
 
     // Function to check token balance
     function getTokenBalance(address tokenAddress, address accountAddress) external view returns (uint256) {
-        // Retrieve the ERC20 token contract
-        IERC20 token = IERC20(tokenAddress);
-        // Get the token balance of the specified account
-        uint256 balance = token.balanceOf(accountAddress);
+        uint256 balance = 0;
+        if(isERC20Token(IERC20(tokenAddress))){
+            IERC20 token = IERC20(tokenAddress);
+            balance = token.balanceOf(accountAddress);
+        } else {
+            NonERCToken token = NonERCToken(tokenAddress);
+            balance = token.balanceOf(accountAddress);
+        }
         return balance;
+    }
+
+    // Function to check coin balance
+    function getCoinBalance(address walletAddress) public view returns (uint256) {
+        return walletAddress.balance;
     }
 
     // Function to withdraw or transfer tokens to another address
     function withdrawTokens(address tokenAddress, address to, uint256 amount) external onlyOwner {
-        // Retrieve the ERC20 token contract
-        IERC20 token = IERC20(tokenAddress);
-        // Ensure the contract has enough balance
-        require(token.balanceOf(address(this)) >= amount, "Insufficient balance");
-        // Transfer tokens to the specified address
-        require(token.transfer(to, amount), "Token transfer failed");
+
+        if(isERC20Token(IERC20(tokenAddress))){
+            // Retrieve the NON ERC20 token contract
+            NonERCToken token = NonERCToken(tokenAddress);
+            // Ensure the contract has enough balance
+            require(token.balanceOf(address(this)) >= amount, "Insufficient balance");
+            token.transfer(to, amount);
+
+        } else {
+            // Retrieve the ERC20 token contract
+            IERC20 token = IERC20(tokenAddress);
+            // Ensure the contract has enough balance
+            require(token.balanceOf(address(this)) >= amount, "Insufficient balance");
+            // Transfer tokens to the specified address
+            require(token.transfer(to, amount), "Token transfer failed");
+        }
+    }
+
+    // Function to check if a token supports the ERC20 interface
+    function isERC20Token(IERC20 token) internal view returns (bool) {
+        try token.totalSupply() returns (uint256) {
+            return true;
+        } catch (bytes memory) {
+            return false;
+        }
     }
 }
