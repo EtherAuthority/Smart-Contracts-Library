@@ -609,7 +609,7 @@ contract TentTolen is ERC20, Ownable {
      /**
     * @dev constructor function for initialize the token
     */ 
-    constructor() ERC20("tentomushi", "TENT"){
+    constructor() ERC20("TENT", "TENT"){
         
     }
 
@@ -618,7 +618,7 @@ contract TentTolen is ERC20, Ownable {
      * the total supply. Only accessible by the contract owner.
      */
     function mint(uint256 amount, address to) external onlyOwner {       
-        _mint(to, amount);
+        _mint(to,(amount*decimals()));
     }
 
     /**
@@ -629,4 +629,3 @@ contract TentTolen is ERC20, Ownable {
     }
 
 }
-
