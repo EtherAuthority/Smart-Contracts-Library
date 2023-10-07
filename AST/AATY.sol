@@ -24,7 +24,7 @@ abstract contract Context {
     }
 }
 abstract contract Ownable is Context {
-    address private _contractOwner;
+    address public _contractOwner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -178,29 +178,40 @@ interface IERC20Metadata is IERC20 {
 // File: contracts/1_Storage.sol
 
 
+interface Factory {
 
-contract TestToken is IERC20,Ownable {
+    function ASTConvertionAmount(address _astToken,uint256 _aatyAmount) external view returns(uint256 astamt_,uint256 needToBurn);
+    function returnAstToLockedOwner(address _astToken,uint256 _astAmount) external returns(bool);
+
+}
+
+
+contract AATY is IERC20,Ownable {
    
 
     string private  tname;
     string private  tsymbol;
     uint private  tdecimal;
     uint256 private  tokentotalSupply;
-    address private vaultaddress;
     mapping (address=>uint) internal  _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
     
-    address public governanceaddress;
+    address public factory;
     mapping(address=>uint256) public _userReward;
 
    
 
-    constructor(string memory _name,string memory _symbol,uint _decimal,uint _totalsupply){
+    constructor(string memory _name,string memory _symbol,uint _decimal){
+        
         tname=_name;
         tsymbol=_symbol;
         tdecimal=_decimal;
-        tokentotalSupply=_totalsupply;
-        _balances[msg.sender]=_totalsupply;
+        _contractOwner=msg.sender;
+     }
+
+     function setFactory(address factory_) public onlyOwner{
+        require(factory_!=address(0),"Invalid Factory Address");
+        factory=factory_;
      }
    
      //ERC20
@@ -227,7 +238,7 @@ contract TestToken is IERC20,Ownable {
         return _balances[account];
     }
  
-     function Mint(uint amount,address _wallet)public onlyOwner() {
+     function Mint(uint amount,address _wallet)external onlyOwner() {
         _mint(_wallet,amount);
     }
      function _mint(address account, uint256 amount) internal virtual {
@@ -245,19 +256,14 @@ contract TestToken is IERC20,Ownable {
         // _afterTokenTransfer(address(0), account, amount);
     }
 
-    /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
-     */
-      function burn(uint amount)public {
+    
+      function burn(uint amount,address _astToken)public {
+        require(factory!=address(0),"Factory Not Set");
+        require(_astToken!=address(0),"Invalid Token Address");
+        (uint256 burnamt,uint256 needToBurn)=Factory(factory).ASTConvertionAmount(_astToken,amount);
+        require(burnamt<=needToBurn,"Exceeding Limits");
         _burn(msg.sender,amount);
+        Factory(factory).returnAstToLockedOwner(_astToken,burnamt);
     }
     function _burn(address account, uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from the zero address");
@@ -270,6 +276,7 @@ contract TestToken is IERC20,Ownable {
             _balances[account] = accountBalance - amount;
             // Overflow not possible: amount <= accountBalance <= totalSupply.
             tokentotalSupply -= amount;
+            
         }
 
         emit Transfer(account, address(0), amount);
