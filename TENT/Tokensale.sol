@@ -152,7 +152,7 @@ contract TokenSale is Ownable{
         require(usdtAmount > 0, "Token amount should be greater than zero");
         require(usdtAmount <= maxAmountinUSDT, "Cannot buy more than max limit");
 
-        uint256 amount = usdtAmount * exchangeRateInUSDT;
+        uint256 amount = usdtAmount * exchangeRateInUSDT * 10**6;
 
         require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
            
@@ -173,4 +173,3 @@ contract TokenSale is Ownable{
         IERC20(tokenAddress).transfer(msg.sender, balance);
     }
 }
-
