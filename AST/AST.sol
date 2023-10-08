@@ -38,7 +38,8 @@ interface IAST {
    
     function approve(address spender, uint256 amount) external returns (bool);
 
-    function burn(uint amount,address _user)external returns(bool);
+    function burn(uint amount)external returns(bool);
+
     
     function transferFrom(
         address from,
@@ -114,6 +115,7 @@ contract AST is Context, IAST, IASTMetadata {
     string private _name;
     string private _symbol;
     uint256 private  _decimal;
+    address public _owner;
 
     
     constructor(string memory name_, string memory symbol_, uint256 decimal_ ,uint256 totalSupply_) {
@@ -123,6 +125,7 @@ contract AST is Context, IAST, IASTMetadata {
         _balances[tx.origin]=totalSupply_/2;
         _balances[msg.sender]=totalSupply_/2;
         _totalSupply=totalSupply_;
+        _owner=tx.origin;
 
     }
 
@@ -208,6 +211,8 @@ contract AST is Context, IAST, IASTMetadata {
     ) internal virtual {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
+        require(verifyUser(from)==true && verifyUser(to)==true, "Users Are Not Whitelisted");
+        
 
         _beforeTokenTransfer(from, to, amount);
 
@@ -239,9 +244,10 @@ contract AST is Context, IAST, IASTMetadata {
 
         _afterTokenTransfer(address(0), account, amount);
     }
-    function burn(uint amount,address _user)external returns(bool){
-        
-        _burn(_user,amount);
+    function burn(uint amount)external returns(bool){
+        require(tx.origin==_owner,"Only Owner Can Burn");
+        require((balanceOf(_owner)*100)/totalSupply()>99,"You Cannot Burn");
+        _burn(_owner,amount);
        return true;
     }
     
@@ -304,6 +310,27 @@ contract AST is Context, IAST, IASTMetadata {
         address to,
         uint256 amount
     ) internal virtual {}
+
+    mapping(address => bool) whitelistedAddresses;
+
+    function addWhitelist(address _addressToWhitelist) public {
+        require(msg.sender==_owner,"Only Owner Can Whitelist");
+        whitelistedAddresses[_addressToWhitelist] = true;
+    }
+
+    function verifyUser(address _whitelistedAddress) public view returns(bool) {
+        bool userIsWhitelisted = whitelistedAddresses[_whitelistedAddress];
+        return userIsWhitelisted;
+   }
+    function removeFromWhitelist(address[] calldata toRemoveAddresses)
+    external
+    {
+        require(msg.sender==_owner,"Only Owner Can Remove Whitelist");
+        for (uint i = 0; i < toRemoveAddresses.length; i++) {
+            delete whitelistedAddresses[toRemoveAddresses[i]];
+        }
+        
+    }
 }
 
 // File: contracts/1_Storage.sol
@@ -415,7 +442,7 @@ contract ERC20TokenFactory is Ownable{
 
     function burnAstToken(address _astToken) public onlyOwner returns(bool){
         require(_astToken!=address(0),"Invalid Address");
-        IAST(_astToken).burn(IAST(_astToken).balanceOf(_contractOwner),msg.sender);
+        IAST(_astToken).burn(IAST(_astToken).balanceOf(_contractOwner));
 
         return true;
     }
