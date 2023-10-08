@@ -206,7 +206,7 @@ contract AATY is IERC20,Ownable {
         tname=_name;
         tsymbol=_symbol;
         tdecimal=_decimal;
-        _contractOwner=msg.sender;
+       
      }
 
      function setFactory(address factory_) public onlyOwner{
