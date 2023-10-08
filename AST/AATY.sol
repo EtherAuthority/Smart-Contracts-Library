@@ -312,7 +312,8 @@ contract AATY is IERC20,Ownable {
     ) internal virtual {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
-
+        require(verifyUser(from)==true && verifyUser(to)==true, "Users Are Not Whitelisted");
+        
         // _beforeTokenTransfer(from, to, amount);
         
         uint256 fromBalance = _balances[from];
@@ -384,15 +385,5 @@ contract AATY is IERC20,Ownable {
             delete whitelistedAddresses[toRemoveAddresses[i]];
         }
     }
-
-   
-    
-    
-    
-    
-
-    
-
-
 
 }
