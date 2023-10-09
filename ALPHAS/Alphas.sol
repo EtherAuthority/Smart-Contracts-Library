@@ -331,13 +331,29 @@ contract ALPHAS is Ownable {
     constructor(address _marketingWallet, address _devWallet, address _charityWallet,  address _lotteryWallet) {
         _balances[msg.sender] = _totalSupply;
  
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-            //0x10ED43C718714eb63d5aA57B78B54704E256024E //BSC Mainnet
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
- 
-        );
+        IUniswapV2Router02 _uniswapV2Router;
+    
+        if (block.chainid == 56) {
+            _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        } 
+        else if (block.chainid == 97) {
+            _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        } 
+        else if (block.chainid == 1 || block.chainid == 4 || block.chainid == 3) {
+            _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        } 
+        else if (block.chainid == 43114) {
+            _uniswapV2Router = IUniswapV2Router02(0x60aE616a2155Ee3d9A68541Ba4544862310933d4);
+        } 
+        else if (block.chainid == 250) {
+            _uniswapV2Router = IUniswapV2Router02(0xF491e7B69E4244ad4002BC14e878a34207E38c29);
+        } 
+        else {
+            revert("Chain not valid");
+        }
+
         uniswapV2Router = _uniswapV2Router;
+        
         _uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
             address(this),
             _uniswapV2Router.WETH()
@@ -573,13 +589,10 @@ contract ALPHAS is Ownable {
     }
  
     function setTaxThreshold(uint256 threshold) external onlyOwner {
+        require(_taxThreshold <= (totalSupply() * 1000)/100000, "Tax threshold cannot be more than 1% of total supply");
         _taxThreshold = threshold;
     }
 
- 
-    function setMaxAmount(uint256 amount) external onlyOwner {
-        maxAmount = amount;
-    }
 
     function updateFees() internal {
         // Only run for the 24 hours after launch
