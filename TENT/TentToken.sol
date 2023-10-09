@@ -609,7 +609,7 @@ contract TentTolen is ERC20, Ownable {
      /**
     * @dev constructor function for initialize the token
     */ 
-    constructor() ERC20("TENT", "TENT"){
+    constructor() ERC20("tentomushi", "TENT"){
         
     }
 
