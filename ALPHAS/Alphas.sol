@@ -287,7 +287,7 @@ contract ALPHAS is Ownable {
     address public devWallet;
     address public charityWallet;
     address public lotteryWallet;
-    address constant public DEAD = 0x000000000000000000000000000000000000dEaD;
+    address constant private DEAD = 0x000000000000000000000000000000000000dEaD;
  
     uint256 public buyFee;
     uint256 public sellFee;       
@@ -305,8 +305,8 @@ contract ALPHAS is Ownable {
  
     uint256 public _taxThreshold = 10000 * 10**uint256(_decimals); // Threshold for sending eth to wallets
  
-    IUniswapV2Router02 public uniswapV2Router;
-    address public _uniswapPair;
+    IUniswapV2Router02 public immutable uniswapV2Router;
+    address public immutable _uniswapPair;
  
     bool private swapping;
     bool public swapEnabled = true;
