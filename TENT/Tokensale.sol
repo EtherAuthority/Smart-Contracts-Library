@@ -156,7 +156,7 @@ contract TokenSale is Ownable{
 
         require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
            
-        IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), usdtAmount);
+        IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), amount);
             
         token.transfer(msg.sender, amount);
 
