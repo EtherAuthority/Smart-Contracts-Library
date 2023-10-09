@@ -153,10 +153,11 @@ contract TokenSale is Ownable{
         require(usdtAmount <= maxAmountinUSDT, "Cannot buy more than max limit");
 
         uint256 amount = usdtAmount * exchangeRateInUSDT * 10**6;
+        uint256 totalusdtAmount = usdtAmount * 10**6;
 
         require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
            
-        IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), amount);
+        IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), totalusdtAmount);
             
         token.transfer(msg.sender, amount);
 
