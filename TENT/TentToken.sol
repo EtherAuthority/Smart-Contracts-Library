@@ -618,7 +618,7 @@ contract TentTolen is ERC20, Ownable {
      * the total supply. Only accessible by the contract owner.
      */
     function mint(uint256 amount, address to) external onlyOwner {       
-        uint256 totalAmt = amount*decimals();    
+        uint256 totalAmt = amount* 10**18;    
         _mint( to, totalAmt );
     }
 
