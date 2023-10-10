@@ -613,6 +613,8 @@ contract ASTTokenFactory is Ownable{
     uint TokenCount=1;
     address AATtoken;
     
+    // _token= AAT contract address
+    // this will set the AAT Contract address to Factory Contract.
 
     function SetAATContrct(address _token) public onlyOwner returns(bool){
         require(_token!=address(0),"Invalid Address");
@@ -620,6 +622,7 @@ contract ASTTokenFactory is Ownable{
         return true;
     }
 
+    // _wallet=User wallet to whom the AAT token will be transfered while Creating AST token.
     function SetPoolWallet(address _wallet) public onlyOwner{
         require(_wallet!=address(0),"Invalid Address");
         
@@ -627,6 +630,7 @@ contract ASTTokenFactory is Ownable{
         
     }
 
+    //_wallet=User wallet to whom the the 50% ASt token will be minted while creating AST token.
     function SetAssetLockedWallet(address _wallet) public onlyOwner{
         require(_wallet!=address(0),"Invalid Address");
         
@@ -634,7 +638,11 @@ contract ASTTokenFactory is Ownable{
         
     }
 
-    //_ratio=2;  2AST=1AAT
+    //totalSupply_= The total amount u want to mint for AST token.
+    // _ratio=Propotion of AST to AAT and AAt to AST token convertion.
+    // Only Called By contrct Owner.
+    // If owner wants to set 1AAT=7.5AST token then he needs to provide 75 as ratio.
+    // If owner wants to set 1AAT=75.3AST token then he needs to provide 753 as ratio.
 
     function CreateASTToken(string memory name_, string memory symbol_, uint256 totalSupply_ ,uint256 _ratio) public onlyOwner returns (AST) {
         require(_ratio>0,"Invalid Amount");
@@ -655,6 +663,11 @@ contract ASTTokenFactory is Ownable{
         return token;
     }
 
+     // _astToken=AST token contract address
+     // _aatAmount=AAT token amount u want to burn
+     // it will return AST token amount in proportion to AAT token Amount.
+     // it also returns The max AST token u can Burn.
+
     function ASTConvertionAmount(address _astToken,uint256 _aatAmount) public view returns(uint256 astamt_,uint256 needToBurn){
         require(_astToken!=address(0),"Invalid Address");
         require(_aatAmount>0,"Invalid Amount");
@@ -665,11 +678,18 @@ contract ASTTokenFactory is Ownable{
          return (astamt_,needToBurn);
     }
 
-    function AATBurnAmount(address _astToken) public view returns(uint256 aatyamt_){
+    // _astToken=AST token contract address
+    // This will return AAT token amount for Burning.
+    
+    function AATBurnAmount(address _astToken) public view returns(uint256 aatamt_){
         require(_astToken!=address(0),"Invalid Address");
         
-        return aatyamt_=(IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet))/AATConvertion[_astToken];
+        return aatamt_=(IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet))/AATConvertion[_astToken];
     }
+
+    // _astToken=AST token contract address
+    // _astAmount=AST token Amount
+    // It will called internally when some User burns AAT token.
 
     function returnAstToLockedOwner(address _astToken,uint256 _astAmount) internal returns(bool) {
         require(_astToken!=address(0),"Invalid Address");
@@ -679,9 +699,17 @@ contract ASTTokenFactory is Ownable{
         return true;
     }
 
+    //_astToken=AST token contract address
+    // _user=wallet address of any user
+    // thic can be called to check the given users AST Token Balance.
+
     function balanceOf(address _astToken,address _user) public view returns(uint256,uint256){
             return (IERC20(_astToken).totalSupply(),IERC20(_astToken).balanceOf(_user));
     }
+
+    // Users who have the AAT token can call this fucntion and burn their AAT token.
+    // _amount=AAT token Amount U want to burn.
+    // _astToken=AST token adress to which u want to convert your AAT when its Burned.
 
     function burnAAT(uint256 _amount,address _astToken) external returns(bool){
         require(AATtoken!=address(0),"AAT Token Not Set");
@@ -692,6 +720,9 @@ contract ASTTokenFactory is Ownable{
         return true;
     }
 
+    // _astToken=AST token Address you want to burn.
+    // Only Called By owner
+    // This will execute when AssetOwner wallet got above 99% of Ast token of which Owner wants to burn.
 
     function burnAstToken(address _astToken) public onlyOwner returns(bool){
         require(_astToken!=address(0),"Invalid Address");
