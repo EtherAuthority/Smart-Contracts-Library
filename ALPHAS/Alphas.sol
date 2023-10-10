@@ -287,7 +287,7 @@ contract ALPHAS is Ownable {
     address public devWallet;
     address public charityWallet;
     address public lotteryWallet;
-    address constant private DEAD = 0x000000000000000000000000000000000000dEaD;
+    address public burnWallet;
  
     uint256 public buyFee;
     uint256 public sellFee;       
@@ -328,7 +328,7 @@ contract ALPHAS is Ownable {
  
  
  
-    constructor(address _marketingWallet, address _devWallet, address _charityWallet,  address _lotteryWallet) {
+    constructor(address _marketingWallet, address _devWallet, address _charityWallet,  address _lotteryWallet, address _burnWallet) {
         _balances[msg.sender] = _totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router;
@@ -368,6 +368,7 @@ contract ALPHAS is Ownable {
         devWallet = _devWallet;
         charityWallet = _charityWallet;
         lotteryWallet = _lotteryWallet;
+        burnWallet = _burnWallet;
  
         _isExcludedFromFee[address(this)] = true;
         _isExcludedFromFee[msg.sender] = true;
@@ -546,6 +547,11 @@ contract ALPHAS is Ownable {
     function setDevWallet(address wallet) external onlyOwner {
         require(wallet != address(0),"Dev wallet cannot be zero address");
         devWallet = wallet;
+    }
+
+    function setBurnWallet(address wallet) external onlyOwner {
+        require(wallet != address(0),"Burn wallet cannot be zero address");
+        burnWallet = wallet;
     }
 
      function updateShares() internal {
@@ -806,7 +812,7 @@ contract ALPHAS is Ownable {
                     buyTax = _calculateTax(amount, buyFee);
                     burnTax = _calculateTax(buyTax, burnPercent);
                     _transferTokens(sender, address(this), buyTax - burnTax); 
-                    _burnTokens(sender, DEAD, burnTax);
+                    _burnTokens(sender, burnWallet, burnTax);
                 }
                 fees = buyTax;
  
@@ -818,7 +824,7 @@ contract ALPHAS is Ownable {
                     sellTax = _calculateTax(amount, sellFee);
                     burnTax = _calculateTax(sellTax, burnPercent);
                     _transferTokens(sender, address(this), sellTax - burnTax); 
-                    _burnTokens(sender, DEAD, burnTax);
+                    _burnTokens(sender, burnWallet, burnTax);
                 }
                 fees = sellTax;
             }
