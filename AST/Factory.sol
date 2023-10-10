@@ -649,7 +649,7 @@ contract ASTTokenFactory is Ownable{
         
         AATConvertion[address(token)]=_ratio;
         
-        IAAT(AATtoken).Mint(poolwallet,totalSupply_*1000/2/_ratio);
+        IAAT(AATtoken).Mint(poolwallet,totalSupply_*10000/2/_ratio);
        
 
         return token;
@@ -660,7 +660,7 @@ contract ASTTokenFactory is Ownable{
         require(_aatAmount>0,"Invalid Amount");
         uint256 convRatio=AATConvertion[_astToken];
          needToBurn=IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet);
-         astamt_=(_aatAmount*convRatio)/1000;
+         astamt_=(_aatAmount*convRatio)/10000;
 
          return (astamt_,needToBurn);
     }
