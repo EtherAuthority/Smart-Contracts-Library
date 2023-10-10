@@ -7,3 +7,6 @@
 7.	“function returnAstToLockedOwner(address _astToken,uint256 _astAmount)”, This function requires “AST” token Address and “AST” token 	amount. It will called internally and transfers Converted “AST” token amount from “AAT” Token Amount to “AssetOwnerWallet”.
 8.	“function burnAAT(uint256 _amount,address _astToken)”, This function requires “AAT” token amount and “AST” contract address for 	which u want to burn your “AAT” token and generate “AST” token.
 9.	“function burnAstToken(address _astToken)”, This function is used by contract owner. It requires “AST” token address to burn the 	“AST” token when the “AssetOwnerWallet” got above 99% of that “AST” Token in his wallet.
+
+                                                                NOTE
+1.  Owner can Add Any Wallet address to "SetFactory()" function and can get all the minted "AST" Token to that wallet.
