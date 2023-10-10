@@ -540,21 +540,25 @@ interface IAST{
 
 contract AST is ERC20 {
 
-    constructor(string memory _name,string memory _symbol,uint256 _totalSupply,address _assetLockedwallet) ERC20(_name, _symbol){
+    address public assetWallet;
+    uint256 public totalSupply_;
+    address public Factory;
+    constructor(string memory _name,string memory _symbol,uint256 _totalSupply,address _assetLockedwallet,address _factory) ERC20(_name, _symbol){
         
-        uint256 totalSupply = _totalSupply;
+        totalSupply_ = _totalSupply;
         
-        _mint(msg.sender, totalSupply /2);
-        _mint(_assetLockedwallet, totalSupply/2);
-        
+        _mint(msg.sender, totalSupply_ /2);
+        _mint(_assetLockedwallet, totalSupply_/2);
+        assetWallet=_assetLockedwallet;
+        Factory=_factory;
     }
 
     function Burn(address account, uint256 amount) external returns(bool){
+        require(Factory==msg.sender,"You Cannot Burn");
         _burn(account,amount);
         return true;
     }
 
-    
 
 }
 
@@ -600,7 +604,7 @@ abstract contract Ownable {
 
 
 
-contract ERC20TokenFactory is Ownable{
+contract ASTTokenFactory is Ownable{
 
     address[] public ASTs;
     mapping(address=>uint) public AATConvertion;
@@ -638,7 +642,7 @@ contract ERC20TokenFactory is Ownable{
         require(poolwallet!=address(0),"Invalid Pool Wallet");
         require(assetLockedwallet!=address(0),"Asset Locked Wallet Is Not Set");
         
-        AST token= new AST(name_ , symbol_, totalSupply_,assetLockedwallet);
+        AST token= new AST(name_ , symbol_, totalSupply_,assetLockedwallet,address(this));
         ASTs.push(address(token));
         TokenCount++;
 
