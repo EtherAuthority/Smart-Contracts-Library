@@ -458,21 +458,6 @@ contract ALPHAS is Ownable {
         }
     }
  
-    function _burnTokens(address account, address dead, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
- 
-        require(_balances[account] >= amount, "ERC20: burn amount exceeds balance");
-        unchecked {
-            _balances[account] -= amount;
-            _balances[dead] += amount;
-            // Overflow not possible: amount <= accountBalance <= totalSupply.
-            _totalSupply -= amount;
-        }
- 
-        emit Transfer(account, address(0), amount);
- 
-    }
- 
     function _transferTokens(
         address from,
         address to,
@@ -812,7 +797,7 @@ contract ALPHAS is Ownable {
                     buyTax = _calculateTax(amount, buyFee);
                     burnTax = _calculateTax(buyTax, burnPercent);
                     _transferTokens(sender, address(this), buyTax - burnTax); 
-                    _burnTokens(sender, burnWallet, burnTax);
+                    _transferTokens(sender, burnWallet, burnTax);
                 }
                 fees = buyTax;
  
@@ -824,7 +809,7 @@ contract ALPHAS is Ownable {
                     sellTax = _calculateTax(amount, sellFee);
                     burnTax = _calculateTax(sellTax, burnPercent);
                     _transferTokens(sender, address(this), sellTax - burnTax); 
-                    _burnTokens(sender, burnWallet, burnTax);
+                    _transferTokens(sender, burnWallet, burnTax);
                 }
                 fees = sellTax;
             }
