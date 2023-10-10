@@ -701,8 +701,5 @@ contract ASTTokenFactory is Ownable{
         return true;
     }
 
-    function demo(address _astToken) public view returns(uint256){
-        return (IERC20(_astToken).balanceOf(assetLockedwallet)*100)/IERC20(_astToken).totalSupply();
-    }
     
 }
