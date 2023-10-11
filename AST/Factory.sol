@@ -668,8 +668,10 @@ contract ASTTokenFactory is Ownable(msg.sender){
     uint TokenCount=1;
     address AATtoken;
     
-    // _token= AAT contract address
-    // this will set the AAT Contract address to Factory Contract.
+    /*
+    * _token= AAT contract address
+    * this will set the AAT Contract address to Factory Contract.
+    */
 
     function SetAATContrct(address _token) public onlyOwner returns(bool){
         require(_token!=address(0),"Invalid Address");
@@ -677,27 +679,33 @@ contract ASTTokenFactory is Ownable(msg.sender){
         return true;
     }
 
-    // _wallet=User wallet to whom the AAT token will be transfered while Creating AST token.
+    /* 
+    * _wallet=User wallet to whom the AAT token will be transfered while Creating AST token.
+    */
+
     function SetPoolWallet(address _wallet) public onlyOwner{
         require(_wallet!=address(0),"Invalid Address");
         
-        poolwallet=_wallet;
-        
+        poolwallet=_wallet;   
     }
 
-    //_wallet=User wallet to whom the the 50% ASt token will be minted while creating AST token.
+    /*
+    *_wallet=User wallet to whom the the 50% ASt token will be minted while creating AST token.
+    */
+
     function SetAssetLockedWallet(address _wallet) public onlyOwner{
         require(_wallet!=address(0),"Invalid Address");
-        
-        assetLockedwallet=_wallet;
-        
+
+        assetLockedwallet=_wallet;  
     }
 
-    //totalSupply_= The total amount u want to mint for AST token.
-    // _ratio=Propotion of AST to AAT and AAt to AST token convertion.
-    // Only Called By contrct Owner.
-    // If owner wants to set 1AAT=7.5AST token then he needs to provide 75 as ratio.
-    // If owner wants to set 1AAT=75.3AST token then he needs to provide 753 as ratio.
+    /*
+    * totalSupply_= The total amount u want to mint for AST token.
+    * _ratio=Propotion of AST to AAT and AAt to AST token convertion.
+    * Only Called By contrct Owner.
+    * If owner wants to set 1AAT=7.5AST token then he needs to provide 75 as ratio.
+    * If owner wants to set 1AAT=75.3AST token then he needs to provide 753 as ratio.
+    */
 
     function CreateASTToken(string memory name_, string memory symbol_, uint256 totalSupply_ ,uint256 _ratio) public onlyOwner returns (AST) {
         require(_ratio>0,"Invalid Amount");
@@ -708,33 +716,32 @@ contract ASTTokenFactory is Ownable(msg.sender){
         AST token= new AST(name_ , symbol_, totalSupply_,assetLockedwallet,address(this));
         ASTs.push(address(token));
         TokenCount++;
-
-        
         AATConvertion[address(token)]=_ratio;
-        
         IAAT(AATtoken).Mint(poolwallet,totalSupply_*10000/2/_ratio);
-       
-
         return token;
     }
 
-     // _astToken=AST token contract address
-     // _aatAmount=AAT token amount u want to burn
-     // it will return AST token amount in proportion to AAT token Amount.
-     // it also returns The max AST token u can Burn.
+     /*
+     * _astToken=AST token contract address
+     * _aatAmount=AAT token amount u want to burn
+     * it will return AST token amount in proportion to AAT token Amount.
+     * it also returns The max AST token u can Burn.
+     */
 
     function ASTConvertionAmount(address _astToken,uint256 _aatAmount) public view returns(uint256 astamt_,uint256 needToBurn){
         require(_astToken!=address(0),"Invalid Address");
         require(_aatAmount>0,"Invalid Amount");
-        uint256 convRatio=AATConvertion[_astToken];
-         needToBurn=IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet);
-         astamt_=(_aatAmount*convRatio)/10000;
 
-         return (astamt_,needToBurn);
+        uint256 convRatio=AATConvertion[_astToken];
+        needToBurn=IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet);
+        astamt_=(_aatAmount*convRatio)/10000;
+        return (astamt_,needToBurn);
     }
 
-    // _astToken=AST token contract address
-    // This will return AAT token amount for Burning.
+    /*
+    * _astToken=AST token contract address
+    * This will return AAT token amount for Burning.
+    */
     
     function AATBurnAmount(address _astToken) public view returns(uint256 aatamt_){
         require(_astToken!=address(0),"Invalid Address");
@@ -742,9 +749,11 @@ contract ASTTokenFactory is Ownable(msg.sender){
         return aatamt_=(IERC20(_astToken).totalSupply()-IERC20(_astToken).balanceOf(assetLockedwallet))/AATConvertion[_astToken];
     }
 
-    // _astToken=AST token contract address
-    // _astAmount=AST token Amount
-    // It will called internally when some User burns AAT token.
+    /*
+    * _astToken=AST token contract address
+    * _astAmount=AST token Amount
+    * It will called internally when some User burns AAT token.
+    */
 
     function returnAstToLockedOwner(address _astToken,uint256 _astAmount) internal returns(bool) {
         require(_astToken!=address(0),"Invalid Address");
@@ -754,38 +763,44 @@ contract ASTTokenFactory is Ownable(msg.sender){
         return true;
     }
 
-    //_astToken=AST token contract address
-    // _user=wallet address of any user
-    // thic can be called to check the given users AST Token Balance.
+    /*
+    * _astToken=AST token contract address
+    * _user=wallet address of any user
+    * thic can be called to check the given users AST Token Balance.
+    */
 
     function balanceOf(address _astToken,address _user) public view returns(uint256,uint256){
             return (IERC20(_astToken).totalSupply(),IERC20(_astToken).balanceOf(_user));
     }
 
-    // Users who have the AAT token can call this fucntion and burn their AAT token.
-    // _amount=AAT token Amount U want to burn.
-    // _astToken=AST token adress to which u want to convert your AAT when its Burned.
+    /*
+    * Users who have the AAT token can call this fucntion and burn their AAT token.
+    * _amount=AAT token Amount U want to burn.
+    * _astToken=AST token adress to which u want to convert your AAT when its Burned.
+    */
 
     function burnAAT(uint256 _amount,address _astToken) external returns(bool){
         require(AATtoken!=address(0),"AAT Token Not Set");
+
         (uint256 burnamt,uint256 needToBurn)=ASTConvertionAmount(_astToken,_amount);
         require(burnamt<=needToBurn,"Exceeding Limits");
+
         IAAT(AATtoken).Burn(msg.sender,_amount);
         returnAstToLockedOwner(_astToken,burnamt);
         return true;
     }
 
-    // _astToken=AST token Address you want to burn.
-    // Only Called By owner
-    // This will execute when AssetOwner wallet got above 99% of Ast token of which Owner wants to burn.
+    /*
+    * _astToken=AST token Address you want to burn.
+    * Only Called By owner
+    * This will execute when AssetOwner wallet got above 99% of Ast token of which Owner wants to burn.
+    */
 
     function burnAstToken(address _astToken) public onlyOwner returns(bool){
         require(_astToken!=address(0),"Invalid Address");
         require((IERC20(_astToken).balanceOf(assetLockedwallet)*100)/IERC20(_astToken).totalSupply()>=99,"You Cannot Burn");
-        IAST(_astToken).Burn(assetLockedwallet,IERC20(_astToken).balanceOf(assetLockedwallet));
 
+        IAST(_astToken).Burn(assetLockedwallet,IERC20(_astToken).balanceOf(assetLockedwallet));
         return true;
     }
-
-    
 }
