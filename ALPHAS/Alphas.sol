@@ -263,7 +263,7 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
  
-contract ALPHAS is Ownable {
+contract ALPHA is Ownable {
  
     string private constant _name = "AlphasElephantCoin";
     string private constant _symbol = "ALPHAS";
@@ -298,11 +298,6 @@ contract ALPHAS is Ownable {
     uint256 public lotteryPercent = 20000;          //20000 = 20%
     uint256 public burnPercent = 20000;             //20000 = 20%
 
-    uint256 public marketingShare = 25000;          //25000 = 25%
-    uint256 public devShare = 25000;                //25000 = 25%
-    uint256 public charityShare = 25000;            //25000 = 25%
-    uint256 public lotteryShare = 25000;            //25000 = 25%
- 
     uint256 public _taxThreshold = 10000 * 10**uint256(_decimals); // Threshold for sending eth to wallets
  
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -539,18 +534,8 @@ contract ALPHAS is Ownable {
         burnWallet = wallet;
     }
 
-     function updateShares() internal {
 
-        uint256 totalTaxPercent = marketingPercent + devPercent + charityPercent + lotteryPercent;
- 
-        marketingShare = (marketingPercent * 100000)/totalTaxPercent;     
-        devShare = (devPercent * 100000)/totalTaxPercent;
-        charityShare = (charityPercent * 100000)/totalTaxPercent;    
-        lotteryShare = (lotteryPercent * 100000)/totalTaxPercent;            
-
-    }
- 
-    function setBurnTaxPercentage(uint256 taxPercentage) external onlyOwner {
+    function setBurnPercentage(uint256 taxPercentage) external onlyOwner {
         require(marketingPercent + devPercent + charityPercent + lotteryPercent + burnPercent <= 100000, "Tax percentage cannot exceed 100%");
         burnPercent = taxPercentage;
     }
@@ -558,25 +543,21 @@ contract ALPHAS is Ownable {
     function setMarketingPercentage(uint256 taxPercentage) external onlyOwner {
         require(marketingPercent + devPercent + charityPercent + lotteryPercent + burnPercent <= 100000, "Tax percentage cannot exceed 100%");
         marketingPercent = taxPercentage;
-        updateShares();
     }
 
     function setDevPercentage(uint256 taxPercentage) external onlyOwner {
         require(marketingPercent + devPercent + charityPercent + lotteryPercent + burnPercent <= 100000, "Tax percentage cannot exceed 100%");
         devPercent = taxPercentage;
-        updateShares();
     }
 
     function setCharityPercentage(uint256 taxPercentage) external onlyOwner {
         require(marketingPercent + devPercent + charityPercent + lotteryPercent + burnPercent <= 100000, "Tax percentage cannot exceed 100%");
         charityPercent = taxPercentage;
-        updateShares();
     }
 
     function setLotteryPercentage(uint256 taxPercentage) external onlyOwner {
         require(marketingPercent + devPercent + charityPercent + lotteryPercent + burnPercent <= 100000, "Tax percentage cannot exceed 100%");
         lotteryPercent = taxPercentage;
-        updateShares();
     }
  
     function setTaxThreshold(uint256 threshold) external onlyOwner {
@@ -706,20 +687,23 @@ contract ALPHAS is Ownable {
  
         uint256 newBalance = address(this).balance - (initialBalance);
  
-        uint256 marketingAmount = (newBalance * marketingShare)/100000;
-        uint256 devAmount = (newBalance * devShare)/100000;
-        uint256 charityAmount = (newBalance * charityShare)/100000;
-        uint256 lotteryAmount = (newBalance * lotteryShare)/100000;
+        uint256 marketingAmount = (newBalance * marketingPercent)/100000;
+        uint256 devAmount = (newBalance * devPercent)/100000;
+        uint256 charityAmount = (newBalance * charityPercent)/100000;
+        uint256 lotteryAmount = (newBalance * lotteryPercent)/100000;
+        uint256 burnAmount = (newBalance * burnPercent)/100000;
 
         bool success;
         bool success1;
         bool success2;
         bool success3;
+        bool success4;
  
         (success,) = marketingWallet.call{value: marketingAmount, gas: 35000}("");
         (success1,) = devWallet.call{value: devAmount, gas: 35000}("");
         (success2,) = charityWallet.call{value: charityAmount, gas: 35000}("");
         (success3,) = lotteryWallet.call{value: lotteryAmount, gas: 35000}("");
+        (success4,) = burnWallet.call{value: burnAmount, gas: 35000}("");
  
     }
  
@@ -760,7 +744,6 @@ contract ALPHAS is Ownable {
         bool isBuy = sender == _uniswapPair;
         bool isSell = recipient == _uniswapPair;
  
-        uint256 burnTax;
         uint256 buyTax;
         uint256 sellTax;
  
@@ -795,9 +778,7 @@ contract ALPHAS is Ownable {
                     require (amount <= maxAmount, "Cannot buy more than max limit");
                     require(balanceOf(recipient) <= maxWallet, "Cannot hold more tokens than limit");
                     buyTax = _calculateTax(amount, buyFee);
-                    burnTax = _calculateTax(buyTax, burnPercent);
-                    _transferTokens(sender, address(this), buyTax - burnTax); 
-                    _transferTokens(sender, burnWallet, burnTax);
+                    _transferTokens(sender, address(this), buyTax); 
                 }
                 fees = buyTax;
  
@@ -807,9 +788,7 @@ contract ALPHAS is Ownable {
                     require (amount <= maxAmount, "Cannot sell more than max limit");
                     require(balanceOf(recipient) <= maxWallet, "Cannot hold more tokens than limit");
                     sellTax = _calculateTax(amount, sellFee);
-                    burnTax = _calculateTax(sellTax, burnPercent);
-                    _transferTokens(sender, address(this), sellTax - burnTax); 
-                    _transferTokens(sender, burnWallet, burnTax);
+                    _transferTokens(sender, address(this), sellTax); 
                 }
                 fees = sellTax;
             }
