@@ -36,7 +36,7 @@ contract owned {
     }
 }
 
-contract votingForSolar is owned {
+contract VotingForSolar is owned {
 
     mapping (address => bool) public founder;
     uint public totalFounders;
@@ -73,32 +73,32 @@ contract votingForSolar is owned {
         requiredSBTPercent = _requiredSBTPercent;
     }
 
-    function changeSBTAddress(address _sbtAddress) public returns(bool) {
+    function ChangeSBTAddress(address _sbtAddress) public returns(bool) {
         require(msg.sender == owner, "invalid caller");
         sbtAddress = _sbtAddress;
         return true;
     }
 
-    function changeTokenAddress(address _tokenAddress) public returns(bool) {
+    function ChangeTokenAddress(address _tokenAddress) public returns(bool) {
         require(msg.sender == owner, "invalid caller");
         tokenAddress = _tokenAddress;
         return true;
     }
 
 
-     function changeRequiredFounderPercent(uint _requiredFounderPercent) public returns(bool) {
+     function ChangeRequiredFounderPercent(uint _requiredFounderPercent) public returns(bool) {
         require(msg.sender == owner, "invalid caller");
         requiredFounderPercent = _requiredFounderPercent;
         return true;
     }   
 
-     function changeRequiredSBTPercent(uint _requiredSBTPercent) public returns(bool) {
+     function ChangeRequiredSBTPercent(uint _requiredSBTPercent) public returns(bool) {
         require(msg.sender == owner, "invalid caller");
         requiredSBTPercent = _requiredSBTPercent;
         return true;
     }  
 
-    function makeFounder(address _founder) public returns(bool) {
+    function MakeFounder(address _founder) public returns(bool) {
         require(msg.sender == owner, "invalid caller");
         founder[_founder] = true;
         totalFounders++;
@@ -128,7 +128,7 @@ contract votingForSolar is owned {
     }
 
 
-    function sbtVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
+    function SbtVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
         uint ot = Proposals[_proposalIndex].voteOpeningTime;
         require( ot < block.timestamp , "voting not started yet");
         require( ot + Proposals[_proposalIndex].votingPeriodInSeconds > block.timestamp , "voting time is over");
@@ -144,7 +144,7 @@ contract votingForSolar is owned {
     } 
 
 
-    function founderVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
+    function FounderVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
         uint ot = Proposals[_proposalIndex].voteOpeningTime;
         require( ot < block.timestamp , "voting not started yet");
         require( ot + Proposals[_proposalIndex].votingPeriodInSeconds > block.timestamp , "voting time is over");
@@ -158,7 +158,7 @@ contract votingForSolar is owned {
         return true;
     } 
 
-    function isVotePassed(uint _proposalIndex) public view returns(bool) {
+    function IsVotePassed(uint _proposalIndex) public view returns(bool) {
         uint totalSBT = contractInterface(sbtAddress).totalSoulCount();
         uint vf = Proposals[_proposalIndex].sbtVoteInFavor;
         uint va = Proposals[_proposalIndex].sbtVoteAgainst;
@@ -177,7 +177,7 @@ contract votingForSolar is owned {
         return false;
     }
 
-    function releaseToken(uint _proposalIndex) public returns(bool) {
+    function ReleaseToken(uint _proposalIndex) public returns(bool) {
         require(isVotePassed(_proposalIndex), "proposal index not passed");
         require(!Proposals[_proposalIndex].released, "proposal index not passed");
         uint amount = Proposals[_proposalIndex].totalTokenToRelease;
