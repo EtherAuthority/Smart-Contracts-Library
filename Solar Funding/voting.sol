@@ -1,1 +1,191 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
 
+
+
+interface contractInterface{
+    function hasSoul(address _soul) external view returns (bool);
+    function totalSoulCount() external view returns(uint);
+    function mintToken(address target, uint256 mintedAmount) external returns(bool); 
+}
+
+contract owned {
+    address  public owner;
+    address  public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address  _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+contract votingForSolar is owned {
+
+    mapping (address => bool) public founder;
+    uint public totalFounders;
+
+    struct Proposal {
+        address tokenHolder;
+        uint powerInMW;
+        uint totalTokenToRelease;
+        uint founderVoteInFavor;
+        uint founderVoteAgainst;
+        uint sbtVoteInFavor;
+        uint sbtVoteAgainst;
+        uint voteOpeningTime;
+        uint votingPeriodInSeconds;
+        bool released;
+    }
+
+    Proposal[] public Proposals;
+
+    uint public requiredSBTPercent;
+    uint public requiredFounderPercent;
+    uint public requiredRescuePercent;
+
+    address public sbtAddress;
+    address public tokenAddress;
+
+
+
+    constructor(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) {
+        sbtAddress = _sbtAddress;
+        tokenAddress = _tokenAddress;
+        requiredRescuePercent = _requiredRescuePercent;
+        requiredFounderPercent = _requiredFounderPercent;
+        requiredSBTPercent = _requiredSBTPercent;
+    }
+
+    function changeSBTAddress(address _sbtAddress) public returns(bool) {
+        require(msg.sender == owner, "invalid caller");
+        sbtAddress = _sbtAddress;
+        return true;
+    }
+
+    function changeTokenAddress(address _tokenAddress) public returns(bool) {
+        require(msg.sender == owner, "invalid caller");
+        tokenAddress = _tokenAddress;
+        return true;
+    }
+
+
+     function changeRequiredFounderPercent(uint _requiredFounderPercent) public returns(bool) {
+        require(msg.sender == owner, "invalid caller");
+        requiredFounderPercent = _requiredFounderPercent;
+        return true;
+    }   
+
+     function changeRequiredSBTPercent(uint _requiredSBTPercent) public returns(bool) {
+        require(msg.sender == owner, "invalid caller");
+        requiredSBTPercent = _requiredSBTPercent;
+        return true;
+    }  
+
+    function makeFounder(address _founder) public returns(bool) {
+        require(msg.sender == owner, "invalid caller");
+        founder[_founder] = true;
+        totalFounders++;
+        return true;
+    }
+
+    function PostProposal(uint _powerInMW, uint _totalTokenToRelease, address _tokenHolder, uint _voteOpeningTime, uint _votingPeriodInSeconds) public returns(uint) {
+        require(founder[msg.sender], "invalid caller");
+        require(_voteOpeningTime > block.timestamp,"opening time can't be in past");
+        Proposal memory temp;
+        temp.powerInMW = _powerInMW;
+        temp.tokenHolder = _tokenHolder;
+        temp.totalTokenToRelease = _totalTokenToRelease;
+        temp.voteOpeningTime = _voteOpeningTime;
+        temp.votingPeriodInSeconds = _votingPeriodInSeconds;
+
+        Proposals.push(temp);
+        
+        return Proposals.length - 1;
+    }
+
+    function RecordMyVote(uint _proposalIndex, bool _favor) public returns(bool){
+        if(founder[msg.sender]) founderVoteOnProposal(_proposalIndex, _favor);
+        else if(contractInterface(sbtAddress).hasSoul(msg.sender)) sbtVoteOnProposal(_proposalIndex, _favor);
+        else revert;
+        return true;
+    }
+
+
+    function sbtVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
+        uint ot = Proposals[_proposalIndex].voteOpeningTime;
+        require( ot < block.timestamp , "voting not started yet");
+        require( ot + Proposals[_proposalIndex].votingPeriodInSeconds > block.timestamp , "voting time is over");
+
+        if (_favor == false) {
+            Proposals[_proposalIndex].sbtVoteAgainst++;
+        }
+        else {
+            Proposals[_proposalIndex].sbtVoteInFavor++;
+        }
+
+        return true;
+    } 
+
+
+    function founderVoteOnProposal(uint _proposalIndex, bool _favor) internal returns(bool) {
+        uint ot = Proposals[_proposalIndex].voteOpeningTime;
+        require( ot < block.timestamp , "voting not started yet");
+        require( ot + Proposals[_proposalIndex].votingPeriodInSeconds > block.timestamp , "voting time is over");
+
+        if (_favor == false) {
+            Proposals[_proposalIndex].founderVoteAgainst++;
+        }
+        else {
+            Proposals[_proposalIndex].founderVoteInFavor++;
+        }
+        return true;
+    } 
+
+    function isVotePassed(uint _proposalIndex) public view returns(bool) {
+        uint totalSBT = contractInterface(sbtAddress).totalSoulCount();
+        uint vf = Proposals[_proposalIndex].sbtVoteInFavor;
+        uint va = Proposals[_proposalIndex].sbtVoteAgainst;
+        uint voteDifference;
+        if (va > vf ) return false;
+        else voteDifference = vf - va;
+        uint countPercent = voteDifference * 100 / totalSBT;
+
+        vf = Proposals[_proposalIndex].founderVoteInFavor;
+        va = Proposals[_proposalIndex].founderVoteAgainst;
+        if (va > vf ) return false;
+        else voteDifference = vf - va;
+        uint countPercent2 = voteDifference * 100 / totalFounders;
+        if (countPercent >= requiredSBTPercent && countPercent2 >= requiredFounderPercent ) return true;
+        else if(countPercent2 > requiredRescuePercent) return true;
+        return false;
+    }
+
+    function releaseToken(uint _proposalIndex) public returns(bool) {
+        require(isVotePassed(_proposalIndex), "proposal index not passed");
+        require(!Proposals[_proposalIndex].released, "proposal index not passed");
+        uint amount = Proposals[_proposalIndex].totalTokenToRelease;
+        address receiver = Proposals[_proposalIndex].tokenHolder;
+        Proposals[_proposalIndex].released = true;
+        contractInterface(tokenAddress).mintToken(receiver,amount);
+        return true;
+    }
+
+
+}
