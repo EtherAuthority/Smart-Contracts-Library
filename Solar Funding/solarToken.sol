@@ -7,9 +7,10 @@ contract SolarPowerToken is ERC20 {
     address public votingContractAddress;
     uint public maxSupply = 75000000 * (10 ** 18);
 
-    constructor()
+    constructor(address _votingContractAddress)
         ERC20("Solar Power Token", "SPT")
-    {}
+
+    { votingContractAddress = _votingContractAddress; }
 
     function mint(address to, uint256 amount) public {
         require(msg.sender == votingContractAddress, "only voting contract can call");
