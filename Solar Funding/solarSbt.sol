@@ -1583,7 +1583,7 @@ pragma solidity ^0.8.20;
 
 
 
-contract MyToken is ERC721, Ownable {
+contract SolarSBT is ERC721, Ownable {
     uint256 private _nextTokenId;
     uint public expiryInSecond = 63072000; // two years default
     uint public maxSoulLimit = 500;
