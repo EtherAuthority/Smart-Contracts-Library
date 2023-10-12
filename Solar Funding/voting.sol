@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 
 interface contractInterface{
-    function hasSoul(address _soul) external view returns (bool);
+    function hasSoul(address _tokenHolder, uint _tokenId) external view returns (bool);
     function _nextTokenId() external view returns(uint);
     function mint(address to, uint256 amount) external returns(bool); 
 }
@@ -122,9 +122,9 @@ contract VotingForSolar is owned {
         return Proposals.length - 1;
     }
 
-    function RecordMyVote(uint _proposalIndex, bool _favor) public returns(bool){
+    function RecordMyVote(uint _voterId, uint _proposalIndex, bool _favor) public returns(bool){
         if(founder[msg.sender]) FounderVoteOnProposal(_proposalIndex, _favor);
-        else if(contractInterface(sbtAddress).hasSoul(msg.sender)) SbtVoteOnProposal(_proposalIndex, _favor);
+        else if(contractInterface(sbtAddress).hasSoul(msg.sender,_voterId)) SbtVoteOnProposal(_proposalIndex, _favor);
         else  revert();
         return true;
     }
