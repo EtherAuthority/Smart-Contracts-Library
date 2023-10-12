@@ -5,8 +5,8 @@ pragma solidity ^0.8.13;
 
 interface contractInterface{
     function hasSoul(address _soul) external view returns (bool);
-    function totalSoulCount() external view returns(uint);
-    function mintToken(address target, uint256 mintedAmount) external returns(bool); 
+    function _nextTokenId() external view returns(uint);
+    function mint(address to, uint256 amount) external returns(bool); 
 }
 
 contract owned {
@@ -161,7 +161,7 @@ contract VotingForSolar is owned {
     } 
 
     function IsVotePassed(uint _proposalIndex) public view returns(bool) {
-        uint totalSBT = contractInterface(sbtAddress).totalSoulCount();
+        uint totalSBT = contractInterface(sbtAddress)._nextTokenId() - 1;
         uint vf = Proposals[_proposalIndex].sbtVoteInFavor;
         uint va = Proposals[_proposalIndex].sbtVoteAgainst;
         uint voteDifference;
@@ -185,7 +185,7 @@ contract VotingForSolar is owned {
         uint amount = Proposals[_proposalIndex].totalTokenToRelease;
         address receiver = Proposals[_proposalIndex].tokenHolder;
         Proposals[_proposalIndex].released = true;
-        contractInterface(tokenAddress).mintToken(receiver,amount);
+        contractInterface(tokenAddress).mint(receiver,amount);
         return true;
     }
 
