@@ -1,4 +1,4 @@
-
+// SPDX-License-Identifier: MIT
 // File: @openzeppelin/contracts/interfaces/draft-IERC6093.sol
 
 
