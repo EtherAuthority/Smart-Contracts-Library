@@ -65,7 +65,9 @@ contract VotingForSolar is owned {
 
 
 
-    constructor(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) {
+    function initialize(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) public {
+        require(msg.sender == owner, "invalid caller");
+        require(sbtAddress == address(0), "can't call twice");
         sbtAddress = _sbtAddress;
         tokenAddress = _tokenAddress;
         requiredRescuePercent = _requiredRescuePercent;
