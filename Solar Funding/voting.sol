@@ -121,9 +121,9 @@ contract VotingForSolar is owned {
     }
 
     function RecordMyVote(uint _proposalIndex, bool _favor) public returns(bool){
-        if(founder[msg.sender]) founderVoteOnProposal(_proposalIndex, _favor);
-        else if(contractInterface(sbtAddress).hasSoul(msg.sender)) sbtVoteOnProposal(_proposalIndex, _favor);
-        else revert;
+        if(founder[msg.sender]) FounderVoteOnProposal(_proposalIndex, _favor);
+        else if(contractInterface(sbtAddress).hasSoul(msg.sender)) SbtVoteOnProposal(_proposalIndex, _favor);
+        else  revert();
         return true;
     }
 
@@ -178,7 +178,7 @@ contract VotingForSolar is owned {
     }
 
     function ReleaseToken(uint _proposalIndex) public returns(bool) {
-        require(isVotePassed(_proposalIndex), "proposal index not passed");
+        require(IsVotePassed(_proposalIndex), "proposal index not passed");
         require(!Proposals[_proposalIndex].released, "proposal index not passed");
         uint amount = Proposals[_proposalIndex].totalTokenToRelease;
         address receiver = Proposals[_proposalIndex].tokenHolder;
