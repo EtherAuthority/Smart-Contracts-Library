@@ -1584,7 +1584,7 @@ pragma solidity ^0.8.20;
 
 
 contract SolarSBT is ERC721, Ownable {
-    uint256 private _nextTokenId;
+    uint256 public _nextTokenId;
     uint public expiryInSecond = 63072000; // two years default
     uint public maxSoulLimit = 500;
     mapping(uint => uint) public timeOfMint; // tokenID => currect time
