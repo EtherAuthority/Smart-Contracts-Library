@@ -1617,10 +1617,10 @@ contract SolarSBT is ERC721, Ownable {
     }
 
     function hasSoul(address _tokenHolder, uint _tokenId) public view returns (bool) {
-        if (_ownerOf(_tokenId) != _tokenHolder && timeOfMint[_tokenId] + expiryInSecond < block.timestamp) {
-            return false;
-        } else {
+        if (balanceOf(_tokenHolder) >= 1 && timeOfMint[_tokenId] + expiryInSecond > block.timestamp) {
             return true;
+        } else {
+            return false;
         }
     }
 }
