@@ -191,8 +191,6 @@ contract FriendtechSharesV1 is Ownable {
     }
 
     function buyShares(address sharesSubject, uint256 amount, address referrer) public payable {
-
-        require(referrer != address(0), "Cannot be address zero");
         User storage user = users[msg.sender];
         // set referral
         
@@ -218,6 +216,7 @@ contract FriendtechSharesV1 is Ownable {
         (bool success2, ) = sharesSubject.call{value: subjectFee}("");
         (bool success3, ) = user.referrer.call{value: referrerFee}("");
         require(success1 && success2 && success3, "Unable to send funds");
+        
         if(!user.exists){
             user.exists = true;
         }
