@@ -633,9 +633,10 @@ contract SolarPowerToken is ERC20 {
 
     { votingContractAddress = _votingContractAddress; }
 
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 amount) public returns(bool){
         require(msg.sender == votingContractAddress, "only voting contract can call");
         require(totalSupply() + amount <= maxSupply, "Cannot Mint more than maximum supply");
         _mint(to, amount);
+        return true;
     }
 }
