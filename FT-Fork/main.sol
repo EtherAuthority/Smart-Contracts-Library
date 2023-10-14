@@ -1,14 +1,9 @@
 /**
  *SPDX-License-Identifier: UNLICENSED
 */
-
-// File: contracts/Context.sol
-
+pragma solidity >=0.8.2 <0.9.0;
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
-
-pragma solidity ^0.8.0;
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -29,14 +24,7 @@ abstract contract Context {
     }
 }
 
-// File: contracts/Ownable.sol
-
-
 // OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
-
-pragma solidity ^0.8.0;
-
-
 /**
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -114,13 +102,6 @@ abstract contract Ownable is Context {
     }
 }
 
-// File: contracts/FriendtechShares.sol
-
-
-
-pragma solidity >=0.8.2 <0.9.0;
-
-
 // TODO: Events, final pricing model, 
 
 contract FriendtechSharesV1 is Ownable {
@@ -129,11 +110,12 @@ contract FriendtechSharesV1 is Ownable {
     uint256 public subjectFeePercent;
     uint256 public referrerFeePercent;
 
-    event ReferrerFeeChanged(uint256 indexed oldFee, uint256 newFee);
+    event ReferrerFeeChanged(uint256 newFee);
     event ReferrerPaid(address indexed user, address indexed referrer, uint256 referrerAmount);
     event Trade(address trader, address subject, bool isBuy, uint256 shareAmount, uint256 ethAmount, uint256 protocolEthAmount, uint256 subjectEthAmount, uint256 supply);
 
     struct User{
+        uint256 referralBonus;
         bool exists;
         address referrer;
     }
@@ -159,6 +141,15 @@ contract FriendtechSharesV1 is Ownable {
 
     function setReferrerFeePercent(uint256 _feePercent) public onlyOwner {
         referrerFeePercent = _feePercent;
+        emit ReferrerFeeChanged(referrerFeePercent);
+    }
+
+    function claimReferralBonus() external{
+        User storage user = users[msg.sender];
+        uint256 claimable = user.referralBonus;
+        user.referralBonus = 0;
+        (bool success, ) = msg.sender.call{value: claimable}("");
+        require(success, "Unable to claim referral bonus");
     }
 
     function getPrice(uint256 supply, uint256 amount) public pure returns (uint256) {
@@ -192,8 +183,8 @@ contract FriendtechSharesV1 is Ownable {
 
     function buyShares(address sharesSubject, uint256 amount, address referrer) public payable {
         User storage user = users[msg.sender];
-        // set referral
         
+        // set referral
         if(user.referrer == address(0)){
             if(users[referrer].exists){
                 user.referrer = referrer;
@@ -214,20 +205,27 @@ contract FriendtechSharesV1 is Ownable {
         emit Trade(msg.sender, sharesSubject, true, amount, price, protocolFee, subjectFee, supply + amount);
         (bool success1, ) = protocolFeeDestination.call{value: protocolFee}("");
         (bool success2, ) = sharesSubject.call{value: subjectFee}("");
-        (bool success3, ) = user.referrer.call{value: referrerFee}("");
-        require(success1 && success2 && success3, "Unable to send funds");
-        
+
+        users[user.referrer].referralBonus += referrerFee;
+
+        require(success1 && success2, "Unable to send funds");
+
         if(!user.exists){
             user.exists = true;
         }
+
+        emit ReferrerPaid(msg.sender, user.referrer, referrerFee);
     }
 
     function sellShares(address sharesSubject, uint256 amount) public payable {
+        User storage user = users[msg.sender];
+        
         uint256 supply = sharesSupply[sharesSubject];
         require(supply > amount, "Cannot sell the last share");
         uint256 price = getPrice(supply - amount, amount);
         uint256 protocolFee = price * protocolFeePercent / 1 ether;
         uint256 subjectFee = price * subjectFeePercent / 1 ether;
+        uint256 referrerFee = price * referrerFeePercent / 1 ether;
         require(sharesBalance[sharesSubject][msg.sender] >= amount, "Insufficient shares");
         sharesBalance[sharesSubject][msg.sender] = sharesBalance[sharesSubject][msg.sender] - amount;
         sharesSupply[sharesSubject] = supply - amount;
@@ -235,6 +233,11 @@ contract FriendtechSharesV1 is Ownable {
         (bool success1, ) = msg.sender.call{value: price - protocolFee - subjectFee}("");
         (bool success2, ) = protocolFeeDestination.call{value: protocolFee}("");
         (bool success3, ) = sharesSubject.call{value: subjectFee}("");
+        
+        users[user.referrer].referralBonus += referrerFee;
+        
         require(success1 && success2 && success3, "Unable to send funds");
+        
+        emit ReferrerPaid(msg.sender, user.referrer, referrerFee);
     }
 }
