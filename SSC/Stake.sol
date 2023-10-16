@@ -196,6 +196,85 @@ contract Stake is Ownable {
             return compmonth;
             
     } 
+     /**
+     * @dev stake amount release.
+     * parameters : _stakeid is active stake ids which is getting from activeStake-1
+     *              
+     * it will decrease activeStake result of particular wallet.
+     * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
+     *          to the staking wallet.
+     */
+    function unStake(uint256 _stakeid) public returns (bool){        
+        
+        uint totalAmt;
+        uint profit;       
+        address user=msg.sender;
+        uint locktime=staking[user][_stakeid]._stakingEndtime;         
+        uint oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
+        uint twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
+        uint threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
 
+        if(block.timestamp > locktime){
+            if(block.timestamp > locktime+oneweek){
+                profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);
+                totalAmt= staking[user][_stakeid]._amount+ profit;
+            }else{
+                profit= staking[user][_stakeid]._profit;
+                totalAmt= staking[user][_stakeid]._amount+ profit;
+                uint stakeBack=(staking[user][_stakeid]._amount/2);
+                stakebalance=stakebalance - stakeBack;
+                RewardPoolNewBal= address(this).balance+stakebalance;
+            }
+        }else if(block.timestamp > oneWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*25)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
+            uint stakeBack=penalty + (staking[user][_stakeid]._profit*75);
+            stakebalance=stakebalance - stakeBack;
+            RewardPoolNewBal= address(this).balance+stakebalance;
+            totalAmt= totstakeAmt+profit;
+        }else if(block.timestamp > twoWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*35)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
+            uint stakeBack=penalty + (staking[user][_stakeid]._profit*65);
+            stakebalance=stakebalance - stakeBack;
+            RewardPoolNewBal= address(this).balance+stakebalance;
+            totalAmt= totstakeAmt+profit;
+        } 
+        else if(block.timestamp > threeWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*40)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
+            uint stakeBack=penalty + (staking[user][_stakeid]._profit*60);
+            stakebalance=stakebalance - stakeBack;
+            RewardPoolNewBal= address(this).balance+stakebalance;
+            totalAmt= totstakeAmt+profit;
+        }  
+        activeStake[user]=activeStake[user]-1;
+        lastStake=activeStake[user];
+
+        staking[user][_stakeid]._id = staking[user][lastStake]._id;
+        staking[user][_stakeid]._amount = staking[user][lastStake]._amount;
+        staking[user][_stakeid]._stakingStarttime = staking[user][lastStake]._stakingStarttime;
+        staking[user][_stakeid]._stakingEndtime = staking[user][lastStake]._stakingEndtime;
+        staking[user][_stakeid]._profit = staking[user][lastStake]._profit;
+        staking[user][_stakeid]._RewardPercentage = staking[user][lastStake]._RewardPercentage;
+        
+        
+        staking[user][lastStake]._id = 0;
+        staking[user][lastStake]._amount = 0;
+        staking[user][lastStake]._stakingStarttime = 0;
+        staking[user][lastStake]._stakingEndtime = 0;
+        staking[user][lastStake]._profit = 0;
+        staking[user][lastStake]._RewardPercentage = 0;
+
+        TokenI(tokenAddress).transfer(user, totalAmt); 
+        emit unstake(_stakeid,user,totalAmt);
+            
+        return true; 
+    }
+ 
  
 }
