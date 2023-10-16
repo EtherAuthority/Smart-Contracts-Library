@@ -1590,7 +1590,7 @@ contract SolarSBT is ERC721, Ownable {
     mapping(uint => uint) public timeOfMint; // tokenID => currect time
 
     constructor()
-        ERC721("Solar SBT", "SSBT")
+        ERC721("Solar Revenue Soul bound token", "SRSbt")
         Ownable()
     {}
 
