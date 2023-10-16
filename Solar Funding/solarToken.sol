@@ -624,12 +624,12 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
 pragma solidity ^0.8.20;
 
 
-contract SolarPowerToken is ERC20 {
+contract SolarRevenueToken is ERC20 {
     address public votingContractAddress;
     uint public maxSupply = 75000000 * (10 ** 18);
 
     constructor(address _votingContractAddress)
-        ERC20("Solar Power Token", "SPT")
+        ERC20("Solar Revenue Token", "SRT")
 
     { votingContractAddress = _votingContractAddress; }
 
