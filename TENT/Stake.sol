@@ -103,8 +103,8 @@ contract Stake is Ownable {
     mapping(address=>uint256) private TotalProfit;   
     mapping(uint256 => uint256) private RewardPercentage; 
     uint256 private lastStake;
-    //uint public onemonth = (31*1*(24*60*60));   
-    uint public onemonth = 60;        
+    uint public onemonth = (31*1*(24*60*60));   
+            
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
