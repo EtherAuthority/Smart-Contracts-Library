@@ -108,15 +108,18 @@ contract Stake is Ownable {
     uint256 private RewardPoolNewBal;
     uint256 private stakebalance;
     uint256 private Percentage;    
-    uint256 private lastStake;
+    uint256 private lastStake=0;
     //uint public onemonth = (31*1*(24*60*60));   
-    uint public onemonth = 60;        
+    uint public onemonth = 600; 
+    //uint public oneweek = (7*(24*60*60)); 
+    uint public oneweek = 60;          
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
         RewardPoolAddress = address(this);
         //Days wise Percentage        
         RewardPoolOldBal= address(this).balance;
+        RewardPoolNewBal=RewardPoolOldBal;
         Percentage = (RewardPoolNewBal * 100)/RewardPoolOldBal;  
         if(Percentage >= 8) RewardPercentage=Percentage; else  RewardPercentage=8; 
     }
@@ -132,13 +135,55 @@ contract Stake is Ownable {
     function ActiveStake()public view returns(uint){
         return activeStake[msg.sender]; 
     } 
-
     /**
      * @dev return days wise staking percentage.
      * 
      */
     function viewCurrentPercentage() public view returns(uint){
         return RewardPercentage;
+    }
+    /**
+     * @dev return only Reward Balance from this Stake contract.
+     * 
+     */
+    function viewRewardPoolBalance() public view returns(uint){
+        return RewardPoolNewBal;
+    }
+    
+
+     /**
+     * @dev returns total staking wallet profited amount
+     *
+     */
+    function TotalProfitedAmt(address user,uint256 _stakeid) public view returns(uint){
+        require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");               
+        uint profit; 
+        uint locktime=staking[user][_stakeid]._stakingEndtime;         
+        uint oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
+        uint twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
+        uint threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");   
+
+        for(uint i=1;i<=lastStake;i++){     
+
+        if(block.timestamp >= locktime){
+            if(block.timestamp >= locktime+oneweek){
+                profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);                
+            }else{
+                profit= staking[user][_stakeid]._profit;                
+            }
+        }else if(block.timestamp > oneWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*25)/100;            
+        }else if(block.timestamp > twoWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*35)/100;            
+        } 
+        else if(block.timestamp > threeWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*40)/100;
+            
+        } 
+        profit+=profit; 
+        }
+        return profit;
     }
 
     /**
@@ -172,30 +217,8 @@ contract Stake is Ownable {
         return true;       
     }
 
-    /**
-     * @dev returns left vesting month.
-     *
-     */
-    function CompletedMonth(uint256 _stakeid, address user) public view returns (uint){
+   
 
-            uint compmonth=0;
-
-            if(staking[user][_stakeid]._stakingStarttime>0){
-            uint oneMonthLocktime=staking[user][_stakeid]._stakingStarttime+onemonth;             
-             for(uint i=1;i<=12;i++) 
-             { 
-                 if(oneMonthLocktime<=block.timestamp){
-                       if(block.timestamp>=staking[user][_stakeid]._stakingStarttime+(onemonth*i)){ 
-                         compmonth+=1;  
-                     } else { 
-                         break; 
-                     }
-                 }  
-             } 
-            }
-            return compmonth;
-            
-    } 
      /**
      * @dev stake amount release.
      * parameters : _stakeid is active stake ids which is getting from activeStake-1
@@ -275,6 +298,5 @@ contract Stake is Ownable {
             
         return true; 
     }
- 
  
 }
