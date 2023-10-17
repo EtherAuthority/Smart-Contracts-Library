@@ -103,7 +103,7 @@ contract Stake is Ownable {
     mapping(address=>mapping(uint256=>_staking)) public staking; 
     mapping(address=>uint256) private activeStake;
     mapping(address=>uint256) private TotalProfit;   
-    uint256 private RewardPercentage; 
+    uint256 public RewardPercentage; 
     uint256 private RewardPoolOldBal;
     uint256 private RewardPoolNewBal;
     uint256 private stakebalance;
@@ -117,11 +117,10 @@ contract Stake is Ownable {
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
         RewardPoolAddress = address(this);
-        //Days wise Percentage        
+             
         RewardPoolOldBal= address(this).balance;
         RewardPoolNewBal=RewardPoolOldBal;
-        Percentage = (RewardPoolNewBal * 100)/RewardPoolOldBal;  
-        if(Percentage >= 8) RewardPercentage=Percentage; else  RewardPercentage=8; 
+        
     }
     /**
      * @dev To show contract event  .
@@ -135,11 +134,14 @@ contract Stake is Ownable {
     function ActiveStake()public view returns(uint){
         return activeStake[msg.sender]; 
     } 
+    
     /**
      * @dev return days wise staking percentage.
      * 
      */
-    function viewCurrentPercentage() public view returns(uint){
+    function RewardInPercentage() public  returns(uint){
+        Percentage = (RewardPoolNewBal * 100)/RewardPoolOldBal;  
+        if(Percentage >= 8) RewardPercentage=Percentage; else  RewardPercentage=8; 
         return RewardPercentage;
     }
     /**
@@ -196,7 +198,9 @@ contract Stake is Ownable {
         require(msg.sender != address(0),"Wallet Address can not be address 0");  
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
         
-        require(_stakeamount > 0,"Amount should be greater then 0");        
+        require(_stakeamount > 0,"Amount should be greater then 0"); 
+        
+               
         
         uint profit = (_stakeamount * RewardPercentage/100)*TokenI(tokenAddress).decimals();
         
@@ -208,8 +212,7 @@ contract Stake is Ownable {
 
         stakebalance=((_stakeamount+(_stakeamount/2))*TokenI(tokenAddress).decimals())+profit;
         RewardPoolNewBal= address(this).balance-stakebalance;
-        Percentage = (RewardPoolNewBal * 100)/RewardPoolOldBal;  
-        if(Percentage >= 8) RewardPercentage=Percentage; else  RewardPercentage=8; 
+        RewardInPercentage(); 
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
 
