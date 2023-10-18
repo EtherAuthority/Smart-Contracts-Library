@@ -112,7 +112,7 @@ contract Stake is Ownable {
     //uint public onemonth = (31*1*(24*60*60));   
     uint public onemonth = 600; 
     //uint public oneweek = (7*(24*60*60)); 
-    uint public oneweek = 60;          
+    uint public oneweek = 100;          
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
@@ -131,7 +131,7 @@ contract Stake is Ownable {
     /**
      * @dev returns number of stake, done by particular wallet .
      */
-    function ActiveStake()public view returns(uint){
+    function TotalStake()public view returns(uint256){
         return activeStake[msg.sender]; 
     } 
     
@@ -206,7 +206,7 @@ contract Stake is Ownable {
         
        TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
 
-        staking[msg.sender][activeStake[msg.sender]] =  _staking(activeStake[msg.sender]+1,block.timestamp,block.timestamp + (30*(24*60*60)),_stakeamount,profit,RewardPercentage);       
+        staking[msg.sender][activeStake[msg.sender]] =  _staking(activeStake[msg.sender],block.timestamp,block.timestamp + (30*(24*60*60)),_stakeamount,profit,RewardPercentage);       
         
         TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
 
@@ -232,13 +232,15 @@ contract Stake is Ownable {
      */
     function unStake(uint256 _stakeid) public returns (bool){        
         
-        uint totalAmt;
-        uint profit;       
+        uint256 totalAmt;
+        uint256 profit;       
         address user=msg.sender;
-        uint locktime=staking[user][_stakeid]._stakingEndtime;         
-        uint oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
-        uint twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
-        uint threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint256 locktime=onemonth;         
+
+        uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
+        uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
+        uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
         require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
 
         if(block.timestamp > locktime){
@@ -304,6 +306,86 @@ contract Stake is Ownable {
         emit unstake(_stakeid,user,totalAmt);
             
         return true; 
+    }
+
+    function viewWithdraw(uint256 _stakeid) public view returns (uint256){        
+        
+        uint256 totalAmt;
+        uint256 profit;       
+        address user=msg.sender;
+        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint256 locktime=onemonth;         
+
+        uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
+        uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
+        uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
+
+        if(block.timestamp > locktime){
+            if(block.timestamp > locktime+oneweek){
+                profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);
+                totalAmt= staking[user][_stakeid]._amount+ profit;
+            }else{
+                
+                profit= staking[user][_stakeid]._profit;
+                totalAmt= staking[user][_stakeid]._amount+ profit;
+                
+            }
+        }else if(block.timestamp > oneWeekLocktime){
+            
+            profit= (staking[user][_stakeid]._profit*25)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty;            
+            totalAmt= totstakeAmt+profit;
+        }else if(block.timestamp > twoWeekLocktime){
+           
+            profit= (staking[user][_stakeid]._profit*35)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
+            totalAmt= totstakeAmt+profit;
+        } 
+        else if(block.timestamp > threeWeekLocktime){
+            profit= (staking[user][_stakeid]._profit*40)/100;
+            uint penalty = (staking[user][_stakeid]._amount*5)/100;
+            uint totstakeAmt=staking[user][_stakeid]._amount-penalty; 
+            totalAmt= totstakeAmt+profit;
+        }  
+        
+            
+        return totalAmt; 
+    }
+
+     function viewPenalty(uint256 _stakeid) public view returns (uint256){        
+        
+        uint256 totalAmt;
+        uint256 profit;       
+        address user=msg.sender;
+        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint256 locktime=onemonth;
+        uint256 penalty;         
+
+        uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
+        uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
+        uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
+
+        if(block.timestamp > oneWeekLocktime){          
+            
+            penalty = (staking[user][_stakeid]._amount*5)/100;
+           
+        }else if(block.timestamp > twoWeekLocktime){           
+            
+            penalty = (staking[user][_stakeid]._amount*5)/100;
+           
+        } 
+        else if(block.timestamp > threeWeekLocktime){
+            
+            penalty = (staking[user][_stakeid]._amount*5)/100;
+           
+        }  
+        
+            
+        return penalty; 
     }
  
 }
