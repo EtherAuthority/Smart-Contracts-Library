@@ -117,7 +117,7 @@ contract Stake is Ownable {
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
         RewardPoolAddress = address(this);             
-        RewardPoolOldBal= 1000000000000000000000000000000000000000000000;
+        RewardPoolOldBal= 1000000000*10**18;
         RewardPoolNewBal=RewardPoolOldBal;
        
         
