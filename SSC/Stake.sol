@@ -101,14 +101,14 @@ contract Stake is Ownable {
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
-    mapping(address=>uint256) private activeStake;
-    mapping(address=>uint256) private TotalProfit;   
-    uint256 public RewardPercentage; 
-    uint256 private RewardPoolOldBal;
-    uint256 private RewardPoolNewBal;
-    uint256 private stakebalance;
-    uint256 private Percentage;    
-    uint256 private lastStake=0;
+    mapping(address=>uint256) public activeStake;
+    mapping(address=>uint256) public TotalProfit;   
+    uint256 public RewardPercentage=100; 
+    uint256 public RewardPoolOldBal;
+    uint256 public RewardPoolNewBal;
+    uint256 public stakebalance;
+    uint256 public Percentage;    
+    uint256 public lastStake=0;
     //uint public onemonth = (31*1*(24*60*60));   
     uint public onemonth = 600; 
     //uint public oneweek = (7*(24*60*60)); 
@@ -116,10 +116,10 @@ contract Stake is Ownable {
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
-        RewardPoolAddress = address(this);
-             
-        RewardPoolOldBal= address(this).balance;
+        RewardPoolAddress = address(this);             
+        RewardPoolOldBal= 1000000000000000000000000000000000000000000000;
         RewardPoolNewBal=RewardPoolOldBal;
+       
         
     }
     /**
@@ -140,6 +140,7 @@ contract Stake is Ownable {
      * 
      */
     function RewardInPercentage() public  returns(uint){
+        
         Percentage = (RewardPoolNewBal * 100)/RewardPoolOldBal;  
         if(Percentage >= 8) RewardPercentage=Percentage; else  RewardPercentage=8; 
         return RewardPercentage;
@@ -199,19 +200,18 @@ contract Stake is Ownable {
         require(TokenI(tokenAddress).balanceOf(msg.sender) > _stakeamount, "Insufficient tokens");
         
         require(_stakeamount > 0,"Amount should be greater then 0"); 
+        _stakeamount=_stakeamount*10**18;
+        RewardPoolOldBal=RewardPoolNewBal;
+        uint profit = (_stakeamount * RewardPercentage)/100;
         
-               
-        
-        uint profit = (_stakeamount * RewardPercentage/100)*TokenI(tokenAddress).decimals();
-        
-        TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
+       TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
 
         staking[msg.sender][activeStake[msg.sender]] =  _staking(activeStake[msg.sender]+1,block.timestamp,block.timestamp + (30*(24*60*60)),_stakeamount,profit,RewardPercentage);       
         
         TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
 
-        stakebalance=((_stakeamount+(_stakeamount/2))*TokenI(tokenAddress).decimals())+profit;
-        RewardPoolNewBal= address(this).balance-stakebalance;
+        stakebalance=(_stakeamount+(_stakeamount/2))+profit;
+        RewardPoolNewBal= RewardPoolOldBal-stakebalance;
         RewardInPercentage(); 
         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
@@ -246,27 +246,30 @@ contract Stake is Ownable {
                 profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);
                 totalAmt= staking[user][_stakeid]._amount+ profit;
             }else{
+                RewardPoolOldBal=RewardPoolNewBal;
                 profit= staking[user][_stakeid]._profit;
                 totalAmt= staking[user][_stakeid]._amount+ profit;
                 uint stakeBack=(staking[user][_stakeid]._amount/2);
                 stakebalance=stakebalance - stakeBack;
-                RewardPoolNewBal= address(this).balance+stakebalance;
+                RewardPoolNewBal= RewardPoolOldBal+stakebalance;
             }
         }else if(block.timestamp > oneWeekLocktime){
+            RewardPoolOldBal=RewardPoolNewBal;
             profit= (staking[user][_stakeid]._profit*25)/100;
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*75);
             stakebalance=stakebalance - stakeBack;
-            RewardPoolNewBal= address(this).balance+stakebalance;
+            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         }else if(block.timestamp > twoWeekLocktime){
+            RewardPoolOldBal=RewardPoolNewBal;
             profit= (staking[user][_stakeid]._profit*35)/100;
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*65);
             stakebalance=stakebalance - stakeBack;
-            RewardPoolNewBal= address(this).balance+stakebalance;
+            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         } 
         else if(block.timestamp > threeWeekLocktime){
@@ -275,7 +278,8 @@ contract Stake is Ownable {
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*60);
             stakebalance=stakebalance - stakeBack;
-            RewardPoolNewBal= address(this).balance+stakebalance;
+            RewardPoolOldBal=RewardPoolNewBal;
+            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         }  
         activeStake[user]=activeStake[user]-1;
