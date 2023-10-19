@@ -568,7 +568,7 @@ contract ALPHA is Ownable {
 
     function updateFees() internal {
         // Only run for the 24 hours after launch
-        if (updateFeesActive && block.timestamp <= launchTime + 1440 minutes) {
+        if (updateFeesActive && block.timestamp <= launchTime + 10 minutes) {
  
             if(block.timestamp <= launchTime + 5 minutes){
                 buyFee = 7000;
@@ -588,21 +588,21 @@ contract ALPHA is Ownable {
                 buyFee = 4000;
                 sellFee = 6000;      
             }
-            else if(block.timestamp > launchTime + 120 minutes && block.timestamp <= launchTime + 1440 minutes){
+            else {
                 buyFee = 3000;
                 sellFee = 5000;      
             }
-            else{
-                buyFee = 2000;
-                sellFee = 3000; 
-            }
-
-            // Stop updating fees after 1440 minutes
-            if (block.timestamp > launchTime + 1440 minutes) {
-                updateFeesActive = false;
-            }
-
         }
+            
+
+        // Stop updating fees after 1440 minutes
+        if (updateFeesActive && block.timestamp > launchTime + 1440 minutes) {
+            buyFee = 2000;
+            sellFee = 3000;
+            updateFeesActive = false;
+        }
+
+        
     }
 
     function updateMaxLimit() internal {
@@ -619,21 +619,21 @@ contract ALPHA is Ownable {
                 maxWallet = (totalSupply() * 550)/100000;
             }
  
-            else if(block.timestamp > launchTime + 20 minutes && block.timestamp <= launchTime + 30 minutes){
+            else {
                 maxAmount = (totalSupply() * 1110)/100000;
                 maxWallet = (totalSupply() * 1110)/100000;
             }
-            else{
-                maxAmount = totalSupply();
-                maxWallet = totalSupply(); 
-            }
-
-            // Stop updating max limit after 30 minutes
-            if (block.timestamp > launchTime + 30 minutes) {
-                updateMaxLimitActive = false;
-            }
-
         }
+            
+
+        // Stop updating max limit after 30 minutes
+        if(updateMaxLimitActive && block.timestamp > launchTime + 30 minutes) {
+            maxAmount = totalSupply();
+            maxWallet = totalSupply(); 
+            updateMaxLimitActive = false;
+        }
+
+        
     }
 
     // Withdraw ERC20 tokens that are potentially stuck in Contract
