@@ -109,10 +109,9 @@ contract Stake is Ownable {
     uint256 public stakebalance;
     uint256 public Percentage;    
     uint256 public lastStake=0;
-    //uint public onemonth = (31*1*(24*60*60));   
-    uint public onemonth = 600; 
-    //uint public oneweek = (7*(24*60*60)); 
-    uint public oneweek = 100;          
+    uint public onemonth = (31*1*(24*60*60));   
+    uint public oneweek = (7*(24*60*60)); 
+          
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
@@ -191,8 +190,7 @@ contract Stake is Ownable {
 
     /**
      * @dev stake amount for particular duration.
-     * parameters : _staketime in days (exp: 30, 90, 180 ,360 )
-     *              _stakeamount ( need to set token amount for stake)
+     * parameters : _stakeamount ( need to set token amount for stake)
      * it will increase activeStake result of particular wallet.
      */
     function stake(uint _stakeamount) public returns (bool){
@@ -236,7 +234,7 @@ contract Stake is Ownable {
         uint256 profit;       
         address user=msg.sender;
         //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 locktime=onemonth;         
+        uint256 locktime=staking[user][_stakeid]._stakingStarttime+onemonth;     
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
@@ -308,13 +306,17 @@ contract Stake is Ownable {
         return true; 
     }
 
-    function viewWithdraw(uint256 _stakeid) public view returns (uint256){        
+     /**
+     * @dev To know total withdrawal stake amount 
+     * parameters : _stakeid is active stake ids which is getting from activeStake-
+     */
+    function viewWithdrawAmount(uint256 _stakeid) public view returns (uint256){        
         
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;
-        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 locktime=onemonth;         
+        uint locktime=staking[user][_stakeid]._stakingEndtime; 
+              
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
@@ -355,6 +357,10 @@ contract Stake is Ownable {
         return totalAmt; 
     }
 
+     /**
+     * @dev To know Penalty amount, if you unstake before locktime
+     * parameters : _stakeid is active stake ids which is getting from activeStake-
+     */
      function viewPenalty(uint256 _stakeid) public view returns (uint256){        
         
         uint256 totalAmt;
