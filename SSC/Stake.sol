@@ -91,12 +91,12 @@ contract Ownable {
 contract Stake is Ownable { 
 
     struct _staking{         
-        uint _id;
-        uint _stakingStarttime;
-        uint _stakingEndtime;
-        uint _amount;
-        uint _profit;
-        uint _RewardPercentage;
+        uint256 _id;
+        uint256 _stakingStarttime;
+        uint256 _stakingEndtime;
+        uint256 _amount;
+        uint256 _profit;
+        uint256 _RewardPercentage;
     }  
     address public RewardPoolAddress;
     address public tokenAddress=address(0);
@@ -108,12 +108,10 @@ contract Stake is Ownable {
     uint256 private bonusPercentage;
     uint256 private RewardPoolOldBal;
     uint256 private RewardPoolNewBal;
-    uint256 private stakebalance;
-    uint256 private Percentage;
-    uint256 private monthPercentage;    
+    uint256 private stakebalance; 
     uint256 private lastStake=0;
-    uint private onemonth = (31*1*(24*60*60));   
-    uint private oneweek = (7*(24*60*60)); 
+    uint256 private onemonth = (31*1*(24*60*60));   
+    uint256 private oneweek = (7*(24*60*60)); 
           
     
     constructor(address _tokenContract) {
@@ -141,20 +139,16 @@ contract Stake is Ownable {
      * @dev return APY wise staking percentage.
      * 
      */
-    function currentAPY() public returns(uint){        
-        Percentage = (RewardPoolNewBal *100*1000)/RewardPoolOldBal;  
-        if(Percentage >= 8000) currentAPYpercentage=Percentage; else  currentAPYpercentage=8000; 
-        return currentAPYpercentage;
+    function currentAPY() public view returns(uint){
+        if((RewardPoolNewBal *100*1000)/RewardPoolOldBal >= 8000) return (RewardPoolNewBal *100*1000)/RewardPoolOldBal; else  return 8000; 
     }
 
     /**
      * @dev return month wise staking percentage.
      * 
      */
-    function rewardInPercentage() public returns(uint){        
-        monthPercentage = ((RewardPoolNewBal *100*1000)/RewardPoolOldBal)/12;  
-        if(monthPercentage >= 6667) rewardPercentage=monthPercentage; else  rewardPercentage=6667; 
-        return rewardPercentage;
+    function rewardInPercentage() public view returns(uint){  
+        if(((RewardPoolNewBal *100*1000)/RewardPoolOldBal)/12 >= 6667) return ((RewardPoolNewBal *100*1000)/RewardPoolOldBal)/12; else  return 6667; 
     }
     /**
      * @dev return only Reward Balance from this Stake contract.
