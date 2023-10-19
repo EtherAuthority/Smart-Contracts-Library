@@ -761,27 +761,15 @@ contract Stake is Ownable {
      * @dev To know Penalty amount, if you unstake before locktime
      * parameters : _stakeid is active stake ids which is getting from activeStake-
      */
-     function viewPenalty(uint256 _stakeid) public view returns (uint256){        
-        
-        uint256 totalAmt;
-        uint256 profit;       
+     function viewPenalty(uint256 _stakeid) public view returns (uint256){  
         address user=msg.sender;         
         uint256 locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 penalty;         
-
-        uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
-        uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
-        uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
+        uint256 penalty=0; 
         require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
 
-        if(block.timestamp > oneWeekLocktime){ 
+        if(block.timestamp < locktime){ 
             penalty = (staking[user][_stakeid]._amount*5)/100;
-        }else if(block.timestamp > twoWeekLocktime){
-            penalty = (staking[user][_stakeid]._amount*5)/100;           
-        } 
-        else if(block.timestamp > threeWeekLocktime){            
-            penalty = (staking[user][_stakeid]._amount*5)/100;           
-        }  
+        }
         return penalty; 
     }
  
