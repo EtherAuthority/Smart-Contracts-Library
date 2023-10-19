@@ -243,8 +243,7 @@ contract Stake is Ownable {
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;
-        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 locktime=staking[user][_stakeid]._stakingStarttime+onemonth;     
+         uint locktime=staking[user][_stakeid]._stakingEndtime; 
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
@@ -357,8 +356,7 @@ contract Stake is Ownable {
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty; 
             totalAmt= totstakeAmt+profit;
-        }  
-        
+        }         
             
         return totalAmt; 
     }
@@ -371,9 +369,8 @@ contract Stake is Ownable {
         
         uint256 totalAmt;
         uint256 profit;       
-        address user=msg.sender;
-        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 locktime=onemonth;
+        address user=msg.sender;         
+        uint locktime=staking[user][_stakeid]._stakingEndtime; 
         uint256 penalty;         
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
