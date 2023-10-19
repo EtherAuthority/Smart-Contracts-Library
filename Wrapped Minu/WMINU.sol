@@ -587,7 +587,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 contract WrappedMinu is ERC20, Ownable {
     IERC20 public minu;
-    mapping(address => bool) private _isExcludedFromFee;
+    mapping(address => bool) public _isExcludedFromFee;
 
     uint256 public burnPercent = 1000;             //1000 = 1%
 
@@ -628,7 +628,7 @@ contract WrappedMinu is ERC20, Ownable {
         _isExcludedFromFee[account] = true;
     }
 
-    function includeInFee(address account) public {
+    function includeInFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = false;
     }
 
