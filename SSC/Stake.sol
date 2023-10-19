@@ -316,8 +316,6 @@ contract Stake is Ownable {
         uint256 profit;       
         address user=msg.sender;
         uint locktime=staking[user][_stakeid]._stakingEndtime; 
-              
-
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
         uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
@@ -327,11 +325,9 @@ contract Stake is Ownable {
             if(block.timestamp > locktime+oneweek){
                 profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);
                 totalAmt= staking[user][_stakeid]._amount+ profit;
-            }else{
-                
+            }else{                
                 profit= staking[user][_stakeid]._profit;
-                totalAmt= staking[user][_stakeid]._amount+ profit;
-                
+                totalAmt= staking[user][_stakeid]._amount+ profit;                
             }
         }else if(block.timestamp > oneWeekLocktime){
             
@@ -351,9 +347,7 @@ contract Stake is Ownable {
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty; 
             totalAmt= totstakeAmt+profit;
-        }  
-        
-            
+        }   
         return totalAmt; 
     }
 
@@ -366,8 +360,7 @@ contract Stake is Ownable {
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;
-        //uint locktime=staking[user][_stakeid]._stakingEndtime; 
-        uint256 locktime=onemonth;
+        uint locktime=staking[user][_stakeid]._stakingEndtime;        
         uint256 penalty;         
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
@@ -375,22 +368,13 @@ contract Stake is Ownable {
         uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
         require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");           
 
-        if(block.timestamp > oneWeekLocktime){          
-            
+        if(block.timestamp > oneWeekLocktime){    
             penalty = (staking[user][_stakeid]._amount*5)/100;
-           
-        }else if(block.timestamp > twoWeekLocktime){           
-            
+        }else if(block.timestamp > twoWeekLocktime){ 
             penalty = (staking[user][_stakeid]._amount*5)/100;
-           
-        } 
-        else if(block.timestamp > threeWeekLocktime){
-            
-            penalty = (staking[user][_stakeid]._amount*5)/100;
-           
-        }  
-        
-            
+        }else if(block.timestamp > threeWeekLocktime){
+            penalty = (staking[user][_stakeid]._amount*5)/100;           
+        }   
         return penalty; 
     }
  
