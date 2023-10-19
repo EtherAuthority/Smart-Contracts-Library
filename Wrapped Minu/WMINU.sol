@@ -632,7 +632,7 @@ contract WrappedMinu is ERC20, Ownable {
         _isExcludedFromFee[account] = false;
     }
 
-    function setBurnPercent(uint256 percent) external {
+    function setBurnPercent(uint256 percent) external onlyOwner {
         require(percent <= 50000, "Burn percent cannot be more than 50%");
         burnPercent = percent;
     }
