@@ -98,7 +98,7 @@ contract Stake is Ownable {
         uint256 _profit;
         uint256 _RewardPercentage;
     }  
-    address public RewardPoolAddress;
+    address public rewardPoolAddress;
     address public tokenAddress=address(0);
     mapping(address=>mapping(uint256=>_staking)) public staking; 
     mapping(address=>uint256) public activeStake;
@@ -106,8 +106,8 @@ contract Stake is Ownable {
     uint256 private rewardPercentage=8333; 
     uint256 private currentAPYpercentage=100000;
     uint256 private bonusPercentage;
-    uint256 private RewardPoolOldBal;
-    uint256 private RewardPoolNewBal;
+    uint256 private rewardPoolOldBal;
+    uint256 private rewardPoolNewBal;
     uint256 private stakebalance; 
     uint256 private lastStake=0;
     uint256 private onemonth = (31*1*(24*60*60));   
@@ -116,9 +116,9 @@ contract Stake is Ownable {
     
     constructor(address _tokenContract) {
         tokenAddress= _tokenContract;
-        RewardPoolAddress = address(this);             
-        RewardPoolOldBal= 1000000000*10**18;
-        RewardPoolNewBal=RewardPoolOldBal;
+        rewardPoolAddress = address(this);             
+        rewardPoolOldBal= 1000000000*10**18;
+        rewardPoolNewBal=rewardPoolOldBal;
        
         
     }
@@ -140,7 +140,7 @@ contract Stake is Ownable {
      * 
      */
     function currentAPY() public view returns(uint){
-        if((RewardPoolNewBal *100*1000)/RewardPoolOldBal >= 8000) return (RewardPoolNewBal *100*1000)/RewardPoolOldBal; else  return 8000; 
+        if((rewardPoolNewBal *100*1000)/rewardPoolOldBal >= 8000) return (rewardPoolNewBal *100*1000)/rewardPoolOldBal; else  return 8000; 
     }
 
     /**
@@ -148,14 +148,14 @@ contract Stake is Ownable {
      * 
      */
     function rewardInPercentage() public view returns(uint){  
-        if(((RewardPoolNewBal *100*1000)/RewardPoolOldBal)/12 >= 6667) return ((RewardPoolNewBal *100*1000)/RewardPoolOldBal)/12; else  return 6667; 
+        if(((rewardPoolNewBal *100*1000)/rewardPoolOldBal)/12 >= 6667) return ((rewardPoolNewBal *100*1000)/rewardPoolOldBal)/12; else  return 6667; 
     }
     /**
      * @dev return only Reward Balance from this Stake contract.
      * 
      */
     function viewRewardPoolBalance() public view returns(uint){
-        return RewardPoolNewBal;
+        return rewardPoolNewBal;
     }
     
 
@@ -163,7 +163,7 @@ contract Stake is Ownable {
      * @dev returns total staking wallet profited amount
      *
      */
-    function TotalProfitedAmt(address user,uint256 _stakeid) public view returns(uint){
+    function totalProfitedAmt(address user,uint256 _stakeid) public view returns(uint){
         require(TotalProfit[msg.sender] > 0,"Wallet Address is not Exist");               
         uint profit; 
         uint locktime=staking[user][_stakeid]._stakingEndtime;         
@@ -205,16 +205,16 @@ contract Stake is Ownable {
         require(_stakeamount > 0,"Amount should be greater then 0"); 
 
         _stakeamount=_stakeamount*10**18;
-        RewardPoolOldBal=RewardPoolNewBal;
+        rewardPoolOldBal=rewardPoolNewBal;
         uint profit = (_stakeamount * rewardPercentage)/100000;        
         TotalProfit[msg.sender]=TotalProfit[msg.sender]+profit;
 
         staking[msg.sender][activeStake[msg.sender]] =  _staking(activeStake[msg.sender],block.timestamp,block.timestamp + (30*(24*60*60)),_stakeamount,profit,rewardPercentage);       
         
         TokenI(tokenAddress).transferFrom(msg.sender,address(this), _stakeamount);
-        bonusPercentage=rewardPercentage/50000;
-        stakebalance=_stakeamount+(_stakeamount*bonusPercentage)+profit;
-        RewardPoolNewBal= RewardPoolOldBal-stakebalance;
+        bonusPercentage=rewardPercentage/2;
+        stakebalance=_stakeamount+(_stakeamount*(bonusPercentage/1000))+profit;
+        rewardPoolNewBal= rewardPoolOldBal-stakebalance;
         rewardInPercentage();         
         activeStake[msg.sender]=activeStake[msg.sender]+1;
 
@@ -237,8 +237,7 @@ contract Stake is Ownable {
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;
-         uint locktime=staking[user][_stakeid]._stakingEndtime; 
-
+        uint256 locktime=staking[user][_stakeid]._stakingEndtime; 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
         uint256 threeWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*3;         
@@ -250,40 +249,40 @@ contract Stake is Ownable {
                 profit= staking[user][_stakeid]._profit+(staking[user][_stakeid]._amount/2);
                 totalAmt= staking[user][_stakeid]._amount+ profit;
             }else{
-                RewardPoolOldBal=RewardPoolNewBal;
+                rewardPoolOldBal=rewardPoolNewBal;
                 profit= staking[user][_stakeid]._profit;
                 totalAmt= staking[user][_stakeid]._amount+ profit;
                 uint stakeBack=(staking[user][_stakeid]._amount/2);
                 stakebalance=stakebalance - stakeBack;
-                RewardPoolNewBal= RewardPoolOldBal+stakebalance;
+                rewardPoolNewBal= rewardPoolOldBal+stakebalance;
             }
         }else if(block.timestamp > oneWeekLocktime){
-            RewardPoolOldBal=RewardPoolNewBal;
+            rewardPoolOldBal=rewardPoolNewBal;
             profit= (staking[user][_stakeid]._profit*25)/100;
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*75);
             stakebalance=stakebalance - stakeBack;
-            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
+            rewardPoolNewBal= rewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         }else if(block.timestamp > twoWeekLocktime){
-            RewardPoolOldBal=RewardPoolNewBal;
+            rewardPoolOldBal=rewardPoolNewBal;
             profit= (staking[user][_stakeid]._profit*35)/100;
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*65);
             stakebalance=stakebalance - stakeBack;
-            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
+            rewardPoolNewBal= rewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         } 
         else if(block.timestamp > threeWeekLocktime){
+            rewardPoolOldBal=rewardPoolNewBal;
             profit= (staking[user][_stakeid]._profit*40)/100;
             uint penalty = (staking[user][_stakeid]._amount*5)/100;
             uint totstakeAmt=staking[user][_stakeid]._amount-penalty;
             uint stakeBack=penalty + (staking[user][_stakeid]._profit*60);
-            stakebalance=stakebalance - stakeBack;
-            RewardPoolOldBal=RewardPoolNewBal;
-            RewardPoolNewBal= RewardPoolOldBal+stakebalance;
+            stakebalance=stakebalance - stakeBack;            
+            rewardPoolNewBal= rewardPoolOldBal+stakebalance;
             totalAmt= totstakeAmt+profit;
         }  
         activeStake[user]=activeStake[user]-1;
@@ -319,8 +318,7 @@ contract Stake is Ownable {
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;
-        uint locktime=staking[user][_stakeid]._stakingEndtime; 
-              
+        uint256 locktime=staking[user][_stakeid]._stakingEndtime;            
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
         uint256 twoWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek*2;
@@ -364,7 +362,7 @@ contract Stake is Ownable {
         uint256 totalAmt;
         uint256 profit;       
         address user=msg.sender;         
-        uint locktime=staking[user][_stakeid]._stakingEndtime; 
+        uint256 locktime=staking[user][_stakeid]._stakingEndtime; 
         uint256 penalty;         
 
         uint256 oneWeekLocktime=staking[user][_stakeid]._stakingStarttime+oneweek;
