@@ -161,13 +161,7 @@ contract Stake is Ownable {
          return rewardPercentage=currentAPY()/12;
     }
 
-    /**
-     * @dev return only Reward Balance from this Stake contract.
-     *
-     */
-    function viewRewardPoolBalance() public view returns (uint256) {
-        return rewardPoolNewBal;
-    }
+    
 
     /**
      * @dev returns total staking wallet profited amount
@@ -181,12 +175,9 @@ contract Stake is Ownable {
         require(TotalProfit[msg.sender] > 0, "Wallet Address is not Exist");
         uint256 profit;
         uint256 locktime = staking[user][_stakeid]._stakingEndtime;
-        uint256 oneWeekLocktime = staking[user][_stakeid]._stakingStarttime +
-            1 weeks;
-        uint256 twoWeekLocktime = staking[user][_stakeid]._stakingStarttime +
-            2 weeks;
-        uint256 threeWeekLocktime = staking[user][_stakeid]._stakingStarttime +
-            3 weeks;
+        uint256 oneWeekLocktime = staking[user][_stakeid]._stakingStarttime + 1 weeks;
+        uint256 twoWeekLocktime = staking[user][_stakeid]._stakingStarttime + 2 weeks;
+        uint256 threeWeekLocktime = staking[user][_stakeid]._stakingStarttime + 3 weeks;
         require(
             staking[user][_stakeid]._amount > 0,
             "Wallet Address is not Exist"
@@ -239,21 +230,16 @@ contract Stake is Ownable {
      * it will increase activeStake result of particular wallet.
      */
     function stake(uint256 _stakeamount) public returns (bool) {
-        require(
-            TokenI(tokenAddress).balanceOf(msg.sender) >= _stakeamount,
-            "Insufficient tokens"
-        );
-        require(_stakeamount > 0, "Amount should be greater then 0");
+        require(TokenI(tokenAddress).balanceOf(msg.sender) >= _stakeamount,"Insufficient tokens");
+        require(_stakeamount > 0, "Amount should be greater then 0");        
 
-        
-        rewardPoolOldBal = rewardPoolNewBal;
         uint256 profit = (_stakeamount * rewardPercentage) / 100000;//8.333e16 = 8% of stake amount
         TotalProfit[msg.sender] = TotalProfit[msg.sender] + profit;
 
         staking[msg.sender][activeStake[msg.sender]] = _staking(
             activeStake[msg.sender],
             block.timestamp,
-            block.timestamp + 30 days,
+            block.timestamp + (31 * 1 * (24 * 60 * 60)),
             _stakeamount,
             profit,
             rewardPercentage
@@ -265,10 +251,7 @@ contract Stake is Ownable {
             _stakeamount
         );
         bonusPercentage = rewardPercentage / 2;//4166.5 = 50% of reward(8%)
-        stakebalance =
-            _stakeamount +
-            (_stakeamount * (bonusPercentage / 1000)) +
-            profit;//5.24983e18 = stake token+ 50% of reward(8%) + profit(8% of stake amount)
+        stakebalance =_stakeamount + (_stakeamount * (bonusPercentage / 1000)) + profit;//5.24983e18 = stake token+ 50% of reward(8%) + profit(8% of stake amount)
         rewardInPercentage();
         activeStake[msg.sender] = activeStake[msg.sender] + 1;
 
