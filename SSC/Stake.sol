@@ -239,7 +239,7 @@ contract Stake is Ownable {
         staking[msg.sender][activeStake[msg.sender]] = _staking(
             activeStake[msg.sender],
             block.timestamp,
-            block.timestamp + (31 * 1 * (24 * 60 * 60)),
+            block.timestamp + 30 days,
             _stakeamount,
             profit,
             rewardPercentage
@@ -284,7 +284,7 @@ contract Stake is Ownable {
             staking[user][_stakeid]._amount > 0,
             "Wallet Address is not Exist!"
         );
-        require(_stakeid > 0, "Please set valid stakeid!");
+        require(_stakeid >= 0, "Please set valid stakeid!");
 
         if (block.timestamp > locktime) {
             if (block.timestamp > locktime + oneweek) {
@@ -295,8 +295,7 @@ contract Stake is Ownable {
             } else {
                 rewardPoolOldBal = rewardPoolNewBal;
                 profit = staking[user][_stakeid]._profit;
-                totalAmt = staking[user][_stakeid]._amount + profit;
-                uint256 stakeBack = (staking[user][_stakeid]._amount / 2);                
+                totalAmt = staking[user][_stakeid]._amount + profit;                                
             }
         } else if (block.timestamp > oneWeekLocktime) {
             rewardPoolOldBal = rewardPoolNewBal;
@@ -314,8 +313,7 @@ contract Stake is Ownable {
             rewardPoolOldBal = rewardPoolNewBal;
             profit = (staking[user][_stakeid]._profit * 40) / 100;
             uint256 penalty = (staking[user][_stakeid]._amount * 5) / 100;
-            uint256 totstakeAmt = staking[user][_stakeid]._amount - penalty;
-            uint256 stakeBack = penalty + (staking[user][_stakeid]._profit * 60);           
+            uint256 totstakeAmt = staking[user][_stakeid]._amount - penalty;               
             totalAmt = totstakeAmt + profit;
         }
         activeStake[user] = activeStake[user] - 1;
