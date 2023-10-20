@@ -8,7 +8,15 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 contract NFTMarketplace {
     enum TokenType { ERC20, ERC721, ERC1155 }
     mapping(uint256 => bool) public listingExists;
+    mapping(uint256 => address) public listingOwner;
     
+    struct SwapDetails {
+        bool isSwap;
+        uint256 swapTokenId;
+        address swapTokenAddress;
+        TokenType swapTokenType;
+    }
+
     struct Listing {
         uint256 listingId;
         address ownerof;
@@ -21,9 +29,7 @@ contract NFTMarketplace {
         TokenType tokenType;
         uint256 feeAmount;
         address feeToken;
-        bool isSwap; // isSwap is set to false for sale
-        uint256 swapTokenId; // swapTokenId is not used for sale
-        address swapTokenAddress; // swapTokenAddress is not used for sale
+        SwapDetails swapDetails;
     }
 
     mapping(uint256 => Listing) public listings;
@@ -42,21 +48,17 @@ contract NFTMarketplace {
         return tokenType != TokenType.ERC20 && tokenType != TokenType.ERC721 && tokenType != TokenType.ERC1155;
     }
 
-    function createListingCommon(
+    function createListingCommonValidation(
         uint256 listingId,
-        address seller,
-        address buyer,
         uint256 tokenIdOrAmount,
         address tokenAddress,
         uint256 price,
-        bool isActive,
-        TokenType tokenType,
         uint256 feeAmount,
         address feeToken,
         bool isSwap,
         uint256 swapTokenId,
         address swapTokenAddress
-    ) internal {
+    ) internal view {
 
         require(!listingExists[listingId], "Listing ID already exists");
         require(feeAmount <= 15, "Fee should not be greater than 15%.");
@@ -64,29 +66,13 @@ contract NFTMarketplace {
         require(listingId > 0, "Invalid listingId");
         require(tokenAddress != address(0), "Invalid tokenAddress");
         require(price > 0, "Invalid price");
+        require(feeToken != address(0), "Invalid fee token");
         require(feeAmount > 0, "Invalid feeAmount");
 
         if(isSwap){
             require(swapTokenId > 0, "Invalid swapTokenId");
             require(swapTokenAddress != address(0), "Invalid swapTokenAddress");
         }
-
-        listings[listingId] = Listing({
-            listingId: listingId,
-            ownerof: msg.sender,
-            seller: seller,
-            buyer: buyer,
-            tokenIdOrAmount: tokenIdOrAmount,
-            tokenAddress: tokenAddress,
-            price: price,
-            isActive: isActive,
-            tokenType: tokenType,
-            feeAmount: feeAmount,
-            feeToken: feeToken,
-            isSwap: isSwap,
-            swapTokenId: swapTokenId,
-            swapTokenAddress: swapTokenAddress
-        });
     }
 
     function hasRequiredTokens(address seller, TokenType tokenType, address tokenAddress, uint256 tokenId) internal view returns (bool) {
@@ -111,28 +97,38 @@ contract NFTMarketplace {
         address feeToken,
         bool isSwap,
         uint256 swapTokenId,
-        address swapTokenAddress
+        address swapTokenAddress,
+        TokenType swapTokenType
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
         
-        createListingCommon(
-            listingId,
-            msg.sender,
-            buyer,
-            tokenIdOrAmount,
-            tokenAddress,
-            price,
-            true,
-            TokenType.ERC20,
-            feeAmount,
-            feeToken,
-            isSwap,
-            swapTokenId,
-            swapTokenAddress
-        );
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
+
+        SwapDetails memory swapDetails;
+        swapDetails.isSwap = isSwap;
+        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenAddress = swapTokenAddress;
+        swapDetails.swapTokenType = swapTokenType;
+
+        listings[listingId] = Listing({
+            listingId: listingId,
+            ownerof: msg.sender,
+            seller: msg.sender,
+            buyer: buyer,
+            tokenIdOrAmount: tokenIdOrAmount,
+            tokenAddress: tokenAddress,
+            price: price,
+            isActive: true,
+            tokenType: TokenType.ERC20,
+            feeAmount: feeAmount,
+            feeToken: feeToken,
+            swapDetails: swapDetails
+        });
 
         listingExists[listingId] = true;
+        listingOwner[listingId] = msg.sender;
+       
     }
 
     function createListingERC721(
@@ -145,26 +141,37 @@ contract NFTMarketplace {
         address feeToken,
         bool isSwap,
         uint256 swapTokenId,
-        address swapTokenAddress
+        address swapTokenAddress,
+        TokenType swapTokenType
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC721, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
-        
-        createListingCommon(
-            listingId,
-            msg.sender,
-            buyer,
-            tokenIdOrAmount,
-            tokenAddress,
-            price,
-            true,
-            TokenType.ERC721,
-            feeAmount,
-            feeToken,
-            isSwap,
-            swapTokenId,
-            swapTokenAddress
-        );
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
+
+        SwapDetails memory swapDetails;
+        swapDetails.isSwap = isSwap;
+        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenAddress = swapTokenAddress;
+        swapDetails.swapTokenType = swapTokenType;
+
+        listings[listingId] = Listing({
+            listingId: listingId,
+            ownerof: msg.sender,
+            seller: msg.sender,
+            buyer: buyer,
+            tokenIdOrAmount: tokenIdOrAmount,
+            tokenAddress: tokenAddress,
+            price: price,
+            isActive: true,
+            tokenType: TokenType.ERC721,
+            feeAmount: feeAmount,
+            feeToken: feeToken,
+            swapDetails: swapDetails
+        });
+
+        listingExists[listingId] = true;
+        listingOwner[listingId] = msg.sender;
+
     }
 
     function createListingERC1155(
@@ -177,26 +184,37 @@ contract NFTMarketplace {
         address feeToken,
         bool isSwap,
         uint256 swapTokenId,
-        address swapTokenAddress
+        address swapTokenAddress,
+        TokenType swapTokenType
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC1155, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
         
-        createListingCommon(
-            listingId,
-            msg.sender,
-            buyer,
-            tokenIdOrAmount,
-            tokenAddress,
-            price,
-            true,
-            TokenType.ERC1155,
-            feeAmount,
-            feeToken,
-            isSwap,
-            swapTokenId,
-            swapTokenAddress
-        );
+        SwapDetails memory swapDetails;
+        swapDetails.isSwap = isSwap;
+        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenAddress = swapTokenAddress;
+        swapDetails.swapTokenType = swapTokenType;
+
+        listings[listingId] = Listing({
+            listingId: listingId,
+            ownerof: msg.sender,
+            seller: msg.sender,
+            buyer: buyer,
+            tokenIdOrAmount: tokenIdOrAmount,
+            tokenAddress: tokenAddress,
+            price: price,
+            isActive: true,
+            tokenType: TokenType.ERC1155,
+            feeAmount: feeAmount,
+            feeToken: feeToken,
+            swapDetails: swapDetails
+        });
+
+        listingExists[listingId] = true;
+        listingOwner[listingId] = msg.sender;
+
     }
     /*
     function cancelListing(uint256 listingId) external onlySeller(listingId) isActiveListing(listingId) {
@@ -226,7 +244,7 @@ contract NFTMarketplace {
     function buyListing(uint256 listingId) external payable isActiveListing(listingId) {
         
         Listing storage listing = listings[listingId];
-        require(listing.isSwap == false, "This listing is not for a buy");
+        //require(listing.isSwap == false, "This listing is not for a buy");
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
 
@@ -255,24 +273,67 @@ contract NFTMarketplace {
 
     function confirmSwap(uint256 listingId) external isActiveListing(listingId) {
         Listing storage listing = listings[listingId];
-        require(listing.isSwap, "This listing is not for a swap");
+        //require(listing.isSwap, "This listing is not for a swap");
         
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
 
-
-        if (listing.tokenType == TokenType.ERC721) {
-            require(IERC721(listing.tokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
-            IERC721(listing.swapTokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.swapTokenId);
-            IERC721(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
-        } else if (listing.tokenType == TokenType.ERC1155) {
-            require(IERC1155(listing.tokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
-            IERC1155(listing.swapTokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.swapTokenId, 1, "");
-            IERC1155(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount, 1, "");
-        } else if (listing.tokenType == TokenType.ERC20) {
-            require(IERC20(listing.tokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
-            IERC20(listing.swapTokenAddress).transferFrom(listing.seller, msg.sender, listing.swapTokenId);
+        if (listing.tokenType == TokenType.ERC20) {
+            
+            require(IERC20(listing.tokenAddress).balanceOf(listing.seller) >= listing.tokenIdOrAmount, "Seller don't have enough ERC20 tokens");
             IERC20(listing.tokenAddress).transferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
+
+            if(listing.swapDetails.swapTokenType == TokenType.ERC20){
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+
+            }
+       
+        } else if (listing.tokenType == TokenType.ERC721) {
+            
+            require(IERC721(listing.tokenAddress).ownerOf(listing.tokenIdOrAmount) == listing.seller, "Seller don't own the specified ERC721 token");
+            IERC721(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
+
+            if(listing.swapDetails.swapTokenType == TokenType.ERC20){
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+
+            }
+
+        } else if (listing.tokenType == TokenType.ERC1155) {
+            
+            require(IERC1155(listing.tokenAddress).balanceOf(listing.seller, listing.tokenIdOrAmount) > 0, "Seller don't own the specified ERC1155 token");
+            IERC1155(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount, 1, "");
+
+            if(listing.swapDetails.swapTokenType == TokenType.ERC20){
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+
+            } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+
+            }
         }
         
         listing.isActive = false;
