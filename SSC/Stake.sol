@@ -149,7 +149,7 @@ contract Stake is Ownable {
      */
     function currentAPY() internal returns (uint256) {
         if (( (TokenI(tokenAddress).balanceOf(address(this))-stakebalance) * 100 * 1000) / rewardPoolOldBal >= 8000)
-            return currentAPYpercentage=(rewardPoolNewBal * 100 * 1000) / rewardPoolOldBal;
+            return currentAPYpercentage=(( (TokenI(tokenAddress).balanceOf(address(this))-stakebalance) * 100 * 1000) * 100 * 1000) / rewardPoolOldBal;
         else return currentAPYpercentage=8000;
     }
 
