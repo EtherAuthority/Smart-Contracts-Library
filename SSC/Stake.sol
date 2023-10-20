@@ -281,7 +281,7 @@ contract Stake is Ownable {
             oneweek *
             3;
         require(
-            staking[user][_stakeid]._amount > 0,
+            staking[user][_stakeid]._amount >= 0,
             "Wallet Address is not Exist!"
         );
         require(_stakeid >= 0, "Please set valid stakeid!");
