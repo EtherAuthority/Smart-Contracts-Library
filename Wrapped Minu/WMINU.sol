@@ -595,19 +595,27 @@ contract WrappedMinu is ERC20, Ownable {
         minu = IERC20(_minu);
     }
 
+    // Function to wrap the Minu Tokens
     function wrap(uint256 amount) external {
         require(amount > 0, "Amount be more than 0");
         require(minu.balanceOf(msg.sender) >= amount, "Not sufficient balance");
 
+        // Transfer Minu tokens to this contract
         minu.transferFrom(msg.sender, address(this), amount);
+
+        // Mint the same amount of WMINU tokens
         _mint(msg.sender, amount);
     }
 
+    // Function to unwrap the Minu Tokens
     function unwrap(uint256 amount) external {
         require(amount > 0, "Amount be more than 0");
         require(minu.balanceOf(address(this)) >= amount, "Not sufficient balance");
-        
+
+        // Burn WMINU tokens from the sender
         _burn(msg.sender, amount);
+
+        // Transfer the same amount of Minu tokens to the sender
         minu.transfer(msg.sender, amount);
     }
 
