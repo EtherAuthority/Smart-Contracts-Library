@@ -109,7 +109,7 @@ contract Stake is Ownable {
         uint256 _RewardPercentage;
     }
    
-    address public tokenAddress = address(0);
+    address public tokenAddress;
     mapping(address => mapping(uint256 => _staking)) public staking;
     mapping(address => uint256) public activeStake;
     mapping(address => uint256) public totalProfit;
