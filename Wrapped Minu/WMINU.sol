@@ -632,10 +632,12 @@ contract WrappedMinu is ERC20, Ownable {
         return super.transfer(recipient, amount);
     }
 
+    // Excludes an address from the burn fee
     function excludeFromFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = true;
     }
 
+    // Includes an address in the burn fee
     function includeInFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = false;
     }
