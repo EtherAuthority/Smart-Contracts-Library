@@ -238,7 +238,7 @@ contract Stake is Ownable {
         staking[msg.sender][activeStake[msg.sender]] = _staking(
             activeStake[msg.sender],
             block.timestamp,
-            block.timestamp + 31 days,
+            block.timestamp + 30 days,
             _stakeamount,
             profit,
             rewardPercentage
