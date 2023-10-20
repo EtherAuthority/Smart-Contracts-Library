@@ -229,7 +229,7 @@ contract Stake is Ownable {
             _stakeamount
         );
        
-        stakebalance +=_stakeamount;
+        stakebalance +=_stakeamount+profit+(profit/2);
       
         activeStake[msg.sender] = activeStake[msg.sender] + 1;
 
@@ -245,11 +245,20 @@ contract Stake is Ownable {
      * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
      *          to the staking wallet.
      */
-    function unStake(uint256 _stakeid) public returns (bool) {
-        uint256 totalAmt;
-        uint256 totstakeAmt;
+    function unStake(uint256 _stakeid) public returns (bool) {      
+        
         address user = msg.sender;
-       
+        uint256 totstakeAmt;
+        uint256 totalAmt=staking[user][_stakeid]._amount;
+        uint256 profit;
+        uint256 oneWeekLocktime = staking[user][_stakeid]._stakingStarttime + oneweek;
+
+        if (block.timestamp < oneWeekLocktime) {            
+            profit = (staking[user][_stakeid]._profit * 25) / 100;
+            uint256 penalty = (staking[user][_stakeid]._amount * 5) / 100;
+            totstakeAmt = staking[user][_stakeid]._amount - penalty;
+            totalAmt = totstakeAmt + profit;
+        }
         totalAmt=viewWithdrawAmount(_stakeid);
         activeStake[user] = activeStake[user] - 1;
         lastStake = activeStake[user];
@@ -268,7 +277,7 @@ contract Stake is Ownable {
         staking[user][lastStake]._profit = 0;
         staking[user][lastStake]._RewardPercentage = 0;
 
-         stakebalance = stakebalance - totstakeAmt; 
+         stakebalance = stakebalance - totalAmt; 
 
         TokenI(tokenAddress).transfer(user, totalAmt);
         emit Unstake(_stakeid, user, totalAmt);
