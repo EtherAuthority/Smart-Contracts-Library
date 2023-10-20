@@ -108,28 +108,26 @@ contract Stake is Ownable {
         uint256 _profit;
         uint256 _RewardPercentage;
     }
-    address public rewardPoolAddress;
+   
     address public tokenAddress = address(0);
     mapping(address => mapping(uint256 => _staking)) public staking;
     mapping(address => uint256) public activeStake;
-    mapping(address => uint256) public TotalProfit;
+    mapping(address => uint256) public totalProfit;
     uint256 private rewardPoolOldBal;
     uint256 public stakebalance;
     uint256 private lastStake = 0;
     uint256 private oneweek = (7 * (24 * 60 * 60));
 
     constructor(address _tokenContract) {
-        tokenAddress = _tokenContract;
-        rewardPoolAddress = address(this);
-        rewardPoolOldBal = 1000000000 * 10**18;
-       
+        tokenAddress = _tokenContract;       
+        rewardPoolOldBal = 1000000000 * 10**18;       
     }
 
     /**
      * @dev To show contract event  .
      */
     event StakeEvent(uint256 _stakeid, address _to, uint256 _stakeamount);
-    event unstake(uint256 _stakeid, address _to, uint256 _amount);
+    event Unstake(uint256 _stakeid, address _to, uint256 _amount);
 
     /**
      * @dev returns number of stake, done by particular wallet .
@@ -154,9 +152,7 @@ contract Stake is Ownable {
      */
     function monthlyPercentage() public view returns (uint256) {       
          return currentAPY()/12;
-    }
-
-    
+    }  
 
     /**
      * @dev returns total staking wallet profited amount
@@ -167,34 +163,26 @@ contract Stake is Ownable {
         view
         returns (uint256)
     {
-        require(TotalProfit[msg.sender] > 0, "Wallet Address is not Exist");
+        require(totalProfit[msg.sender] > 0, "Wallet Address is not Exist");
         uint256 profit;
         uint256 locktime = staking[user][_stakeid]._stakingEndtime;
         uint256 oneWeekLocktime = staking[user][_stakeid]._stakingStarttime + 1 weeks;
         uint256 twoWeekLocktime = staking[user][_stakeid]._stakingStarttime + 2 weeks;
         uint256 threeWeekLocktime = staking[user][_stakeid]._stakingStarttime + 3 weeks;
-        require(
-            staking[user][_stakeid]._amount > 0,
-            "Wallet Address is not Exist"
-        );
-
+        require(staking[user][_stakeid]._amount > 0,"Wallet Address is not Exist");
         
         if (block.timestamp >= locktime) {
-                if (block.timestamp >= locktime + 1 weeks) {
-                    profit =
-                        staking[user][_stakeid]._profit +
-                        (staking[user][_stakeid]._amount / 2);//83330000000000000+5e17=5.8333e17
-                } else {
-                    profit = staking[user][_stakeid]._profit;
-                }
+                if (block.timestamp >= locktime + 1 weeks)
+                    profit =staking[user][_stakeid]._profit + (staking[user][_stakeid]._profit / 2);//83330000000000000+5e17=5.8333e17
+                else profit = staking[user][_stakeid]._profit;
+                
         } else if (block.timestamp > oneWeekLocktime) {
                 profit = (staking[user][_stakeid]._profit * 25) / 100;
         } else if (block.timestamp > twoWeekLocktime) {
                 profit = (staking[user][_stakeid]._profit * 35) / 100;
         } else if (block.timestamp > threeWeekLocktime) {
                 profit = (staking[user][_stakeid]._profit * 40) / 100;
-        }
-           
+        }        
         
         return profit;
     }
@@ -203,17 +191,12 @@ contract Stake is Ownable {
      * @dev returns total staking wallet profited amount
      *
      */
-    function totalProfitedAmt(address user)
-        public
-        view
-        returns (uint256)
-    {
-        require(TotalProfit[msg.sender] > 0, "Wallet Address is not Exist");
-        uint256 profit;
-       
+    function totalProfitedAmt(address user) public view returns (uint256){
+        require(totalProfit[user] > 0, "Wallet Address is not Exist");
+        uint256 profit;      
 
         for (uint256 i = 0; i < activeStake[user]; i++) {
-          profit+=stakeProfitedAmt(msg.sender,i);
+          profit+=stakeProfitedAmt(user,i);
         }
         
         return profit;
@@ -229,7 +212,7 @@ contract Stake is Ownable {
         require(_stakeamount > 0, "Amount should be greater then 0");        
 
         uint256 profit = (_stakeamount * monthlyPercentage()) / 100000;//8.333e16 = 8% of stake amount
-        TotalProfit[msg.sender] = TotalProfit[msg.sender] + profit;
+        totalProfit[msg.sender] = totalProfit[msg.sender] + profit;
 
         staking[msg.sender][activeStake[msg.sender]] = _staking(
             activeStake[msg.sender],
@@ -288,7 +271,7 @@ contract Stake is Ownable {
          stakebalance = stakebalance - totstakeAmt; 
 
         TokenI(tokenAddress).transfer(user, totalAmt);
-        emit unstake(_stakeid, user, totalAmt);
+        emit Unstake(_stakeid, user, totalAmt);
 
         return true;
     }
