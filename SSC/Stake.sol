@@ -110,7 +110,7 @@ contract Stake is Ownable {
     }
    
     address public tokenAddress;
-    mapping(address => mapping(uint256 => _staking)) public staking;
+    mapping(address => _staking[]) public staking;
     mapping(address => uint256) public activeStake;
     mapping(address => uint256) public totalProfit;
     uint256 private rewardPoolOldBal;
@@ -214,14 +214,14 @@ contract Stake is Ownable {
         uint256 profit = (_stakeamount * monthlyPercentage()) / 100000;//8.333e16 = 8% of stake amount
         totalProfit[msg.sender] = totalProfit[msg.sender] + profit;
 
-        staking[msg.sender][activeStake[msg.sender]] = _staking(
-            activeStake[msg.sender],
+        staking[msg.sender].push( _staking(
+           staking[msg.sender].length,
             block.timestamp,
             block.timestamp + 30 days,
             _stakeamount,
             profit,
             monthlyPercentage()
-        );
+        ));
 
         TokenI(tokenAddress).transferFrom(
             msg.sender,
@@ -231,7 +231,7 @@ contract Stake is Ownable {
        
         stakebalance +=_stakeamount+profit+(profit/2);
       
-        activeStake[msg.sender] = activeStake[msg.sender] + 1;
+        activeStake[msg.sender] = staking[msg.sender].length;
 
         emit StakeEvent(activeStake[msg.sender], address(this), _stakeamount);
         return true;
@@ -260,8 +260,12 @@ contract Stake is Ownable {
             totalAmt = totstakeAmt + profit;
         }
         totalAmt=viewWithdrawAmount(_stakeid);
-        activeStake[user] = activeStake[user] - 1;
-        lastStake = activeStake[user];
+       
+
+      
+        
+        lastStake = staking[msg.sender].length;
+        lastStake=lastStake-1;
 
         staking[user][_stakeid]._id = staking[user][lastStake]._id;
         staking[user][_stakeid]._amount = staking[user][lastStake]._amount;
@@ -270,14 +274,11 @@ contract Stake is Ownable {
         staking[user][_stakeid]._profit = staking[user][lastStake]._profit;
         staking[user][_stakeid]._RewardPercentage = staking[user][lastStake]._RewardPercentage;
 
-        staking[user][lastStake]._id = 0;
-        staking[user][lastStake]._amount = 0;
-        staking[user][lastStake]._stakingStarttime = 0;
-        staking[user][lastStake]._stakingEndtime = 0;
-        staking[user][lastStake]._profit = 0;
-        staking[user][lastStake]._RewardPercentage = 0;
+        
+        staking[msg.sender].pop();
+        activeStake[msg.sender] = staking[msg.sender].length;
 
-         stakebalance = stakebalance - totalAmt; 
+        stakebalance = stakebalance - totalAmt; 
 
         TokenI(tokenAddress).transfer(user, totalAmt);
         emit Unstake(_stakeid, user, totalAmt);
