@@ -319,11 +319,10 @@ contract Stake is Ownable {
                 profit = staking[user][_stakeid]._profit;
                 totalAmt = staking[user][_stakeid]._amount + profit;
             }
-        }else if (block.timestamp < oneWeekLocktime) {            
-            profit = (staking[user][_stakeid]._profit * 25) / 100;
+        }else if (block.timestamp < oneWeekLocktime) { 
             uint256 penalty = (staking[user][_stakeid]._amount * 5) / 100;
             totstakeAmt = staking[user][_stakeid]._amount - penalty;
-            totalAmt = totstakeAmt + profit;
+            totalAmt = totstakeAmt;
         }else if (block.timestamp > oneWeekLocktime) {            
             profit = (staking[user][_stakeid]._profit * 25) / 100;            
             totstakeAmt = staking[user][_stakeid]._amount;
