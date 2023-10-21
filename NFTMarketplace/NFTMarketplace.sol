@@ -12,7 +12,7 @@ contract NFTMarketplace {
     
     struct SwapDetails {
         bool isSwap;
-        uint256 swapTokenId;
+        uint256 swapTokenIdOrAmount;
         address swapTokenAddress;
         TokenType swapTokenType;
     }
@@ -56,7 +56,7 @@ contract NFTMarketplace {
         uint256 feeAmount,
         address feeToken,
         bool isSwap,
-        uint256 swapTokenId,
+        uint256 swapTokenIdOrAmount,
         address swapTokenAddress
     ) internal view {
 
@@ -70,7 +70,7 @@ contract NFTMarketplace {
         require(feeAmount > 0, "Invalid feeAmount");
 
         if(isSwap){
-            require(swapTokenId > 0, "Invalid swapTokenId");
+            require(swapTokenIdOrAmount > 0, "Invalid swapTokenIdOrAmount");
             require(swapTokenAddress != address(0), "Invalid swapTokenAddress");
         }
     }
@@ -96,18 +96,19 @@ contract NFTMarketplace {
         uint256 feeAmount,
         address feeToken,
         bool isSwap,
-        uint256 swapTokenId,
+        uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
         TokenType swapTokenType
     ) external {
-
         require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
-        
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
+            revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
+        }
 
         SwapDetails memory swapDetails;
         swapDetails.isSwap = isSwap;
-        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenIdOrAmount = swapTokenIdOrAmount;
         swapDetails.swapTokenAddress = swapTokenAddress;
         swapDetails.swapTokenType = swapTokenType;
 
@@ -140,17 +141,20 @@ contract NFTMarketplace {
         uint256 feeAmount,
         address feeToken,
         bool isSwap,
-        uint256 swapTokenId,
+        uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
         TokenType swapTokenType
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC721, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
+            revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
+        }
 
         SwapDetails memory swapDetails;
         swapDetails.isSwap = isSwap;
-        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenIdOrAmount = swapTokenIdOrAmount;
         swapDetails.swapTokenAddress = swapTokenAddress;
         swapDetails.swapTokenType = swapTokenType;
 
@@ -183,17 +187,20 @@ contract NFTMarketplace {
         uint256 feeAmount,
         address feeToken,
         bool isSwap,
-        uint256 swapTokenId,
+        uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
         TokenType swapTokenType
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC1155, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenId, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
+            revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
+        }
         
         SwapDetails memory swapDetails;
         swapDetails.isSwap = isSwap;
-        swapDetails.swapTokenId = swapTokenId;
+        swapDetails.swapTokenIdOrAmount = swapTokenIdOrAmount;
         swapDetails.swapTokenAddress = swapTokenAddress;
         swapDetails.swapTokenType = swapTokenType;
 
@@ -231,11 +238,11 @@ contract NFTMarketplace {
 
         if (listing.isSwap) {
             if (listing.tokenType == TokenType.ERC721) {
-                IERC721(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenId);
+                IERC721(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenIdOrAmount);
             } else if (listing.tokenType == TokenType.ERC1155) {
-                IERC1155(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenId, 1, "");
+                IERC1155(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenIdOrAmount, 1, "");
             } else if (listing.tokenType == TokenType.ERC20) {
-                IERC20(listing.swapTokenAddress).transfer(msg.sender, listing.swapTokenId);
+                IERC20(listing.swapTokenAddress).transfer(msg.sender, listing.swapTokenIdOrAmount);
             }
         }
     }
@@ -244,7 +251,7 @@ contract NFTMarketplace {
     function buyListing(uint256 listingId) external payable isActiveListing(listingId) {
         
         Listing storage listing = listings[listingId];
-        //require(listing.isSwap == false, "This listing is not for a buy");
+        require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
 
@@ -273,7 +280,7 @@ contract NFTMarketplace {
 
     function confirmSwap(uint256 listingId) external isActiveListing(listingId) {
         Listing storage listing = listings[listingId];
-        //require(listing.isSwap, "This listing is not for a swap");
+        require(listing.swapDetails.isSwap, "This listing is not for a swap");
         
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
@@ -284,16 +291,16 @@ contract NFTMarketplace {
             IERC20(listing.tokenAddress).transferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
 
             if(listing.swapDetails.swapTokenType == TokenType.ERC20){
-                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
-                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.swapDetails.swapTokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
-                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
-                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.swapDetails.swapTokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
-                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
-                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.swapDetails.swapTokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount, 1, "");
 
             }
        
@@ -303,16 +310,16 @@ contract NFTMarketplace {
             IERC721(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
 
             if(listing.swapDetails.swapTokenType == TokenType.ERC20){
-                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
-                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.swapDetails.swapTokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
-                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
-                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.swapDetails.swapTokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
-                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
-                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.swapDetails.swapTokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount, 1, "");
 
             }
 
@@ -322,16 +329,16 @@ contract NFTMarketplace {
             IERC1155(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount, 1, "");
 
             if(listing.swapDetails.swapTokenType == TokenType.ERC20){
-                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.tokenIdOrAmount, "You don't have enough ERC20 tokens");
-                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC20(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender) >= listing.swapDetails.swapTokenIdOrAmount, "You don't have enough ERC20 tokens");
+                IERC20(listing.swapDetails.swapTokenAddress).transferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC721){
-                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.tokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
-                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId);
+                require(IERC721(listing.swapDetails.swapTokenAddress).ownerOf(listing.swapDetails.swapTokenIdOrAmount) == msg.sender, "You don't own the specified ERC721 token");
+                IERC721(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount);
 
             } else if(listing.swapDetails.swapTokenType == TokenType.ERC1155){
-                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.tokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
-                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenId, 1, "");
+                require(IERC1155(listing.swapDetails.swapTokenAddress).balanceOf(msg.sender, listing.swapDetails.swapTokenIdOrAmount) > 0, "You don't own the specified ERC1155 token");
+                IERC1155(listing.swapDetails.swapTokenAddress).safeTransferFrom(msg.sender, listing.seller, listing.swapDetails.swapTokenIdOrAmount, 1, "");
 
             }
         }
@@ -342,5 +349,29 @@ contract NFTMarketplace {
     // Function to get listing details
     function getListingDetails(uint256 listingId) external view returns (Listing memory) {
         return listings[listingId];
+    }
+
+    function getTokenType(uint8 tokenType) public pure returns (string memory) {
+        require(tokenType >= 0 && tokenType <= 2, "Invalid input. Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
+        
+        if (tokenType == 0) {
+            return "ERC20";
+        } else if (tokenType == 1) {
+            return "ERC721";
+        } else {
+            return "ERC1155";
+        }
+    }
+
+    function getSwapTokenType(uint8 tokenType) public pure returns (string memory) {
+        require(tokenType >= 0 && tokenType <= 2, "Invalid input. Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
+        
+        if (tokenType == 0) {
+            return "ERC20";
+        } else if (tokenType == 1) {
+            return "ERC721";
+        } else {
+            return "ERC1155";
+        }
     }
 }
