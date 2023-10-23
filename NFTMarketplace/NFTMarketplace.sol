@@ -34,20 +34,45 @@ contract NFTMarketplace {
 
     mapping(uint256 => Listing) public listings;
     
+    /**
+     * @dev Modifier to check if the caller is the seller of a listing.
+     * @param listingId The ID of the listing.
+     */
     modifier onlySeller(uint256 listingId) {
         require(listings[listingId].seller == msg.sender, "You are not the seller");
         _;
     }
 
+    /**
+     * @dev Modifier to check if a listing is active.
+     * @param listingId The ID of the listing.
+     */
     modifier isActiveListing(uint256 listingId) {
         require(listings[listingId].isActive, "Listing is not active");
         _;
     }
 
+    /**
+     * @dev Internal function to check if a given TokenType is defined.
+     * @param tokenType The TokenType to check.
+     * @return bool Returns true if TokenType is defined, otherwise false.
+     */
     function checkDefinedTokenType(TokenType tokenType) internal pure returns (bool) {
         return tokenType != TokenType.ERC20 && tokenType != TokenType.ERC721 && tokenType != TokenType.ERC1155;
     }
 
+    /**
+     * @dev Internal function for common validation when creating a listing.
+     * @param listingId The ID of the listing.
+     * @param tokenIdOrAmount The ID or amount of the token.
+     * @param tokenAddress The address of the token contract.
+     * @param price The price of the listing.
+     * @param feeAmount The fee amount.
+     * @param feeToken The address of the fee token.
+     * @param isSwap Indicates if the listing is for swapping.
+     * @param swapTokenIdOrAmount The ID or amount of the swap token.
+     * @param swapTokenAddress The address of the swap token contract.
+     */
     function createListingCommonValidation(
         uint256 listingId,
         uint256 tokenIdOrAmount,
@@ -68,6 +93,7 @@ contract NFTMarketplace {
         require(price > 0, "Invalid price");
         require(feeToken != address(0), "Invalid fee token");
         require(feeAmount > 0, "Invalid feeAmount");
+        require(tokenAddress != swapTokenAddress && tokenIdOrAmount != swapTokenIdOrAmount, "tokenAddress and tokenIdOrAmount should not be same as swapTokenAddress and swapTokenIdOrAmount");
 
         if(isSwap){
             require(swapTokenIdOrAmount > 0, "Invalid swapTokenIdOrAmount");
@@ -75,18 +101,40 @@ contract NFTMarketplace {
         }
     }
 
-    function hasRequiredTokens(address seller, TokenType tokenType, address tokenAddress, uint256 tokenId) internal view returns (bool) {
+    /**
+     * @dev Internal function to check if the seller has the required tokens for a listing.
+     * @param seller The address of the seller.
+     * @param tokenType The TokenType of the token.
+     * @param tokenAddress The address of the token contract.
+     * @param tokenIdOrAmount The ID of the token.
+     * @return bool Returns true if the seller has the required tokens, otherwise false.
+     */
+    function hasRequiredTokens(address seller, TokenType tokenType, address tokenAddress, uint256 tokenIdOrAmount) internal view returns (bool) {
         if (tokenType == TokenType.ERC20) {
-            return IERC20(tokenAddress).balanceOf(seller) >= tokenId;
+            return IERC20(tokenAddress).balanceOf(seller) >= tokenIdOrAmount;
         } else if (tokenType == TokenType.ERC721) {
-            return IERC721(tokenAddress).ownerOf(tokenId) == seller;
+            return IERC721(tokenAddress).ownerOf(tokenIdOrAmount) == seller;
         } else if (tokenType == TokenType.ERC1155) {
-            return IERC1155(tokenAddress).balanceOf(seller, tokenId) > 0;
+            return IERC1155(tokenAddress).balanceOf(seller, tokenIdOrAmount) > 0;
         } else {
             return false;
         }
     }
 
+    /**
+     * @dev Function to create an ERC20 listing.
+     * @param listingId The ID of the listing.
+     * @param buyer The address of the buyer.
+     * @param tokenIdOrAmount The ID or amount of the token.
+     * @param tokenAddress The address of the token contract.
+     * @param price The price of the listing.
+     * @param feeAmount The fee amount.
+     * @param feeToken The address of the fee token.
+     * @param isSwap Indicates if the listing is for swapping.
+     * @param swapTokenIdOrAmount The ID or amount of the swap token.
+     * @param swapTokenAddress The address of the swap token contract.
+     * @param swapTokenType The TokenType of the swap token.
+     */
     function createListingERC20(
         uint256 listingId,
         address buyer,
@@ -101,6 +149,7 @@ contract NFTMarketplace {
         TokenType swapTokenType
     ) external {
         require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
+        require(IERC20(tokenAddress).allowance(msg.sender, address(this)) >= tokenIdOrAmount, "Seller hasn't approved token transfer");
         createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
@@ -132,6 +181,20 @@ contract NFTMarketplace {
        
     }
 
+    /**
+     * @dev Function to create an ERC721 listing.
+     * @param listingId The ID of the listing.
+     * @param buyer The address of the buyer.
+     * @param tokenIdOrAmount The ID or amount of the token.
+     * @param tokenAddress The address of the token contract.
+     * @param price The price of the listing.
+     * @param feeAmount The fee amount.
+     * @param feeToken The address of the fee token.
+     * @param isSwap Indicates if the listing is for swapping.
+     * @param swapTokenIdOrAmount The ID or amount of the swap token.
+     * @param swapTokenAddress The address of the swap token contract.
+     * @param swapTokenType The TokenType of the swap token.
+     */
     function createListingERC721(
         uint256 listingId,
         address buyer,
@@ -147,6 +210,7 @@ contract NFTMarketplace {
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC721, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
+        require(IERC721(tokenAddress).getApproved(tokenIdOrAmount) == address(this), "TokenId not approved");
         createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
@@ -178,6 +242,20 @@ contract NFTMarketplace {
 
     }
 
+    /**
+     * @dev Function to create an ERC1155 listing.
+     * @param listingId The ID of the listing.
+     * @param buyer The address of the buyer.
+     * @param tokenIdOrAmount The ID or amount of the token.
+     * @param tokenAddress The address of the token contract.
+     * @param price The price of the listing.
+     * @param feeAmount The fee amount.
+     * @param feeToken The address of the fee token.
+     * @param isSwap Indicates if the listing is for swapping.
+     * @param swapTokenIdOrAmount The ID or amount of the swap token.
+     * @param swapTokenAddress The address of the swap token contract.
+     * @param swapTokenType The TokenType of the swap token.
+     */
     function createListingERC1155(
         uint256 listingId,
         address buyer,
@@ -193,6 +271,7 @@ contract NFTMarketplace {
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC1155, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
+        require(IERC1155(tokenAddress).isApprovedForAll(msg.sender, address(this)), "TokenId not approved");
         createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
@@ -223,31 +302,11 @@ contract NFTMarketplace {
         listingOwner[listingId] = msg.sender;
 
     }
-    /*
-    function cancelListing(uint256 listingId) external onlySeller(listingId) isActiveListing(listingId) {
-        Listing storage listing = listings[listingId];
-        listing.isActive = false;
-
-        if (listing.tokenType == TokenType.ERC721) {
-            IERC721(listing.tokenAddress).safeTransferFrom(address(this), msg.sender, listing.tokenId);
-        } else if (listing.tokenType == TokenType.ERC1155) {
-            IERC1155(listing.tokenAddress).safeTransferFrom(address(this), msg.sender, listing.tokenId, 1, "");
-        } else if (listing.tokenType == TokenType.ERC20) {
-            IERC20(listing.tokenAddress).transfer(msg.sender, listing.tokenId);
-        }
-
-        if (listing.isSwap) {
-            if (listing.tokenType == TokenType.ERC721) {
-                IERC721(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenIdOrAmount);
-            } else if (listing.tokenType == TokenType.ERC1155) {
-                IERC1155(listing.swapTokenAddress).safeTransferFrom(address(this), msg.sender, listing.swapTokenIdOrAmount, 1, "");
-            } else if (listing.tokenType == TokenType.ERC20) {
-                IERC20(listing.swapTokenAddress).transfer(msg.sender, listing.swapTokenIdOrAmount);
-            }
-        }
-    }
-    */
-
+    
+    /**
+     * @dev Function to buy a listing.
+     * @param listingId The ID of the listing.
+     */
     function buyListing(uint256 listingId) external payable isActiveListing(listingId) {
         
         Listing storage listing = listings[listingId];
@@ -278,6 +337,10 @@ contract NFTMarketplace {
         listing.isActive = false;
     }
 
+    /**
+     * @dev Function to confirm a swap for a listing.
+     * @param listingId The ID of the listing.
+     */
     function confirmSwap(uint256 listingId) external isActiveListing(listingId) {
         Listing storage listing = listings[listingId];
         require(listing.swapDetails.isSwap, "This listing is not for a swap");
@@ -346,11 +409,20 @@ contract NFTMarketplace {
         listing.isActive = false;
     }
 
-    // Function to get listing details
+    /**
+     * @dev Function to get details of a listing.
+     * @param listingId The ID of the listing.
+     * @return Listing Returns the details of the listing.
+     */
     function getListingDetails(uint256 listingId) external view returns (Listing memory) {
         return listings[listingId];
     }
 
+    /**
+     * @dev Function to get the name of a TokenType.
+     * @param tokenType The TokenType (0 for ERC20, 1 for ERC721, 2 for ERC1155).
+     * @return string Returns the name of the TokenType.
+     */
     function getTokenType(uint8 tokenType) public pure returns (string memory) {
         require(tokenType >= 0 && tokenType <= 2, "Invalid input. Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
         
@@ -363,6 +435,11 @@ contract NFTMarketplace {
         }
     }
 
+    /**
+     * @dev Function to get the name of a swap TokenType.
+     * @param tokenType The TokenType (0 for ERC20, 1 for ERC721, 2 for ERC1155).
+     * @return string Returns the name of the TokenType.
+     */
     function getSwapTokenType(uint8 tokenType) public pure returns (string memory) {
         require(tokenType >= 0 && tokenType <= 2, "Invalid input. Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
         
