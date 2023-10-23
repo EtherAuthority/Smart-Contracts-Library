@@ -29,6 +29,7 @@ contract NFTMarketplace {
         TokenType tokenType;
         uint256 feeAmount;
         address feeToken;
+        uint256 listingEndDate;
         SwapDetails swapDetails;
     }
 
@@ -82,7 +83,8 @@ contract NFTMarketplace {
         address feeToken,
         bool isSwap,
         uint256 swapTokenIdOrAmount,
-        address swapTokenAddress
+        address swapTokenAddress,
+        uint256 listingEndDate
     ) internal view {
 
         require(!listingExists[listingId], "Listing ID already exists");
@@ -94,6 +96,7 @@ contract NFTMarketplace {
         require(feeToken != address(0), "Invalid fee token");
         require(feeAmount > 0, "Invalid feeAmount");
         require(tokenAddress != swapTokenAddress && tokenIdOrAmount != swapTokenIdOrAmount, "tokenAddress and tokenIdOrAmount should not be same as swapTokenAddress and swapTokenIdOrAmount");
+        require(listingEndDate > block.timestamp, "Invalid listing end date");
 
         if(isSwap){
             require(swapTokenIdOrAmount > 0, "Invalid swapTokenIdOrAmount");
@@ -146,11 +149,12 @@ contract NFTMarketplace {
         bool isSwap,
         uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
-        TokenType swapTokenType
+        TokenType swapTokenType,
+        uint256 listingEndDate
     ) external {
         require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
         require(IERC20(tokenAddress).allowance(msg.sender, address(this)) >= tokenIdOrAmount, "Seller hasn't approved token transfer");
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress, listingEndDate);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
         }
@@ -173,6 +177,7 @@ contract NFTMarketplace {
             tokenType: TokenType.ERC20,
             feeAmount: feeAmount,
             feeToken: feeToken,
+            listingEndDate: listingEndDate,
             swapDetails: swapDetails
         });
 
@@ -206,12 +211,13 @@ contract NFTMarketplace {
         bool isSwap,
         uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
-        TokenType swapTokenType
+        TokenType swapTokenType,
+        uint256 listingEndDate
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC721, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
         require(IERC721(tokenAddress).getApproved(tokenIdOrAmount) == address(this), "TokenId not approved");
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress, listingEndDate);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
         }
@@ -234,6 +240,7 @@ contract NFTMarketplace {
             tokenType: TokenType.ERC721,
             feeAmount: feeAmount,
             feeToken: feeToken,
+            listingEndDate: listingEndDate,
             swapDetails: swapDetails
         });
 
@@ -267,12 +274,13 @@ contract NFTMarketplace {
         bool isSwap,
         uint256 swapTokenIdOrAmount,
         address swapTokenAddress,
-        TokenType swapTokenType
+        TokenType swapTokenType,
+        uint256 listingEndDate
     ) external {
 
         require(hasRequiredTokens(msg.sender, TokenType.ERC1155, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
         require(IERC1155(tokenAddress).isApprovedForAll(msg.sender, address(this)), "TokenId not approved");
-        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress);
+        createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress, listingEndDate);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
         }
@@ -295,6 +303,7 @@ contract NFTMarketplace {
             tokenType: TokenType.ERC1155,
             feeAmount: feeAmount,
             feeToken: feeToken,
+            listingEndDate: listingEndDate,
             swapDetails: swapDetails
         });
 
@@ -311,6 +320,8 @@ contract NFTMarketplace {
         
         Listing storage listing = listings[listingId];
         require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
+
+        require(block.timestamp < listing.listingEndDate,"Listing Expired");
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
 
@@ -345,6 +356,7 @@ contract NFTMarketplace {
         Listing storage listing = listings[listingId];
         require(listing.swapDetails.isSwap, "This listing is not for a swap");
         
+        require(block.timestamp < listing.listingEndDate,"Listing Expired");
         require(msg.sender != listing.seller, "You cannot buy your own listing");
         require(msg.sender == listing.buyer, "You are not the specified buyer");
 
