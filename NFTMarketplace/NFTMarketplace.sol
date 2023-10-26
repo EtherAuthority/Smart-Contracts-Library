@@ -395,7 +395,7 @@ contract NFTMarketplace is Ownable{
             }
         }    
 
-        //listing.isActive = false;
+        listing.isActive = false;
     }
 
     /**
