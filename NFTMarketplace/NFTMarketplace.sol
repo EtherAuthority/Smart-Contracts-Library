@@ -350,18 +350,17 @@ contract NFTMarketplace is Ownable{
      * @dev Function to buy a listing.
      * @param listingId The ID of the listing.
      */
-    function buyListing(uint256 listingId, uint256 number) external payable isActiveListing(listingId) {
+    function buyListing(uint256 listingId) external payable isActiveListing(listingId) {
         
         
         Listing storage listing = listings[listingId];
-        if(number == 1){
-            require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
-            
-            require(block.timestamp < listing.listingEndDate,"Listing Expired");
-            require(msg.sender != listing.seller, "You cannot buy your own listing");
-            require(msg.sender == listing.buyer, "You are not the specified buyer");
-        }
-
+        
+        require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
+        
+        require(block.timestamp < listing.listingEndDate,"Listing Expired");
+        require(msg.sender != listing.seller, "You cannot buy your own listing");
+        require(msg.sender == listing.buyer, "You are not the specified buyer");
+        
         uint256 totalPrice = listing.price;
         uint256 fee = 0;
         
