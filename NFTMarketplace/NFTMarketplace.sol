@@ -4,11 +4,26 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFTMarketplace {
+interface USDT {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract NFTMarketplace is Ownable{
     enum TokenType { ERC20, ERC721, ERC1155 }
     mapping(uint256 => bool) public listingExists;
     mapping(uint256 => address) public listingOwner;
+    
+    address public USDTContractAddress;
     
     struct SwapDetails {
         bool isSwap;
@@ -54,6 +69,21 @@ contract NFTMarketplace {
     }
 
     /**
+     * @dev Constructor function to initialize the contract with known tokens.
+     */
+    constructor() {
+        USDTContractAddress = 0xd9145CCE52D386f254917e481eB44e9943F39138;
+    }
+
+    /**
+     * @dev Sets the USDT contract address.
+     * @param _address The new address for the USDT contract.
+     */
+    function setUSDTContractAddress(address _address) external onlyOwner {
+        USDTContractAddress = _address;
+    }
+
+    /**
      * @dev Internal function to check if a given TokenType is defined.
      * @param tokenType The TokenType to check.
      * @return bool Returns true if TokenType is defined, otherwise false.
@@ -91,11 +121,12 @@ contract NFTMarketplace {
         require(feeAmount <= 15, "Fee should not be greater than 15%.");
         require(tokenIdOrAmount > 0, "Invalid amount");
         require(listingId > 0, "Invalid listingId");
-        require(tokenAddress != address(0), "Invalid tokenAddress");
         require(price > 0, "Invalid price");
         require(feeToken != address(0), "Invalid fee token");
         require(feeAmount > 0, "Invalid feeAmount");
-        require(tokenAddress != swapTokenAddress && tokenIdOrAmount != swapTokenIdOrAmount, "tokenAddress and tokenIdOrAmount should not be same as swapTokenAddress and swapTokenIdOrAmount");
+        if(tokenAddress != address(0) && swapTokenAddress != address(0)){
+            require(tokenAddress != swapTokenAddress && tokenIdOrAmount != swapTokenIdOrAmount, "tokenAddress and tokenIdOrAmount should not be same as swapTokenAddress and swapTokenIdOrAmount");
+        }
         require(listingEndDate > block.timestamp, "Invalid listing end date");
 
         if(isSwap){
@@ -152,8 +183,11 @@ contract NFTMarketplace {
         TokenType swapTokenType,
         uint256 listingEndDate
     ) external {
-        require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
-        require(IERC20(tokenAddress).allowance(msg.sender, address(this)) >= tokenIdOrAmount, "Seller hasn't approved token transfer");
+        if(tokenAddress != address(0)){
+            require(hasRequiredTokens(msg.sender, TokenType.ERC20, tokenAddress, tokenIdOrAmount), "Seller doesn't have the required tokens");
+            require(IERC20(tokenAddress).allowance(msg.sender, address(this)) >= tokenIdOrAmount, "Seller hasn't approved token transfer");
+        }
+        
         createListingCommonValidation(listingId, tokenIdOrAmount, tokenAddress, price, feeAmount, feeToken, isSwap, swapTokenIdOrAmount, swapTokenAddress, listingEndDate);
         if (swapTokenType != TokenType.ERC20 && swapTokenType != TokenType.ERC721 && swapTokenType != TokenType.ERC1155) {
             revert("Invalid swap token type, Use 0 for ERC20, 1 for ERC721, 2 for ERC1155.");
@@ -316,36 +350,53 @@ contract NFTMarketplace {
      * @dev Function to buy a listing.
      * @param listingId The ID of the listing.
      */
-    function buyListing(uint256 listingId) external payable isActiveListing(listingId) {
+    function buyListing(uint256 listingId, uint256 number) external payable isActiveListing(listingId) {
+        
         
         Listing storage listing = listings[listingId];
-        require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
-
-        require(block.timestamp < listing.listingEndDate,"Listing Expired");
-        require(msg.sender != listing.seller, "You cannot buy your own listing");
-        require(msg.sender == listing.buyer, "You are not the specified buyer");
+        if(number == 1){
+            require(listing.swapDetails.isSwap == false, "This listing is not for a buy");
+            
+            require(block.timestamp < listing.listingEndDate,"Listing Expired");
+            require(msg.sender != listing.seller, "You cannot buy your own listing");
+            require(msg.sender == listing.buyer, "You are not the specified buyer");
+        }
 
         uint256 totalPrice = listing.price;
         uint256 fee = 0;
         
-        if (listing.tokenType == TokenType.ERC721) {
-            IERC721(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
-        } else if (listing.tokenType == TokenType.ERC1155) {
-            IERC1155(listing.tokenAddress).safeTransferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount, 1, "");
-        } else if (listing.tokenType == TokenType.ERC20) {
-            IERC20(listing.tokenAddress).transferFrom(listing.seller, msg.sender, listing.tokenIdOrAmount);
+        fee = (totalPrice * listing.feeAmount) / 100;
+
+        if(listing.tokenAddress == USDTContractAddress){
+            
+            USDT usdtToken = USDT(listing.tokenAddress);
+
+            require(msg.value == 0, "Cannot send Ether for token purchase.");
+            require(usdtToken.balanceOf(msg.sender) >= totalPrice, "You don't have enough USDT token balance.");
+            
+            usdtToken.transferFrom(msg.sender, listing.seller, totalPrice - fee);
+            if (fee > 0) {
+                usdtToken.transferFrom(msg.sender, listing.feeToken, fee);
+            }
+        } else if(listing.tokenAddress != address(0)){
+
+            require(msg.value == 0, "Cannot send Coins for token purchase.");
+            require(IERC20(listing.tokenAddress).balanceOf(msg.sender) >= totalPrice, "You don't have enough tokens balance.");
+            IERC20(listing.tokenAddress).transferFrom(msg.sender, listing.seller, totalPrice - fee);
+            if (fee > 0) {
+                IERC20(listing.tokenAddress).transferFrom(msg.sender, listing.feeToken, fee);
+            }
+
         } else {
+            
             require(msg.value >= totalPrice, "Insufficient funds");
-            fee = (totalPrice * listing.feeAmount) / 100;
             payable(listing.seller).transfer(totalPrice - fee);
-        }
-        
-        //if(checkDefinedTokenType(listing.tokenType)){}
-        if (fee > 0) {
-            IERC20(listing.feeToken).transfer(listing.seller, fee);
-        }
-        
-        listing.isActive = false;
+            if (fee > 0) {
+                payable(listing.feeToken).transfer(fee);
+            }
+        }    
+
+        //listing.isActive = false;
     }
 
     /**
