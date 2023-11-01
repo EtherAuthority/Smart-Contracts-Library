@@ -1612,7 +1612,7 @@ contract SolarSBT is ERC721, Ownable {
         validUpTo[tokenId] = block.timestamp + expiryInSecond;
     }
 
-    function changeValidationT(uint _tokenId, uint _timeStampOfExpiry) public onlyOwner returns(bool){
+    function changeValidation(uint _tokenId, uint _timeStampOfExpiry) public onlyOwner returns(bool){
         address tokenOwner = _ownerOf(_tokenId);
         require(tokenOwner != address(0) && balanceOf(tokenOwner) >= 1 , "invalid token id");
         validUpTo[_tokenId] = _timeStampOfExpiry;
