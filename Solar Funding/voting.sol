@@ -64,8 +64,8 @@ contract VotingForSolar is owned {
 
 
 
-    function initialize(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) public {
-        require(msg.sender == owner, "invalid caller");
+    function initialize(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) public onlyOwner
+{
         require(sbtAddress == address(0), "can't call twice");
         sbtAddress = _sbtAddress;
         tokenAddress = _tokenAddress;
@@ -74,33 +74,28 @@ contract VotingForSolar is owned {
         requiredSBTPercent = _requiredSBTPercent;
     }
 
-    function ChangeSBTAddress(address _sbtAddress) public returns(bool) {
-        require(msg.sender == owner, "invalid caller");
+    function ChangeSBTAddress(address _sbtAddress) public onlyOwner returns(bool) {
         sbtAddress = _sbtAddress;
         return true;
     }
 
-    function ChangeTokenAddress(address _tokenAddress) public returns(bool) {
-        require(msg.sender == owner, "invalid caller");
+    function ChangeTokenAddress(address _tokenAddress) public onlyOwner returns(bool) {
         tokenAddress = _tokenAddress;
         return true;
     }
 
 
-     function ChangeRequiredFounderPercent(uint _requiredFounderPercent) public returns(bool) {
-        require(msg.sender == owner, "invalid caller");
+     function ChangeRequiredFounderPercent(uint _requiredFounderPercent) public onlyOwner returns(bool) {
         requiredFounderPercent = _requiredFounderPercent;
         return true;
     }   
 
-     function ChangeRequiredSBTPercent(uint _requiredSBTPercent) public returns(bool) {
-        require(msg.sender == owner, "invalid caller");
+     function ChangeRequiredSBTPercent(uint _requiredSBTPercent) public onlyOwner returns(bool) {
         requiredSBTPercent = _requiredSBTPercent;
         return true;
     }  
 
-    function MakeFounder(address _founder) public returns(bool) {
-        require(msg.sender == owner, "invalid caller");
+    function MakeFounder(address _founder) public onlyOwner returns(bool) {
         require(founder[_founder] == false, "Already Founder");
         founder[_founder] = true;
         totalFounders++;
@@ -151,7 +146,7 @@ contract VotingForSolar is owned {
     } 
 
     function IsVotePassed(uint _proposalIndex) public view returns(bool) {
-        uint totalSBT = contractInterface(sbtAddress)._nextTokenId() - 1;
+        uint totalSBT = contractInterface(sbtAddress)._nextTokenId();
         uint sVc = Proposals[_proposalIndex].sbtVoteCount;
         uint fVc = Proposals[_proposalIndex].founderVoteCount;
         uint countPercent = sVc * 100 / totalSBT;
@@ -163,7 +158,7 @@ contract VotingForSolar is owned {
 
     function ReleaseToken(uint _proposalIndex) public returns(bool) {
         require(IsVotePassed(_proposalIndex), "proposal index not passed");
-        require(!Proposals[_proposalIndex].released, "proposal index not released");
+        require(!Proposals[_proposalIndex].released, "proposal index already released");
         uint amount = Proposals[_proposalIndex].totalTokenToRelease;
         address receiver = Proposals[_proposalIndex].tokenHolder;
         Proposals[_proposalIndex].released = true;
