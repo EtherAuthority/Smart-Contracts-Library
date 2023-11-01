@@ -3,7 +3,7 @@
 
 
 // OpenZeppelin Contracts (last updated v5.0.0) (interfaces/draft-IERC6093.sol)
-pragma solidity ^0.8.20;
+pragma solidity 0.8.19;
 
 /**
  * @dev Standard ERC20 Errors
@@ -168,7 +168,7 @@ interface IERC1155Errors {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/math/SignedMath.sol)
 
-pragma solidity ^0.8.20;
+
 
 /**
  * @dev Standard signed math utilities missing in the Solidity language.
@@ -214,7 +214,7 @@ library SignedMath {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/math/Math.sol)
 
-pragma solidity ^0.8.20;
+
 
 /**
  * @dev Standard math utilities missing in the Solidity language.
@@ -632,7 +632,7 @@ library Math {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Strings.sol)
 
-pragma solidity ^0.8.20;
+
 
 
 
@@ -728,7 +728,7 @@ library Strings {
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
-pragma solidity ^0.8.0;
+
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -755,7 +755,7 @@ abstract contract Context {
 
 // OpenZeppelin Contracts (last updated v4.9.0) (access/Ownable.sol)
 
-pragma solidity ^0.8.0;
+
 
 
 /**
@@ -840,7 +840,7 @@ abstract contract Ownable is Context {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/IERC721Receiver.sol)
 
-pragma solidity ^0.8.20;
+
 
 /**
  * @title ERC721 token receiver interface
@@ -871,7 +871,7 @@ interface IERC721Receiver {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/IERC165.sol)
 
-pragma solidity ^0.8.20;
+
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -899,7 +899,7 @@ interface IERC165 {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/introspection/ERC165.sol)
 
-pragma solidity ^0.8.20;
+
 
 
 /**
@@ -928,7 +928,7 @@ abstract contract ERC165 is IERC165 {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/IERC721.sol)
 
-pragma solidity ^0.8.20;
+
 
 
 /**
@@ -1065,7 +1065,7 @@ interface IERC721 is IERC165 {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/extensions/IERC721Metadata.sol)
 
-pragma solidity ^0.8.20;
+
 
 
 /**
@@ -1094,7 +1094,7 @@ interface IERC721Metadata is IERC721 {
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/ERC721.sol)
 
-pragma solidity ^0.8.20;
+
 
 
 
@@ -1579,7 +1579,7 @@ abstract contract ERC721 is Context, ERC165, IERC721, IERC721Metadata, IERC721Er
 // File: sbtOJ.sol
 
 
-pragma solidity ^0.8.20;
+
 
 
 
@@ -1587,7 +1587,7 @@ contract SolarSBT is ERC721, Ownable {
     uint256 public _nextTokenId;
     uint public expiryInSecond = 63072000; // two years default
     uint public maxSoulLimit = 500;
-    mapping(uint => uint) public timeOfMint; // tokenID => currect time
+    mapping(uint => uint) public validUpTo; // tokenID => currect time + expiryInSeconds 
 
     constructor()
         ERC721("Solar Revenue Soul bound token", "SRSbt")
@@ -1604,20 +1604,21 @@ contract SolarSBT is ERC721, Ownable {
     }    
     function safeMint(address to) public onlyOwner {
         require(_nextTokenId+1 < maxSoulLimit, "minting limit reached");
+        require(balanceOf(to) == 0 , "already hold SBT" );
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
-        timeOfMint[tokenId] = block.timestamp;
+        validUpTo[tokenId] = block.timestamp + expiryInSecond;
     }
 
-    function inactiveSBT(uint _tokenId) public onlyOwner returns(bool){
-        require(_ownerOf(_tokenId) != address(0) && timeOfMint[_tokenId] > 0, "token id already inactive or invalid");
-        timeOfMint[_tokenId] = 0;
-        _nextTokenId--;
+    function changeValidationT(uint _tokenId, uint _timeStampOfExpiry) public onlyOwner returns(bool){
+        address tokenOwner = _ownerOf(_tokenId);
+        require(tokenOwner != address(0) && balanceOf(tokenOwner) >= 1 , "invalid token id");
+        validUpTo[_tokenId] = _timeStampOfExpiry;
         return true;
     }
 
-    function hasSoul(address _tokenHolder, uint _tokenId) public view returns (bool) {
-        if (balanceOf(_tokenHolder) >= 1 && timeOfMint[_tokenId] + expiryInSecond > block.timestamp) {
+    function hasSoul(address _tokenHolder) public view returns (bool) {
+        if (balanceOf(_tokenHolder) >= 1 && validUpTo[_tokenId] >= block.timestamp) {
             return true;
         } else {
             return false;
