@@ -1588,6 +1588,7 @@ contract SolarSBT is ERC721, Ownable {
     uint public expiryInSecond = 63072000; // two years default
     uint public maxSoulLimit = 500;
     mapping(uint => uint) public validUpTo; // tokenID => currect time + expiryInSeconds 
+    mapping(address => uint) public tokenIdByAddress;
 
     constructor()
         ERC721("Solar Revenue Soul bound token", "SRSbt")
@@ -1607,6 +1608,7 @@ contract SolarSBT is ERC721, Ownable {
         require(balanceOf(to) == 0 , "already hold SBT" );
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
+        tokenIdByAddress[to] = tokenId;
         validUpTo[tokenId] = block.timestamp + expiryInSecond;
     }
 
@@ -1618,7 +1620,7 @@ contract SolarSBT is ERC721, Ownable {
     }
 
     function hasSoul(address _tokenHolder) public view returns (bool) {
-        if (balanceOf(_tokenHolder) >= 1 && validUpTo[_tokenId] >= block.timestamp) {
+        if (balanceOf(_tokenHolder) >= 1 && validUpTo[tokenIdByAddress[_tokenHolder]] >= block.timestamp) {
             return true;
         } else {
             return false;
