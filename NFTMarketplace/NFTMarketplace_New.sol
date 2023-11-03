@@ -41,10 +41,12 @@ contract NFTMarketplace is Ownable {
         address buyer;
         uint256[] listingType;
         address[] tokenAddress;
-        uint256[] tokenIdOrAmount;
+        uint256[] tokenId;
+        uint256[] tokenAmount;
         uint256[] swapListingType;
         address[] swapTokenAddress;
-        uint256[] swapTokenIdOrAmount;
+        uint256[] swapTokenId;
+        uint256[] swapTokenAmount;
         uint256 listingEndDate;
         bool isSwap;
     }
@@ -57,10 +59,12 @@ contract NFTMarketplace is Ownable {
         address buyer;
         uint256[] listingType;
         address[] tokenAddress;
-        uint256[] tokenIdOrAmount;
+        uint256[] tokenId;
+        uint256[] tokenAmount;
         uint256[] swapListingType;
         address[] swapTokenAddress;
-        uint256[] swapTokenIdOrAmount;
+        uint256[] swapTokenId;
+        uint256[] swapTokenAmount;
         uint256 listingEndDate;
         bool isSwap;
         bool isActive;
@@ -103,33 +107,33 @@ contract NFTMarketplace is Ownable {
     */
     function createListing(listingTupleData memory _data) public payable {
         
-        require(_data.tokenAddress.length == _data.tokenIdOrAmount.length, "Token address and token ID/amount arrays must have the same length");
-        require(_data.swapTokenAddress.length == _data.swapTokenIdOrAmount.length, "Swap token address and swap token ID/amount arrays must have the same length");
+        //require(_data.tokenAddress.length == _data.tokenIdOrAmount.length, "Token address and token ID/amount arrays must have the same length");
+        //require(_data.swapTokenAddress.length == _data.swapTokenIdOrAmount.length, "Swap token address and swap token ID/amount arrays must have the same length");
         require(_data.listingEndDate > block.timestamp, "Invalid listing end date");
         if(_data.isSwap){
             for (uint256 stc = 0; stc < _data.swapTokenAddress.length; stc++) {
-                require(_data.swapTokenIdOrAmount[stc] > 0, "Invalid swapTokenIdOrAmount");
+                require(_data.swapTokenId[stc] > 0 || _data.swapTokenAmount[stc] > 0, "Invalid swapTokenId or swapTokenAmount");
                 require(_data.swapTokenAddress[stc] != address(0), "Invalid swapTokenAddress");
             }
         }
 
         for (uint256 tc = 0; tc < _data.tokenAddress.length; tc++) {
-            require(_data.tokenIdOrAmount[tc] > 0, "Invalid tokenIdOrAmount");
+            require(_data.tokenId[tc] > 0 || _data.tokenAmount[tc] > 0, "Invalid tokenId or tokenAmount");
             require(_data.tokenAddress[tc] != address(0), "Invalid tokenAddress");
 
             if(_data.isSwap){
 
                 if(_data.listingType[tc] == uint256(TokenType.ERC20)){
-                    require(IERC20(_data.tokenAddress[tc]).balanceOf(msg.sender) >= _data.tokenIdOrAmount[tc], "You don't have enough ERC20 tokens");
-                    IERC20(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc]);
+                    require(IERC20(_data.tokenAddress[tc]).balanceOf(msg.sender) >= _data.tokenAmount[tc], "You don't have enough ERC20 tokens");
+                    IERC20(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenAmount[tc]);
 
                 } else if(_data.listingType[tc] == uint256(TokenType.ERC721)){
-                    require(IERC721(_data.tokenAddress[tc]).ownerOf(_data.tokenIdOrAmount[tc]) == msg.sender, "You don't own the specified ERC721 token");
-                    IERC721(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc]);
+                    require(IERC721(_data.tokenAddress[tc]).ownerOf(_data.tokenId[tc]) == msg.sender, "You don't own the specified ERC721 token");
+                    IERC721(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenId[tc]);
 
                 } else if(_data.listingType[tc] == uint256(TokenType.ERC1155)){
-                    require(IERC1155(_data.tokenAddress[tc]).balanceOf(msg.sender, _data.tokenIdOrAmount[tc]) > 0, "You don't own the specified ERC1155 token");
-                    IERC1155(_data.tokenAddress[tc]).setApprovalForAll(address(this), true);
+                    require(IERC1155(_data.tokenAddress[tc]).balanceOf(msg.sender, _data.tokenId[tc]) > 0, "You don't own the specified ERC1155 token");
+                    //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), _data.tokenId[tc], _data.tokenAmount[tc], "");
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, _data.buyer, 1, _data.tokenIdOrAmount[tc], "");
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), 1, _data.tokenIdOrAmount[tc], "");
                 }
@@ -140,24 +144,25 @@ contract NFTMarketplace is Ownable {
                     if(_data.tokenAddress[tc] == USDTContractAddress){
                         USDT usdtToken = USDT(_data.tokenAddress[tc]);
                         require(msg.value == 0, "Cannot send Ether for token purchase.");
-                        usdtToken.approve(address(this), _data.tokenIdOrAmount[tc]);
-                        usdtToken.transferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc]);
+                        usdtToken.approve(address(this), _data.tokenAmount[tc]);
+                        usdtToken.transferFrom(msg.sender, address(this), _data.tokenAmount[tc]);
                     } else if(_data.tokenAddress[tc] != address(0)){
                         require(msg.value == 0, "Cannot send Coins for token purchase.");
-                        require(IERC20(_data.tokenAddress[tc]).balanceOf(msg.sender) >= _data.tokenIdOrAmount[tc], "You don't have enough tokens balance.");
-                        IERC20(_data.tokenAddress[tc]).approve(address(this), _data.tokenIdOrAmount[tc]);
-                        IERC20(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc]);
+                        require(IERC20(_data.tokenAddress[tc]).balanceOf(msg.sender) >= _data.tokenAmount[tc], "You don't have enough tokens balance.");
+                        IERC20(_data.tokenAddress[tc]).approve(address(this), _data.tokenAmount[tc]);
+                        IERC20(_data.tokenAddress[tc]).transferFrom(msg.sender, address(this), _data.tokenAmount[tc]);
                     } else {
-                        require(msg.value >= _data.tokenIdOrAmount[tc], "Insufficient funds");
-                        payable(address(this)).transfer(_data.tokenIdOrAmount[tc]);
+                        require(msg.value >= _data.tokenAmount[tc], "Insufficient funds");
+                        payable(address(this)).transfer(_data.tokenAmount[tc]);
                     }
                 } else if(_data.listingType[tc] == uint256(TokenType.ERC721)){
-                    require(IERC721(_data.tokenAddress[tc]).ownerOf(_data.tokenIdOrAmount[tc]) == msg.sender, "You don't own the specified ERC721 token");
-                    IERC721(msg.sender).approve(address(this), _data.tokenIdOrAmount[tc]);
-                    IERC721(msg.sender).safeTransferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc]);
+                    require(IERC721(_data.tokenAddress[tc]).ownerOf(_data.tokenId[tc]) == msg.sender, "You don't own the specified ERC721 token");
+                    IERC721(msg.sender).approve(address(this), _data.tokenId[tc]);
+                    IERC721(msg.sender).safeTransferFrom(msg.sender, address(this), _data.tokenId[tc]);
                 } else if(_data.listingType[tc] == uint256(TokenType.ERC1155)){
-                    require(IERC1155(_data.tokenAddress[tc]).balanceOf(msg.sender, _data.tokenIdOrAmount[tc]) > 0, "You don't own the specified ERC1155 token");
-                    //IERC1155(_data.tokenAddress[tc]).setApprovalForAll(msg.sender, true);
+                    require(IERC1155(_data.tokenAddress[tc]).balanceOf(msg.sender, _data.tokenId[tc]) > 0, "You don't own the specified ERC1155 token");
+                    //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), _data.tokenId[tc], _data.tokenAmount[tc], "");
+                    
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), 1, _data.tokenIdOrAmount[tc], "");
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), _data.tokenIdOrAmount[tc], 1, "");
                 }
@@ -173,11 +178,13 @@ contract NFTMarketplace is Ownable {
             buyer: _data.buyer,
             listingType: _data.listingType,
             tokenAddress: _data.tokenAddress,
-            tokenIdOrAmount: _data.tokenIdOrAmount,
+            tokenId: _data.tokenId,
+            tokenAmount: _data.tokenAmount,
             swapListingType: _data.swapListingType,
             swapTokenAddress: _data.swapTokenAddress,
-            swapTokenIdOrAmount: _data.swapTokenIdOrAmount,
-                        listingEndDate: _data.listingEndDate,
+            swapTokenId: _data.swapTokenId,
+            swapTokenAmount: _data.swapTokenAmount,
+            listingEndDate: _data.listingEndDate,
             isSwap: _data.isSwap,
             isActive: true
         });
@@ -215,57 +222,56 @@ contract NFTMarketplace is Ownable {
             for (uint256 tc = 0; tc < listing.swapTokenAddress.length; tc++) {
                 if (listing.listingType[tc] == uint256(TokenType.ERC20)) {
 
-                    require(IERC20(listing.tokenAddress[tc]).balanceOf(address(this)) >= listing.tokenIdOrAmount[tc], "Contract don't have enough ERC20 tokens");
-                    IERC20(listing.tokenAddress[tc]).approve(address(this), listing.tokenIdOrAmount[tc]);
-                    IERC20(listing.tokenAddress[tc]).transfer(listing.buyer, listing.tokenIdOrAmount[tc]);
+                    require(IERC20(listing.tokenAddress[tc]).balanceOf(address(this)) >= listing.tokenAmount[tc], "Contract don't have enough ERC20 tokens");
+                    IERC20(listing.tokenAddress[tc]).approve(address(this), listing.tokenAmount[tc]);
+                    IERC20(listing.tokenAddress[tc]).transfer(listing.buyer, listing.tokenAmount[tc]);
 
                     if(listing.swapListingType[tc] == uint256(TokenType.ERC20)){
-                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenIdOrAmount[tc], "You don't have enough ERC20 tokens");
-                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenAmount[tc], "You don't have enough ERC20 tokens");
+                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenAmount[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC721)){
-                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenIdOrAmount[tc]) == msg.sender, "You don't own the specified ERC721 token");
-                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenId[tc]) == msg.sender, "You don't own the specified ERC721 token");
+                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC1155)){
-                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenIdOrAmount[tc]) > 0, "You don't own the specified ERC1155 token");
-                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc], 1, "");
+                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenAmount[tc]) > 0, "You don't own the specified ERC1155 token");
+                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc], listing.swapTokenAmount[tc],"");
                     }
                     
                 } else if (listing.listingType[tc] == uint256(TokenType.ERC721)) {
 
-                    require(IERC721(listing.tokenAddress[tc]).ownerOf(listing.tokenIdOrAmount[tc]) == address(this), "Seller don't own the specified ERC721 token");
-                    IERC721(listing.tokenAddress[tc]).safeTransferFrom(address(this), msg.sender, listing.tokenIdOrAmount[tc]);
+                    require(IERC721(listing.tokenAddress[tc]).ownerOf(listing.tokenId[tc]) == address(this), "Seller don't own the specified ERC721 token");
+                    IERC721(listing.tokenAddress[tc]).safeTransferFrom(address(this), msg.sender, listing.tokenId[tc]);
                     
                     if(listing.swapListingType[tc] == uint256(TokenType.ERC20)){
-                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenIdOrAmount[tc], "You don't have enough ERC20 tokens");
-                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenAmount[tc], "You don't have enough ERC20 tokens");
+                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenAmount[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC721)){
-                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenIdOrAmount[tc]) == msg.sender, "You don't own the specified ERC721 token");
-                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenId[tc]) == msg.sender, "You don't own the specified ERC721 token");
+                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC1155)){
-                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenIdOrAmount[tc]) > 0, "You don't own the specified ERC1155 token");
-                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc], 1, "");
+                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenAmount[tc]) > 0, "You don't own the specified ERC1155 token");
+                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc], listing.swapTokenAmount[tc], "");
                     }
                 } else if (listing.listingType[tc] == uint256(TokenType.ERC1155)) {
 
-                    require(IERC1155(listing.tokenAddress[tc]).balanceOf(listing.seller, listing.tokenIdOrAmount[tc]) > 0, "Seller don't own the specified ERC1155 token");
-                    //IERC1155(listing.tokenAddress[tc]).safeTransferFrom(address(this), msg.sender, listing.tokenIdOrAmount[tc], 1, "");
-                    IERC1155(listing.tokenAddress[tc]).safeTransferFrom(listing.seller, listing.buyer, 1, listing.tokenIdOrAmount[tc], "");
+                    require(IERC1155(listing.tokenAddress[tc]).balanceOf(listing.seller, listing.tokenAmount[tc]) > 0, "Seller don't own the specified ERC1155 token");
+                    IERC1155(listing.tokenAddress[tc]).safeTransferFrom(listing.seller, listing.buyer, listing.tokenId[tc], listing.tokenAmount[tc], "");
 
                     if(listing.swapListingType[tc] == uint256(TokenType.ERC20)){
-                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenIdOrAmount[tc], "You don't have enough ERC20 tokens");
-                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenAmount[tc], "You don't have enough ERC20 tokens");
+                        IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenAmount[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC721)){
-                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenIdOrAmount[tc]) == msg.sender, "You don't own the specified ERC721 token");
-                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                        require(IERC721(listing.swapTokenAddress[tc]).ownerOf(listing.swapTokenId[tc]) == msg.sender, "You don't own the specified ERC721 token");
+                        IERC721(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc]);
 
                     } else if(listing.swapListingType[tc] == uint256(TokenType.ERC1155)){
-                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenIdOrAmount[tc]) > 0, "You don't own the specified ERC1155 token");
-                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc], 1, "");
+                        require(IERC1155(listing.swapTokenAddress[tc]).balanceOf(msg.sender, listing.swapTokenId[tc]) > 0, "You don't own the specified ERC1155 token");
+                        IERC1155(listing.swapTokenAddress[tc]).safeTransferFrom(msg.sender, listing.seller, listing.swapTokenId[tc], listing.swapTokenAmount[tc], "");
                     }
                 }
             }
@@ -278,20 +284,20 @@ contract NFTMarketplace is Ownable {
                     
                     USDT usdtToken = USDT(listing.swapTokenAddress[tc]);
                     require(msg.value == 0, "Cannot send Ether for token purchase.");
-                    usdtToken.transferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                    usdtToken.transferFrom(msg.sender, listing.seller, listing.swapTokenAmount[tc]);
                     
                 } else if(listing.swapTokenAddress[tc] != address(0)){
 
                     require(msg.value == 0, "Cannot send Coins for token purchase.");
-                    require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenIdOrAmount[tc], "You don't have enough tokens balance.");
+                    require(IERC20(listing.swapTokenAddress[tc]).balanceOf(msg.sender) >= listing.swapTokenAmount[tc], "You don't have enough tokens balance.");
 
-                    IERC20(listing.tokenAddress[tc]).transfer(msg.sender, listing.tokenIdOrAmount[tc]);
-                    IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenIdOrAmount[tc]);
+                    IERC20(listing.tokenAddress[tc]).transfer(msg.sender, listing.tokenAmount[tc]);
+                    IERC20(listing.swapTokenAddress[tc]).transferFrom(msg.sender, listing.seller, listing.swapTokenAmount[tc]);
 
                 } else {
                     
-                    require(msg.value >= listing.swapTokenIdOrAmount[tc], "Insufficient funds");
-                    payable(listing.seller).transfer(listing.swapTokenIdOrAmount[tc]);                
+                    require(msg.value >= listing.swapTokenAmount[tc], "Insufficient funds");
+                    payable(listing.seller).transfer(listing.swapTokenAmount[tc]);                
                 }
             }
         }
