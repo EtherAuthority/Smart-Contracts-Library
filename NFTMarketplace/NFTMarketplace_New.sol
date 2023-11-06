@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+//https://testnet.bscscan.com/address/0x90B90fB1C69f16849cc2F114D7640C58172Ce5fD#readContract
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -19,6 +21,11 @@ interface USDT {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+interface ERC1155Interface {
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data) external;
+}
+
 contract NFTMarketplace is Ownable {
     /**
     * @title NFT Marketplace Contract
@@ -133,6 +140,8 @@ contract NFTMarketplace is Ownable {
 
                 } else if(_data.listingType[tc] == uint256(TokenType.ERC1155)){
                     require(IERC1155(_data.tokenAddress[tc]).balanceOf(msg.sender, _data.tokenId[tc]) > 0, "You don't own the specified ERC1155 token");
+                    //ERC1155Interface(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), _data.tokenId[tc], _data.tokenAmount[tc], "");
+
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), _data.tokenId[tc], _data.tokenAmount[tc], "");
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, _data.buyer, 1, _data.tokenIdOrAmount[tc], "");
                     //IERC1155(_data.tokenAddress[tc]).safeTransferFrom(msg.sender, address(this), 1, _data.tokenIdOrAmount[tc], "");
