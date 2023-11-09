@@ -591,7 +591,7 @@ contract WrappedMinu is ERC20, Ownable {
     uint256 public burnPercentOnSwap = 2000;             //2000 = 2%
     uint256 public burnPercentOnTransfer = 1000;         //1000 = 1%
 
-    constructor(address _minu) ERC20("Wrapped Minu", "WMINU") {
+    constructor(address _minu) ERC20("Wrapped Minu", "wMinu") {
         minu = IERC20(_minu);
     }
 
