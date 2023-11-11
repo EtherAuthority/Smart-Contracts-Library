@@ -120,6 +120,8 @@ contract Locker is Ownable{
     mapping(address => bool) public signer;
     uint256 randNonce = 12345;
 
+    
+    
     function addSigner(address _signerWallet)public onlyOwner returns(bool){
          signer[_signerWallet]=true;        
          return true;
@@ -149,7 +151,7 @@ contract Locker is Ownable{
         return randNonce;
     } 
 
-    function vote(uint proposal) public{
+    function vote(uint256 proposal) public{
         require(signer[msg.sender]==true,"Only signers have right to vote");
         require(proposals[proposal].voteCount < 2, "Has no right to vote");
         
@@ -168,7 +170,8 @@ contract Locker is Ownable{
         }
     }
 
-    receive() external payable{        
+    receive() external payable{
+        
     }
 
 }
