@@ -174,9 +174,11 @@ contract NFTMarketplace is Ownable {
                         require(_data.swapTokenId[stc][subtc3] > 0, "Invalid swapTokenId");
                     }
                 }
-
-                for (uint256 subtc4 = 0; subtc4 < _data.swapTokenAmount[stc].length; subtc4++) {
-                    require(_data.swapTokenAmount[stc][subtc4] > 0, "Invalid swapTokenAmount");
+                
+                if(_data.listingType[stc] == uint256(TokenType.ERC20) || _data.listingType[stc] == uint256(TokenType.ERC1155)){
+                    for (uint256 subtc4 = 0; subtc4 < _data.swapTokenAmount[stc].length; subtc4++) {
+                        require(_data.swapTokenAmount[stc][subtc4] > 0, "Invalid swapTokenAmount");
+                    }
                 }
             }
         }
