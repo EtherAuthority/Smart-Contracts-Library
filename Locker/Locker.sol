@@ -168,6 +168,7 @@ contract Locker is Ownable{
         }
     }
 
-    
+    receive() external payable{        
+    }
 
 }
