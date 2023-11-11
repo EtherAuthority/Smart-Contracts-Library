@@ -124,6 +124,11 @@ contract Locker is Ownable{
          signer[_signerWallet]=true;        
          return true;
     }
+
+    function removeSigner(address _signerWallet)public onlyOwner returns(bool){
+         signer[_signerWallet]=false;        
+         return true;
+    }
     
     function addProposal(address _wallet, uint256 _amount)public onlyOwner returns(bool){
        
@@ -158,10 +163,8 @@ contract Locker is Ownable{
         if(proposals[proposal].voteCount==2){
             proposals[proposal].status="completed"; 
             require(proposals[proposal].amount <= address(this).balance, "Insufficient balance");        
-            address recipient=proposals[proposal].wallet;
-
-            recipient.transfer(proposals[proposal].amount);
-                      
+            address payable recipient=payable(proposals[proposal].wallet);
+            recipient.transfer(proposals[proposal].amount);                      
         }
     }
 
