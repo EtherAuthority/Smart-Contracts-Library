@@ -169,6 +169,9 @@ contract VotingForSolar is Ownable {
     event tokenAddressChangedEv(address _tokenAddress);
     event founderVotepercentChanged(uint _requiredFounderPercent);
     event SBTPercentChangedEv(uint _requiredSBTPercent);
+    event RescuePercentChangedEv(uint _requiredRescueTPercent);
+
+    
     event founderMadeEv(address _founder);
     event proposalPostedEv(address _founder,uint _powerInMW,uint _totalTokenToRelease,address _tokenHolder,uint _voteOpeningTime,uint _votingPeriodInSeconds,uint _proposalIndex);
     event founderVoteRecordedEv(uint _proposalIndex,address _voter);
@@ -177,16 +180,16 @@ contract VotingForSolar is Ownable {
     /// @notice Initialize the contract with required parameters.
     /// @param _sbtAddress The address of the SBT (Solar Token) contract.
     /// @param _tokenAddress The address of the token contract.
-    /// @param _requiredSBTPercent The required percentage of SBT tokens for voting.
-    /// @param _requiredFounderPercent The required percentage of founder votes for proposal approval.
+    /// @param _requiredSBTPercent The required percentage of SBT tokens for voting. In multiple of 100
+    /// @param _requiredFounderPercent The required percentage of founder votes for proposal approval. In multiple of 100
     /// @param _requiredRescuePercent The required percentage of rescue votes for proposal approval.
     function initialize(address _sbtAddress, address _tokenAddress, uint _requiredSBTPercent, uint _requiredFounderPercent, uint _requiredRescuePercent) public onlyOwner {
         require(sbtAddress == address(0), "Initialization can only occur once");
         sbtAddress = _sbtAddress;
         tokenAddress = _tokenAddress;
-        requiredRescuePercent = _requiredRescuePercent;
-        requiredFounderPercent = _requiredFounderPercent;
-        requiredSBTPercent = _requiredSBTPercent;
+        requiredRescuePercent = _requiredRescuePercent;     // Multiple the % amount with 100. for example, enter 6000 for 66%
+        requiredFounderPercent = _requiredFounderPercent;   // Multiple the % amount with 100. for example, enter 6000 for 66%
+        requiredSBTPercent = _requiredSBTPercent;           // Multiple the % amount with 100. for example, enter 6600 for 66%
     }
 
     /// @notice Change the address of the SBT contract.
@@ -208,7 +211,7 @@ contract VotingForSolar is Ownable {
     }
 
     /// @notice Change the required percentage of founder votes for proposal approval.
-    /// @param _requiredFounderPercent The new required founder vote percentage.
+    /// @param _requiredFounderPercent The new required founder vote percentage. Enter in multiple of 100. for example, enter 6600 for 66%
     /// @return Whether the change was successful.
     function ChangeRequiredFounderPercent(uint _requiredFounderPercent) public onlyOwner returns(bool) {
         requiredFounderPercent = _requiredFounderPercent;
@@ -217,13 +220,24 @@ contract VotingForSolar is Ownable {
     }
 
     /// @notice Change the required percentage of SBT tokens for voting.
-    /// @param _requiredSBTPercent The new required SBT vote percentage.
+    /// @param _requiredSBTPercent The new required SBT vote percentage. Enter in multiple of 100. for example, enter 6600 for 66%
     /// @return Whether the change was successful.
     function ChangeRequiredSBTPercent(uint _requiredSBTPercent) public onlyOwner returns(bool) {
         requiredSBTPercent = _requiredSBTPercent;
         emit SBTPercentChangedEv(_requiredSBTPercent);
         return true;
     }
+
+
+    /// @notice Change the required percentage of Rescue tokens for voting.
+    /// @param _requiredRescuePercent The new required Rescue percentage. Enter in multiple of 100. for example, enter 6600 for 66%
+    /// @return Whether the change was successful.
+    function ChangeRequiredRescuePercent(uint _requiredRescuePercent) public onlyOwner returns(bool) {
+        requiredRescuePercent = _requiredRescuePercent;
+        emit RescuePercentChangedEv(_requiredRescuePercent);
+        return true;
+    }
+
 
     /// @notice Make an address a founder.
     /// @param _founder The address to be granted founder status.
@@ -309,11 +323,19 @@ function IsVotePassed(uint _proposalIndex) public view returns(bool passed, uint
     uint totalSBT = contractInterface(sbtAddress)._nextTokenId();
     uint sVc = Proposals[_proposalIndex].sbtVoteCount;
     uint fVc = Proposals[_proposalIndex].founderVoteCount;
-    uint countPercent = sVc * 100 / totalSBT;
-    uint countPercent2 = fVc * 100 / totalFounders;
+    uint countPercent;
+    uint countPercent2;
+    if(totalSBT != 0){
+        countPercent = sVc * 100 * 100 / totalSBT;         // percentage in decimal of 100
+    }
+    if(totalFounders != 0){
+        countPercent2 = fVc * 100 * 100 / totalFounders;   // percentage in decimal of 100
+    }
+    
+    
     if (countPercent >= requiredSBTPercent && countPercent2 >= requiredFounderPercent) {
         return (true, sVc, fVc);
-    } else if (countPercent2 > requiredRescuePercent) {
+    } else if (countPercent2 >= requiredRescuePercent) {
         return (true, sVc, fVc);
     }
     return (false, sVc, fVc);
