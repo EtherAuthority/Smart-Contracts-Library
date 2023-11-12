@@ -173,6 +173,7 @@ contract VotingForSolar is Ownable {
 
     
     event founderMadeEv(address _founder);
+    event founderRemovedEv(address _founder);
     event proposalPostedEv(address _founder,uint _powerInMW,uint _totalTokenToRelease,address _tokenHolder,uint _voteOpeningTime,uint _votingPeriodInSeconds,uint _proposalIndex);
     event founderVoteRecordedEv(uint _proposalIndex,address _voter);
     event sbtVoteRecorded(uint _proposalIndex,address _voter);
@@ -249,6 +250,19 @@ contract VotingForSolar is Ownable {
         emit founderMadeEv(_founder);
         return true;
     }
+
+
+    /// @notice Remove an address from founder.
+    /// @param _founder The address to be removed founder status.
+    /// @return Whether the address was successfully removed as a founder.
+    function RemoveFounder(address _founder) public onlyOwner returns(bool) {
+        require(founder[_founder], "Address is not a founder");
+        founder[_founder] = false;
+        totalFounders--;
+        emit founderRemovedEv(_founder);
+        return true;
+    }
+
 
 /// @notice Post a new proposal to be voted on.
 /// @param _powerInMW The power in megawatts for the proposal.
