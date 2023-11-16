@@ -102,11 +102,6 @@ abstract contract Ownable is Context {
  **/
 contract Locker is Ownable{
 
-    struct Voter {       
-        bool voted;  // if true, that person already voted        
-        uint proposalid;   // index of the voted proposal
-    }
-
     // This is a type for a single proposal.
     struct Proposal {
         uint256 proposalid;
@@ -118,7 +113,7 @@ contract Locker is Ownable{
       // A dynamically-sized array of `Proposal` structs.
     Proposal[] public proposals;
     mapping(address => bool) public signer;
-    uint256 randNonce = 12345;
+    uint256 proposalid = 1;
 
     
     
@@ -135,7 +130,7 @@ contract Locker is Ownable{
     function addProposal(address _wallet, uint256 _amount)public onlyOwner returns(bool){
        
          proposals.push(Proposal({
-                proposalid:randMod(),
+                proposalid:proposalid++,
                 wallet:_wallet,
                 amount: _amount,
                 voteCount: 0,
@@ -144,14 +139,9 @@ contract Locker is Ownable{
         return true;
     }
 
-    function randMod() internal returns(uint)
-    {
-        // increase nonce
-        randNonce++;
-        return randNonce;
-    } 
+  
 
-    function vote(uint256 proposal) public{
+    function vote(uint proposal) public{
         require(signer[msg.sender]==true,"Only signers have right to vote");
         require(proposals[proposal].voteCount < 2, "Has no right to vote");
         
@@ -160,7 +150,7 @@ contract Locker is Ownable{
         // If `proposal` is out of the range of the array,
         // this will throw automatically and revert all
         // changes.
-        proposals[proposal].voteCount += 1;
+        proposals[proposal].voteCount=proposals[proposal].voteCount+1;
 
         if(proposals[proposal].voteCount==2){
             proposals[proposal].status="completed"; 
