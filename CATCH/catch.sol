@@ -1,10 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2021-03-01
-*/
-
-/**
- *Submitted for verification at BscScan.com on 2021-03-01
-*/
 
 // SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.6.12;
@@ -701,14 +694,14 @@ contract CATCH is Context, IERC20, Ownable {
     address[] private _excluded;
    
     uint256 private constant MAX = ~uint256(0);
-    uint256 private _tTotal = 90 * 10**6 * 10**9;
+    uint256 private _tTotal = 90 * 10**6 * 10**18;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
    
 
     string private _name = "CATCH";
     string private _symbol = "CATCH";
-    uint8 private _decimals = 9;
+    uint8 private _decimals = 18;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -716,8 +709,8 @@ contract CATCH is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 public _maxTxAmount = 1 * 10**6 * 10**9;
-    uint256 private numTokensSellToAddToLiquidity = 5 * 10**5 * 10**9;
+    uint256 public _maxTxAmount = 1 * 10**6 * 10**18;
+    uint256 private numTokensSellToAddToLiquidity = 5 * 10**5 * 10**18;
 
     //taxShare 
     uint256 refAmt;
@@ -726,7 +719,7 @@ contract CATCH is Context, IERC20, Ownable {
     uint256 burn;
 
     //coin operation wallet
-    uint256 public coinFund;
+    address public fundWallet;
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -742,10 +735,11 @@ contract CATCH is Context, IERC20, Ownable {
         inSwapAndLiquify = false;
     }
     
-    constructor () public {
+    constructor (address _fundWallet) public {
         _rOwned[_msgSender()] = _rTotal;
-        
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        fundWallet = _fundWallet;
+         // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); //BSC Testnet
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //Ethereum
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -875,7 +869,8 @@ contract CATCH is Context, IERC20, Ownable {
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
         _takeLiquidity(tLiquidity);
-        _reflectFee(rFee, tFee, tBurn,tCoinOperation);
+        _reflectFee(rFee, tFee, tBurn);
+        _takeCoinFund(tCoinOperation);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -899,19 +894,33 @@ contract CATCH is Context, IERC20, Ownable {
         swapAndLiquifyEnabled = _enabled;
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
+
+    //set numTokensSellToAddToLiquidity value
+    function updateThreshold(uint256 _amount) external onlyOwner {
+        require(_amount > 0,"amount is not valid");
+        numTokensSellToAddToLiquidity = _amount;
+    }
     
      //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
-    function _reflectFee(uint256 rFee, uint256 tFee, uint256 tBurn, uint256 tCoinOperation) private {
+    function _reflectFee(uint256 rFee, uint256 tFee, uint256 tBurn) private {
          uint256 currentRate = _getRate();
          uint256 rBurn = tBurn.mul(currentRate);
-         uint256 rCoinOperation = tCoinOperation.mul(currentRate);
-        _rTotal = _rTotal.sub(rFee).sub(rBurn).sub(rCoinOperation);
+     
+        _rTotal = _rTotal.sub(rFee).sub(rBurn);
         _tFeeTotal = _tFeeTotal.add(tFee);
-        coinFund = coinFund.add(tCoinOperation);
+
         _tTotal = _tTotal.sub(tBurn);
         
+    }
+
+       function _takeCoinFund(uint256 tCoinOperation) private {
+           uint256 currentRate =  _getRate();
+        uint256 rCoinOperation = tCoinOperation.mul(currentRate);
+        _rOwned[fundWallet] = _rOwned[fundWallet].add(rCoinOperation);
+        if(_isExcluded[fundWallet])
+            _tOwned[fundWallet] = _tOwned[fundWallet].add(tCoinOperation);
     }
 
    
@@ -1012,13 +1021,7 @@ contract CATCH is Context, IERC20, Ownable {
         return _isExcludedFromFee[account];
     }
 
-     //Withdraw coin func
-      function coinFunds(address DevWallet) external {
-        uint256 totalFund = coinFund;
-        require(totalFund > 0, "totalFund must be greater than 0");
-        coinFund=0;
-        transfer(DevWallet,totalFund);
-    }
+ 
 
     function _approve(address owner, address spender, uint256 amount) private {
         require(owner != address(0), "ERC20: approve from the zero address");
@@ -1192,7 +1195,8 @@ contract CATCH is Context, IERC20, Ownable {
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
         _takeLiquidity(tLiquidity);
-        _reflectFee(rFee, tFee, tBurn,tCoinOperation);
+        _reflectFee(rFee, tFee, tBurn);
+        _takeCoinFund(tCoinOperation);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1203,7 +1207,8 @@ contract CATCH is Context, IERC20, Ownable {
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
         _takeLiquidity(tLiquidity);
-        _reflectFee(rFee, tFee, tBurn,tCoinOperation);
+        _reflectFee(rFee, tFee, tBurn);
+        _takeCoinFund(tCoinOperation);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1214,7 +1219,8 @@ contract CATCH is Context, IERC20, Ownable {
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);   
         _takeLiquidity(tLiquidity);
-        _reflectFee(rFee, tFee, tBurn,tCoinOperation);
+        _reflectFee(rFee, tFee, tBurn);
+        _takeCoinFund(tCoinOperation);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 }
