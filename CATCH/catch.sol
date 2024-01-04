@@ -725,7 +725,7 @@ contract CATCH is Context, IERC20, Ownable {
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
-    event addLiquidit(uint256 tokenAmount,uint256 etherAmount);
+    // event addLiquidit(uint256 tokenAmount,uint256 etherAmount);
     event thresholdUpdated(uint256 amount);
     event SwapAndLiquify(
         uint256 tokensSwapped,
@@ -1610,23 +1610,6 @@ contract CATCH is Context, IERC20, Ownable {
             block.timestamp
         );
     }
-
-   //  function addLiquidities(uint256 tokenAmount, uint256 ethAmount) external {
-   //   addLiquidity(tokenAmount,ethAmount);
-   //   emit addLiquidit(tokenAmount,ethAmount);
-  //  }
-    
-//     function removeLiquidity(uint liquidity,address to, uint deadline) external {
-//     // Use the Uniswap V2 Router to remove liquidity
-//         uniswapV2Router.removeLiquidityETH(
-//         address(this),
-//         liquidity,
-//         0,
-//         0,
-//         to,
-//         deadline
-//     );
-// }
 
 
 /**
