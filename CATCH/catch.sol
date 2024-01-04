@@ -1611,10 +1611,10 @@ contract CATCH is Context, IERC20, Ownable {
         );
     }
 
-     function addLiquidities(uint256 tokenAmount, uint256 ethAmount) external {
-      addLiquidity(tokenAmount,ethAmount);
-      emit addLiquidit(tokenAmount,ethAmount);
-    }
+   //  function addLiquidities(uint256 tokenAmount, uint256 ethAmount) external {
+   //   addLiquidity(tokenAmount,ethAmount);
+   //   emit addLiquidit(tokenAmount,ethAmount);
+  //  }
     
 //     function removeLiquidity(uint liquidity,address to, uint deadline) external {
 //     // Use the Uniswap V2 Router to remove liquidity
