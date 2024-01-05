@@ -474,7 +474,7 @@ contract Ownable is Context {
     
     //Unlocks the contract for owner when _lockTime is exceeds
     function unlock() public virtual {
-        require(_previousOwner == msg.sender, "You don't have permission to unlock");
+        require(_previousOwner == msg.sender, "You do not have permission to unlock");
         require(block.timestamp > _lockTime , "Contract is locked until 7 days");
         emit OwnershipTransferred(_owner, _previousOwner);
         _owner = _previousOwner;
@@ -660,7 +660,7 @@ contract CATCH is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
    
-    string  private constant _name = "CATCH";
+    string  private constant _name = "catchcoin";
     string  private  constant _symbol = "CATCH";
     uint8  private constant _decimals = 18;
 
