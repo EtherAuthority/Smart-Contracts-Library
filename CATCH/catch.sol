@@ -701,9 +701,9 @@ contract CATCH is Context, IERC20, Ownable {
     uint256 private _tFeeTotal;
    
 
-    string private _name = "CATCH";
-    string private _symbol = "CATCH";
-    uint8 private _decimals = 18;
+    string constant private _name = "CATCH";
+    string constant private _symbol = "CATCH";
+    uint8 constant private _decimals = 18;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -723,9 +723,8 @@ contract CATCH is Context, IERC20, Ownable {
     //coin operation wallet
     address public fundWallet;
     
-    event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
-    // event addLiquidit(uint256 tokenAmount,uint256 etherAmount);
+    event fundWalletChange(address wallet);
     event thresholdUpdated(uint256 amount);
     event SwapAndLiquify(
         uint256 tokensSwapped,
@@ -780,7 +779,7 @@ contract CATCH is Context, IERC20, Ownable {
     * It is commonly displayed in user interfaces and provides a human-readable name for the token.
     * @return The name of the token.
     */
-    function name() public view returns (string memory) {
+    function name() public pure returns (string memory) {
         return _name;
     }
 
@@ -790,7 +789,7 @@ contract CATCH is Context, IERC20, Ownable {
     * It is commonly used for identifying the token in user interfaces and exchanges.
     * @return The symbol or ticker of the token.
     */
-    function symbol() public view returns (string memory) {
+    function symbol() public pure returns (string memory) {
         return _symbol;
     }
 
@@ -800,7 +799,7 @@ contract CATCH is Context, IERC20, Ownable {
     * It is commonly used to interpret the token amounts correctly in user interfaces.
     * @return The number of decimal places used in the token representation.
     */
-    function decimals() public view returns (uint8) {
+    function decimals() public pure returns (uint8) {
         return _decimals;
     }
 
@@ -1007,7 +1006,7 @@ contract CATCH is Context, IERC20, Ownable {
  * @notice Requires that the specified account is currently excluded.
  */
     function includeInReward(address account) external onlyOwner() {
-        require(_isExcluded[account], "Account is already excluded");
+        require(_isExcluded[account], "Account is already Included");
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
                 _excluded[i] = _excluded[_excluded.length - 1];
@@ -1068,7 +1067,21 @@ contract CATCH is Context, IERC20, Ownable {
     function includeInFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = false;
     }
+
+    /**
+ * @dev Sets the address of the fund wallet.
+ * @param _fundWallet The new address to be set as the fund wallet.
+ *
+ * Requirements:
+ * - Only the contract owner can call this function.
+ *
+ * Emits a {fundWalletChange} event with the updated fund wallet address on successful execution.
+ */
     
+    function setFundWallet(address _fundWallet) external onlyOwner{
+     fundWallet = _fundWallet;
+     emit fundWalletChange(_fundWallet);
+    }
    
    /**
  * @dev External function for setting the maximum transaction percentage of the total supply.
@@ -1540,7 +1553,7 @@ contract CATCH is Context, IERC20, Ownable {
         uint256 initialBalance = address(this).balance;
 
         // swap tokens for ETH
-        swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
+        swapTokensForEth(half); // <- this breaks the ETH -> swap when swap+liquify is triggered
 
         // how much ETH did we just swap into?
         uint256 newBalance = address(this).balance.sub(initialBalance);
