@@ -602,9 +602,6 @@ interface IUniswapV2Router01 {
 }
 
 
-
-// pragma solidity >=0.6.2;
-
 interface IUniswapV2Router02 is IUniswapV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
@@ -645,7 +642,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
         uint deadline
     ) external;
 }
-
 
 contract CATCH is Context, IERC20, Ownable {
     using SafeMath for uint256;
@@ -720,8 +716,7 @@ contract CATCH is Context, IERC20, Ownable {
     constructor (address _fundWallet)  {
         _rOwned[_msgSender()] = _rTotal;
         fundWallet = _fundWallet;
-         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); //BSC Testnet
-        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //Ethereum
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //Mainnet router address
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -947,7 +942,6 @@ contract CATCH is Context, IERC20, Ownable {
     * @param account The address to be excluded from earning reflections.
     */
     function excludeFromReward(address account) external onlyOwner() {
-        // require(account != 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D, 'We can not exclude Uniswap router.');
         require(!_isExcluded[account], "Account is already excluded");
         if(_rOwned[account] > 0) {
             _tOwned[account] = tokenFromReflection(_rOwned[account]);
@@ -1447,8 +1441,8 @@ contract CATCH is Context, IERC20, Ownable {
     * liquidity fee, and burn fee, based on specified percentages.
     * 
     * @notice This function is intended for internal use and should not be called directly.
-    */
-    ///set buy or sell tax
+    * Auditor Note:- Due to Less time and in order to reduce contract size we have opted to change the tax percentages for buy, sell and normal transfer dynamically instead of hardcoding it.
+    **/
       function _sellBuyTax(address from, address to) private {
            //sell and buy logic
         bool isBuy = from == uniswapV2Pair;
@@ -1573,7 +1567,6 @@ contract CATCH is Context, IERC20, Ownable {
         );
     }
 
-
     /**
     * @dev Internal function for transferring tokens between addresses, applying fees if specified.
     * @param sender The address from which the tokens are being sent.
@@ -1586,7 +1579,7 @@ contract CATCH is Context, IERC20, Ownable {
     *  
     * @notice This function is intended for internal use and should not be called directly.
     */
-    ///this method is responsible for taking all fee, if takeFee is true
+    
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
         if(!takeFee)
             removeAllFee();
