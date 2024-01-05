@@ -720,9 +720,9 @@ contract CATCH is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
    
-    string constant private _name = "CATCH";
-    string constant private _symbol = "CATCH";
-    uint8 constant private _decimals = 18;
+    string private constant _name = "CATCH";
+    string private constant _symbol = "CATCH";
+    uint8 private constant _decimals = 18;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
