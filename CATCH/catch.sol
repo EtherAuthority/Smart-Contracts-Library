@@ -702,28 +702,16 @@ contract CATCH is Context, IERC20, Ownable {
     * @param _fundWallet The address where funds will be sent.
     */
     
-    constructor (address _fundWallet)  {
+       constructor (address _fundWallet)  {
         _rOwned[_msgSender()] = _rTotal;
         fundWallet = _fundWallet;
-
-         //https://chainlist.org/
-        if (block.chainid == 56) {
-            uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //BNB Smart Chain Mainnet
-        } else if (block.chainid == 97) {
-            uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); //BNB Smart Chain testnet
-        } else if (block.chainid == 1 || block.chainid == 4 || block.chainid == 3) {
-            uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //Ethereum Mainnet
-        } else if (block.chainid == 43114) {
-            uniswapV2Router = IUniswapV2Router02(0x60aE616a2155Ee3d9A68541Ba4544862310933d4); // Avalanche C-Chain
-        } else if (block.chainid == 250) {
-            uniswapV2Router = IUniswapV2Router02(0xF491e7B69E4244ad4002BC14e878a34207E38c29); // Fantom Opera
-        } else {
-            revert("Chain not valid");
-        }
-
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //BNB Smart Chain Mainnet
          // Create a uniswap pair for this new token
-        uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory())
-            .createPair(address(this), uniswapV2Router.WETH());
+        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
+            .createPair(address(this), _uniswapV2Router.WETH());
+
+        // set the rest of the contract variables
+        uniswapV2Router = _uniswapV2Router;
         
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
