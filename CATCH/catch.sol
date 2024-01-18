@@ -373,7 +373,7 @@ contract CATCH is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 private numTokensSellToAddToLiquidity = 5 * 10**5 * 10**18;
+    uint256 private numTokensSellToAddToLiquidity = 1 * 10**2 * 10**18;
 
     //taxShare 
     uint256 refAmt;
