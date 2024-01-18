@@ -413,6 +413,7 @@ contract Ownable is Context {
     uint256 private _lockTime;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Locked(address owner, address newOwner,uint256 lockTime);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -469,7 +470,7 @@ contract Ownable is Context {
         _previousOwner = _owner;
         _owner = address(0);
         _lockTime = block.timestamp + time;
-        emit OwnershipTransferred(_owner, address(0));
+        emit Locked(_owner, address(0),_lockTime);
     }
     
     //Unlocks the contract for owner when _lockTime is exceeds
