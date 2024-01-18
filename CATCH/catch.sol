@@ -686,6 +686,9 @@ contract CATCH is Context, IERC20, Ownable {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event FundWalletChange(address wallet);
     event ThresholdUpdated(uint256 amount);
+    event CoinFund(uint256 totalCoinFund);
+    event AddedLiquidity(uint256 totalLiquidity);
+    event ReflectedFee(uint256 totalReflectFee);
     event SwapAndLiquify(
         uint256 tokensSwapped,
         uint256 ethReceived,
@@ -1087,6 +1090,7 @@ contract CATCH is Context, IERC20, Ownable {
         _tFeeTotal = _tFeeTotal.add(tFee);
 
         _tTotal = _tTotal.sub(tBurn);
+        emit ReflectedFee(tFee);
         
     }
 
@@ -1109,6 +1113,7 @@ contract CATCH is Context, IERC20, Ownable {
         _rOwned[fundWallet] = _rOwned[fundWallet].add(rCoinOperation);
         if(_isExcluded[fundWallet])
             _tOwned[fundWallet] = _tOwned[fundWallet].add(tCoinOperation);
+        emit CoinFund(tCoinOperation);
     }
 
     /**
@@ -1242,6 +1247,7 @@ contract CATCH is Context, IERC20, Ownable {
         _rOwned[address(this)] = _rOwned[address(this)].add(rLiquidity);
         if(_isExcluded[address(this)])
             _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
+        emit AddedLiquidity(tLiquidity);
     }
 
     /**
