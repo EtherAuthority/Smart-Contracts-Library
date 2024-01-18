@@ -892,6 +892,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     
     function setFundWallet(address _fundWallet) external onlyOwner{
+     require(_fundWallet != address(0),"Fund wallet can not be zero");
      fundWallet = _fundWallet;
      emit FundWalletChange(_fundWallet);
     }                                                                                                                  
