@@ -81,164 +81,6 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
-/**
- * @dev Wrappers over Solidity's arithmetic operations with added overflow
- * checks.
- *
- * Arithmetic operations in Solidity wrap on overflow. This can easily result
- * in bugs, because programmers usually assume that an overflow raises an
- * error, which is the standard behavior in high level programming languages.
- * `SafeMath` restores this intuition by reverting the transaction when an
- * operation overflows.
- *
- * Using this library instead of the unchecked operations eliminates an entire
- * class of bugs, so it's recommended to use it always.
- */
- 
-library SafeMath {
-    /**
-     * @dev Returns the addition of two unsigned integers, reverting on
-     * overflow.
-     *
-     * Counterpart to Solidity's `+` operator.
-     *
-     * Requirements:
-     *
-     * - Addition cannot overflow.
-     */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "SafeMath: addition overflow");
-
-        return c;
-    }
-
-    /**
-     * @dev Returns the subtraction of two unsigned integers, reverting on
-     * overflow (when the result is negative).
-     *
-     * Counterpart to Solidity's `-` operator.
-     *
-     * Requirements:
-     *
-     * - Subtraction cannot overflow.
-     */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        return sub(a, b, "SafeMath: subtraction overflow");
-    }
-
-    /**
-     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
-     * overflow (when the result is negative).
-     *
-     * Counterpart to Solidity's `-` operator.
-     *
-     * Requirements:
-     *
-     * - Subtraction cannot overflow.
-     */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b <= a, errorMessage);
-        uint256 c = a - b;
-
-        return c;
-    }
-
-    /**
-     * @dev Returns the multiplication of two unsigned integers, reverting on
-     * overflow.
-     *
-     * Counterpart to Solidity's `*` operator.
-     *
-     * Requirements:
-     *
-     * - Multiplication cannot overflow.
-     */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
-        if (a == 0) {
-            return 0;
-        }
-
-        uint256 c = a * b;
-        require(c / a == b, "SafeMath: multiplication overflow");
-
-        return c;
-    }
-
-    /**
-     * @dev Returns the integer division of two unsigned integers. Reverts on
-     * division by zero. The result is rounded towards zero.
-     *
-     * Counterpart to Solidity's `/` operator. Note: this function uses a
-     * `revert` opcode (which leaves remaining gas untouched) while Solidity
-     * uses an invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     *
-     * - The divisor cannot be zero.
-     */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return div(a, b, "SafeMath: division by zero");
-    }
-
-    /**
-     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
-     * division by zero. The result is rounded towards zero.
-     *
-     * Counterpart to Solidity's `/` operator. Note: this function uses a
-     * `revert` opcode (which leaves remaining gas untouched) while Solidity
-     * uses an invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     *
-     * - The divisor cannot be zero.
-     */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b > 0, errorMessage);
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-        return c;
-    }
-
-    /**
-     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts when dividing by zero.
-     *
-     * Counterpart to Solidity's `%` operator. This function uses a `revert`
-     * opcode (which leaves remaining gas untouched) while Solidity uses an
-     * invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     *
-     * - The divisor cannot be zero.
-     */
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        return mod(a, b, "SafeMath: modulo by zero");
-    }
-
-    /**
-     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
-     * Reverts with custom message when dividing by zero.
-     *
-     * Counterpart to Solidity's `%` operator. This function uses a `revert`
-     * opcode (which leaves remaining gas untouched) while Solidity uses an
-     * invalid opcode to revert (consuming all remaining gas).
-     *
-     * Requirements:
-     *
-     * 
-     */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        require(b != 0, errorMessage);
-        return a % b;
-    }
-}
-
 /**
  * @title Context
  * @dev The base contract that provides information about the message sender
@@ -507,7 +349,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 contract CATCH is Context, IERC20, Ownable {
-    using SafeMath for uint256;
 
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
@@ -687,7 +528,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function transferFrom(address sender, address recipient, uint256 amount) external override returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        _approve(sender, _msgSender(), _allowances[sender][_msgSender()]-amount);
         return true;
     }
 
@@ -700,7 +541,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @return A boolean indicating the success of the operation.
     */
     function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender]+addedValue);
         return true;
     }
 
@@ -713,7 +554,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @return A boolean indicating the success of the operation.
     */
     function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender]-subtractedValue);
         return true;
     }
 
@@ -748,9 +589,9 @@ contract CATCH is Context, IERC20, Ownable {
         address sender = _msgSender();
         require(!_isExcluded[sender], "Excluded addresses cannot call this function");
         (uint256 rAmount,) = _getValue(tAmount);
-        _rOwned[sender] = _rOwned[sender].sub(rAmount);
-        _rTotal = _rTotal.sub(rAmount);
-        _tFeeTotal = _tFeeTotal.add(tAmount);
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rTotal = _rTotal-rAmount;
+        _tFeeTotal = _tFeeTotal+tAmount;
     }
 
     /**
@@ -786,7 +627,7 @@ contract CATCH is Context, IERC20, Ownable {
     function tokenFromReflection(uint256 rAmount) public view returns(uint256) {
         require(rAmount <= _rTotal, "Amount must be less than total reflections");
         uint256 currentRate =  _getRate();
-        return rAmount.div(currentRate);
+        return rAmount / currentRate;
     }
 
     /**
@@ -848,10 +689,10 @@ contract CATCH is Context, IERC20, Ownable {
      function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tCoinOperation, uint256 tBurn) = _getValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tCoinOperation, tBurn);
-        _tOwned[sender] = _tOwned[sender].sub(tAmount);
-        _rOwned[sender] = _rOwned[sender].sub(rAmount);
-        _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
+        _tOwned[sender] = _tOwned[sender]-tAmount;
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _tOwned[recipient] = _tOwned[recipient]+tTransferAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;        
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
         _takeCoinFund(tCoinOperation);
@@ -945,12 +786,12 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function _reflectFee(uint256 rFee, uint256 tFee, uint256 tBurn) private {
          uint256 currentRate = _getRate();
-         uint256 rBurn = tBurn.mul(currentRate);
+         uint256 rBurn = tBurn * currentRate;
      
-        _rTotal = _rTotal.sub(rFee).sub(rBurn);
-        _tFeeTotal = _tFeeTotal.add(tFee);
+        _rTotal = _rTotal - rFee - rBurn;
+        _tFeeTotal = _tFeeTotal + tFee;
 
-        _tTotal = _tTotal.sub(tBurn);
+        _tTotal = _tTotal - tBurn;
         emit ReflectedFee(tFee);
         
     }
@@ -970,10 +811,10 @@ contract CATCH is Context, IERC20, Ownable {
     */
        function _takeCoinFund(uint256 tCoinOperation) private {
            uint256 currentRate =  _getRate();
-        uint256 rCoinOperation = tCoinOperation.mul(currentRate);
-        _rOwned[fundWallet] = _rOwned[fundWallet].add(rCoinOperation);
+        uint256 rCoinOperation = tCoinOperation * currentRate;
+        _rOwned[fundWallet] = _rOwned[fundWallet] + rCoinOperation;
         if(_isExcluded[fundWallet])
-            _tOwned[fundWallet] = _tOwned[fundWallet].add(tCoinOperation);
+            _tOwned[fundWallet] = _tOwned[fundWallet] + tCoinOperation;
         emit CoinFund(tCoinOperation);
     }
 
@@ -1033,8 +874,8 @@ contract CATCH is Context, IERC20, Ownable {
         uint256 tLiquidity = calculateLiquidityFee(tAmount);
         uint256 tCoinOperation = calculateCoinOperartionTax(tAmount);
         uint256 tBurn = calculateBurnTax(tAmount);
-        uint256 allTax = tFee+tLiquidity+tCoinOperation+tBurn;
-        uint256 tTransferAmount = tAmount.sub(allTax);
+        uint256 allTax = tFee + tLiquidity + tCoinOperation + tBurn;
+        uint256 tTransferAmount = tAmount - allTax;
         return (tTransferAmount, tFee, tLiquidity, tCoinOperation, tBurn);
     }
 
@@ -1056,13 +897,13 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 tCoinOperation, uint256 tBurn) private view returns (uint256, uint256, uint256) {
         uint256 currentRate = _getRate();
-        uint256 rAmount = tAmount.mul(currentRate);
-        uint256 rFee = tFee.mul(currentRate);
-        uint256 rCoinOperation = tCoinOperation.mul(currentRate);
-        uint256 rBurn = tBurn.mul(currentRate);
-        uint256 rLiquidity = tLiquidity.mul(currentRate);
-        uint256 allTax = rFee+rCoinOperation+rBurn+rLiquidity;
-        uint256 rTransferAmount = rAmount.sub(allTax);
+        uint256 rAmount = tAmount * currentRate;
+        uint256 rFee = tFee * currentRate;
+        uint256 rCoinOperation = tCoinOperation * currentRate;
+        uint256 rBurn = tBurn * currentRate;
+        uint256 rLiquidity = tLiquidity * currentRate;
+        uint256 allTax = rFee + rCoinOperation + rBurn + rLiquidity;
+        uint256 rTransferAmount = rAmount - allTax;
         return (rAmount, rTransferAmount, rFee);
     }
 
@@ -1074,7 +915,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function _getRate() private view returns(uint256) {
         (uint256 rSupply, uint256 tSupply) = _getCurrentSupply();
-        return rSupply.div(tSupply);
+        return rSupply / tSupply;
     }
 
     /**
@@ -1089,10 +930,10 @@ contract CATCH is Context, IERC20, Ownable {
         uint256 tSupply = _tTotal;      
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_rOwned[_excluded[i]] > rSupply || _tOwned[_excluded[i]] > tSupply) return (_rTotal, _tTotal);
-            rSupply = rSupply.sub(_rOwned[_excluded[i]]);
-            tSupply = tSupply.sub(_tOwned[_excluded[i]]);
+            rSupply = rSupply - _rOwned[_excluded[i]];
+            tSupply = tSupply - _tOwned[_excluded[i]];
         }
-        if (rSupply < _rTotal.div(_tTotal)) return (_rTotal, _tTotal);
+        if (rSupply < _rTotal / _tTotal) return (_rTotal, _tTotal);
         return (rSupply, tSupply);
     }
     
@@ -1104,10 +945,10 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function _takeLiquidity(uint256 tLiquidity) private {
            uint256 currentRate =  _getRate();
-        uint256 rLiquidity = tLiquidity.mul(currentRate);
-        _rOwned[address(this)] = _rOwned[address(this)].add(rLiquidity);
+        uint256 rLiquidity = tLiquidity * currentRate;
+        _rOwned[address(this)] = _rOwned[address(this)] + rLiquidity;
         if(_isExcluded[address(this)])
-            _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
+            _tOwned[address(this)] = _tOwned[address(this)] + tLiquidity;
         emit AddedLiquidity(tLiquidity);
     }
 
@@ -1120,9 +961,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(refAmt).div(
-            10**2
-        );
+        return _amount * refAmt / 10**2;
     }
 
     /**
@@ -1133,9 +972,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @notice Internal use only.
     */
     function calculateLiquidityFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(liquidty).div(
-            10**2
-        );
+        return _amount * liquidty / 10**2;
     }
 
     /**
@@ -1147,9 +984,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
 
         function calculateCoinOperartionTax(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(coinOperation).div(
-            10**2
-        );
+        return _amount * coinOperation / 10**2;
     }
 
     /*
@@ -1162,9 +997,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @notice Internal use only.
     */
     function calculateBurnTax(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(burn).div(
-            10**2
-        );
+        return _amount * burn / 10**2;
     }
     
     /**
@@ -1329,8 +1162,8 @@ contract CATCH is Context, IERC20, Ownable {
     */
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
-        uint256 half = contractTokenBalance.div(2);
-        uint256 otherHalf = contractTokenBalance.sub(half);
+        uint256 half = contractTokenBalance / 2;
+        uint256 otherHalf = contractTokenBalance - half;
 
         // capture the contract's current ETH balance.
         // this is so that we can capture exactly the amount of ETH that the
@@ -1342,7 +1175,7 @@ contract CATCH is Context, IERC20, Ownable {
         swapTokensForEth(half); // <- this breaks the ETH -> swap when swap+liquify is triggered
 
         // how much ETH did we just swap into?
-        uint256 newBalance = address(this).balance.sub(initialBalance);
+        uint256 newBalance = address(this).balance - initialBalance;
 
         // add liquidity to uniswap
         addLiquidity(otherHalf, newBalance);
@@ -1453,8 +1286,8 @@ contract CATCH is Context, IERC20, Ownable {
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
         (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tCoinOperation, uint256 tBurn) = _getValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tCoinOperation, tBurn);
-        _rOwned[sender] = _rOwned[sender].sub(rAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
         _takeCoinFund(tCoinOperation);
@@ -1477,9 +1310,9 @@ contract CATCH is Context, IERC20, Ownable {
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tCoinOperation, uint256 tBurn) = _getValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tCoinOperation, tBurn);
-        _rOwned[sender] = _rOwned[sender].sub(rAmount);
-        _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _tOwned[recipient] = _tOwned[recipient]+tTransferAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;           
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
         _takeCoinFund(tCoinOperation);
@@ -1502,9 +1335,9 @@ contract CATCH is Context, IERC20, Ownable {
     function _transferFromExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tCoinOperation, uint256 tBurn) = _getValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, tCoinOperation, tBurn);
-        _tOwned[sender] = _tOwned[sender].sub(tAmount);
-        _rOwned[sender] = _rOwned[sender].sub(rAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);   
+        _tOwned[sender] = _tOwned[sender]-tAmount;
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;   
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
         _takeCoinFund(tCoinOperation);
