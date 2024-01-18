@@ -1001,6 +1001,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @param account The address to exclude from transaction fees.
     */
      function excludeFromFee(address account) external onlyOwner {
+        require(!_isExcludedFromFee[account],"Alreay excluded from fee");
         _isExcludedFromFee[account] = true;
     }
 
@@ -1012,6 +1013,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     
     function includeInFee(address account) external onlyOwner {
+        require(_isExcludedFromFee[account],"Alreay included in fee");
         _isExcludedFromFee[account] = false;
     }
 
