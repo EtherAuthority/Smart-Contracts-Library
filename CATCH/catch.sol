@@ -510,6 +510,7 @@ interface IUniswapV2Factory {
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
+    //WETH function that return const value,  rather than performing some state-changing operation. 
     function WETH() external pure returns (address);
 
     function addLiquidity(
@@ -648,8 +649,8 @@ contract CATCH is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
-    mapping (address => uint256) public _rOwned;
-    mapping (address => uint256) public _tOwned;
+    mapping (address => uint256) private _rOwned;
+    mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
 
     mapping (address => bool) private _isExcludedFromFee;
@@ -661,9 +662,9 @@ contract CATCH is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
    
-    string  private constant _name = "catchcoin";
-    string  private  constant _symbol = "CATCH";
-    uint8  private constant _decimals = 18;
+    string  private constant NAME = "catchcoin";
+    string  private  constant SYMBOL = "CATCH";
+    uint8  private constant DECIMALS = 18;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -683,8 +684,8 @@ contract CATCH is Context, IERC20, Ownable {
     address public fundWallet;
     
     event SwapAndLiquifyEnabledUpdated(bool enabled);
-    event fundWalletChange(address wallet);
-    event thresholdUpdated(uint256 amount);
+    event FundWalletChange(address wallet);
+    event ThresholdUpdated(uint256 amount);
     event SwapAndLiquify(
         uint256 tokensSwapped,
         uint256 ethReceived,
@@ -728,7 +729,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @return The name of the token.
     */
     function name() external pure returns (string memory) {
-        return _name;
+        return NAME;
     }
 
     /**
@@ -738,7 +739,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @return The symbol or ticker of the token.
     */
     function symbol() external pure returns (string memory) {
-        return _symbol;
+        return SYMBOL;
     }
 
     /**
@@ -748,7 +749,7 @@ contract CATCH is Context, IERC20, Ownable {
     * @return The number of decimal places used in the token representation.
     */
     function decimals() external pure returns (uint8) {
-        return _decimals;
+        return DECIMALS;
     }
 
     /**
@@ -1024,12 +1025,12 @@ contract CATCH is Context, IERC20, Ownable {
     * Requirements:
     * - Only the contract owner can call this function.
     *
-    * Emits a {fundWalletChange} event with the updated fund wallet address on successful execution.
+    * Emits a {FundWalletChange} event with the updated fund wallet address on successful execution.
     */
     
     function setFundWallet(address _fundWallet) external onlyOwner{
      fundWallet = _fundWallet;
-     emit fundWalletChange(_fundWallet);
+     emit FundWalletChange(_fundWallet);
     }                                                                                                                  
 
     /**
@@ -1057,7 +1058,7 @@ contract CATCH is Context, IERC20, Ownable {
     function updateThreshold(uint256 _amount) external onlyOwner {
         require(_amount > 0,"amount is not valid");
         numTokensSellToAddToLiquidity = _amount;
-        emit thresholdUpdated(_amount);
+        emit ThresholdUpdated(_amount);
     }
     
      //to recieve ETH from uniswapV2Router when swaping
