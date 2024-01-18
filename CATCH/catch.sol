@@ -670,7 +670,6 @@ contract CATCH is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 public _maxTxAmount = 1 * 10**6 * 10**18;
     uint256 private numTokensSellToAddToLiquidity = 5 * 10**5 * 10**18;
 
     //taxShare 
@@ -1040,22 +1039,7 @@ contract CATCH is Context, IERC20, Ownable {
     function setFundWallet(address _fundWallet) external onlyOwner{
      fundWallet = _fundWallet;
      emit fundWalletChange(_fundWallet);
-    }
-   
-    /**
-    * @dev External function for setting the maximum transaction percentage of the total supply.
-    * @param maxTxPercent The new maximum transaction percentage to be set.
-    * 
-    * The function can only be called by the owner of the contract.
-    * Calculates the new maximum transaction amount (_maxTxAmount) based on the provided percentage.
-    * 
-    * @notice Only the owner of the contract can call this function.
-    */
-    function setMaxTxPercent(uint256 maxTxPercent) external onlyOwner() {
-        _maxTxAmount = _tTotal.mul(maxTxPercent).div(
-            10**2
-        );
-    }                                                                                                                   
+    }                                                                                                                  
 
     /**
     * @notice Allows the owner to enable or disable the swap and liquify feature.
@@ -1394,15 +1378,8 @@ contract CATCH is Context, IERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        if(from != owner() && to != owner())
-        require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
         
         uint256 contractTokenBalance = balanceOf(address(this));
-        
-        if(contractTokenBalance >= _maxTxAmount)
-        {
-            contractTokenBalance = _maxTxAmount;
-        }
         
         bool overMinTokenBalance = contractTokenBalance >= numTokensSellToAddToLiquidity;
         if (
