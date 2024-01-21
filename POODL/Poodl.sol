@@ -728,7 +728,7 @@ contract Poodl is Initializable, ERC20Upgradeable, OwnableUpgradeable {
    //Owner can use this function to remove all BNB from contract 
     function claim()external onlyOwner returns (bool){
         uint256 amount=  address(this).balance;
-        require(amount>0,"amount is equal to zero");
+        require(amount>0,"NO sufficient balance in contract");
         (bool success, )=msg.sender.call{value: amount}("");
         emit Claimed(amount);
         return success;
