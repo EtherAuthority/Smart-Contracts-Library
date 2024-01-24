@@ -762,7 +762,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     //set numTokensSellToAddToLiquidity value
     function updateThreshold(uint256 _amount) external onlyOwner {
-        require(_amount > 0,"amount is not valid");
+        require(_amount > 0 && _amount <= 5 * 10**5 * 10**18,"you can only enter 0 to 5 * 10**5 * 10**18 amount");
         numTokensSellToAddToLiquidity = _amount;
         emit ThresholdUpdated(_amount);
     }
