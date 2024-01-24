@@ -409,6 +409,7 @@ contract CATCH is Context, IERC20, Ownable {
     */
     
        constructor (address _fundWallet)  {
+        require(_fundWallet != address(0),"Fund wallet can not be zero");
         _rOwned[_msgSender()] = _rTotal;
         fundWallet = _fundWallet;
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //BNB Smart Chain Mainnet
