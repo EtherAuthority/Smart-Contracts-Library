@@ -269,8 +269,6 @@ contract AppleHead is Ownable {
     string private constant SYMBOL = "APXD";
     uint8  private constant DECIMAL= 18;
     uint256 private _totalSupply = 10* 10**9 *10**uint256(DECIMAL);
-    // Max Buy/Sell Limit
-    uint256 public constant MAX_AMOUNT = 50000000 * 10 ** uint256(DECIMAL); 
  
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -282,24 +280,17 @@ contract AppleHead is Ownable {
     address public marketingWallet;
     address public reserveWallet;
 
-    address constant public DEAD = 0x000000000000000000000000000000000000dEaD;
+    uint256 public constant HOLDER1SELLTAXPERCENT = 6;
+    uint256 public constant HOLDER2SELLTAXPERCENT = 7;
+    uint256 public otherHolderSellTaxPercentage = 8;
 
-    uint256 public constant HOLDER1SELLTAXPERCENT = 6;  //6 = 6%
-    uint256 public constant HOLDER2SELLTAXPERCENT = 7;  // 7 = 7%
-    uint256 public otherHolderSellTaxPercentage = 8;    //  8 = 8%
-
-    uint256 public holder1TaxPer = 10 * _totalSupply / 100;  // 0.01 *10**3=10 token  
-    uint256 public holder2TaxPer = 5 * _totalSupply / 100;  // 0.005 *10**3=5 token 
-
-    uint256 public constant WALLETTAXSHARE = 28;    //28000 = 28%
-    uint256 public constant LIQUIDITYTAXSHARE = 28; //28000 = 28% 
+    uint256 public constant WALLETTAXSHARE = 28;   // distributed after 
+    uint256 public constant LIQUIDITYTAXSHARE = 28; 
     
     // Threshold for performing swapandliquify
     uint256 public taxThreshold = 100 * 10**uint256(DECIMAL); 
 
     uint256 private  constant TIMEDELAY= 300;
-    //for anti whale max wallet limit 1%
-    uint256 private _maxWalletToken= _totalSupply / 100;
  
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapPair;
@@ -334,7 +325,9 @@ contract AppleHead is Ownable {
         
         // Initialize Uniswap V2 router
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
+
         );
         uniswapV2Router = _uniswapV2Router;
         
@@ -513,8 +506,6 @@ contract AppleHead is Ownable {
         require(_balances[account] >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] -= amount;
-            _balances[DEAD] += amount;
-            // Overflow not possible: amount <= accountBalance <= totalSupply.
             _totalSupply -= amount;
         }
         emit Transfer(account, address(0), amount);
@@ -571,6 +562,15 @@ contract AppleHead is Ownable {
         whiteList[account] = false;
         emit RemoveWhitelisted(account);
     }
+    
+    /**
+    * @dev Retrieves the maximum limit for a certain calculation.
+    * This external view function returns a uint256 value, representing 0.5% (5/1000) of the total supply.
+    * @return The calculated maximum limit.
+    */
+    function maxLimit() external view returns(uint256) {
+        return 5 * _totalSupply / 1000;
+    }
 
     /**
     * @notice Sets the development wallet address.
@@ -618,7 +618,7 @@ contract AppleHead is Ownable {
     * @dev The tax percentage cannot exceed 14%.
     */
     function setSellTaxPercentage(uint256 taxPercentage) external onlyOwner {
-        require(taxPercentage <= 14000, "Tax percentage cannot exceed 14%");
+        require(taxPercentage <= 14, "Tax percentage cannot exceed 14%");
         otherHolderSellTaxPercentage = taxPercentage;
         emit SellTaxUpdated(taxPercentage);
     }
@@ -726,12 +726,12 @@ contract AppleHead is Ownable {
         uint256 newBalance = address(this).balance - initialBalance;
         uint256 walletTax = (newBalance * WALLETTAXSHARE) / 100;
 
-        uint256 taxShare = walletTax * 3;
-        newBalance = newBalance - taxShare;
-
         payable(marketingWallet).transfer(walletTax);
+        newBalance -= walletTax; 
         payable(reserveWallet).transfer(walletTax);
+        newBalance -= walletTax;
         payable(developmentWallet).transfer(walletTax);
+        newBalance -= walletTax;
 
         if (newBalance > 0) {
             addLiquidity(otherLiqHalf, newBalance);
@@ -761,20 +761,10 @@ contract AppleHead is Ownable {
     }
 
     /**
-    * @notice Internal function to transfer tokens between addresses with optional fees.
-    * @dev This function handles the transfer of tokens between addresses, with optional fees applied based on the transaction type and sender/recipient addresses.
-    * @param sender The address from which tokens will be transferred.
-    * @param recipient The address to which tokens will be transferred.
+    * @dev Internal function for token transfers with additional checks and fees.
+    * @param sender The address sending the tokens.
+    * @param recipient The address receiving the tokens.
     * @param amount The amount of tokens to be transferred.
-    * @dev This function performs various checks and actions depending on the sender, recipient, and transaction type:
-    *      - If the sender, recipient, or contract itself is the owner, a normal transfer is performed without any fees.
-    *      - If the transaction is a buy or sell transaction, additional checks are performed based on the transaction type and amount:
-    *          - For buy transactions, it checks if the buyer's token balance doesn't exceed a certain percentage of the total supply to prevent large buys.
-    *          - For sell transactions, it calculates and applies the appropriate sell tax based on the holder's token percentage and applies the tax to the contract's balance.
-    *          - It also prevents sniping attacks by checking if the same address has bought or sold within a specified time limit.
-    *      - If the contract's token balance exceeds the tax threshold and swapping is not in progress, liquidity is added to the Uniswap pool.
-    *      - Fees are only applied if the transaction is not part of a swap, and the sender and recipient are not whitelisted addresses.
-    * @dev If fees are applied, the calculated fee is deducted from the transferred amount before the transfer is completed.
     */
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
@@ -787,14 +777,16 @@ contract AppleHead is Ownable {
             return;
         }
     
+        // Check for buy or sell transactions
         bool isBuy = sender == uniswapPair;
         bool isSell = recipient == uniswapPair;
     
         // Additional checks and actions for buy and sell transactions
         if (isBuy) {
-            require(amount <= MAX_AMOUNT, "Cannot buy more than max limit");
+            // 0.5% max buy amount
+            require(amount <= 5 * _totalSupply / 1000, "Can not buy more than max limit 0.5%");
             uint256 balanceOfBuyer = balanceOf(recipient) + amount;
-            require(_maxWalletToken >= balanceOfBuyer, "You cannot buy more than 1% of total supply");
+            require(_totalSupply / 100 >= balanceOfBuyer, "You cannot buy more than 1% of total supply");
             _timeLimit[recipient] = block.timestamp + TIMEDELAY;
         }
         uint256 contractTokenBalance = balanceOf(address(this));
@@ -814,16 +806,19 @@ contract AppleHead is Ownable {
         if (takeFee) {
             uint256 sellTax;
             if (isSell) {
+                // 0.5% max sell amount
+                require(amount <= 5 * _totalSupply / 1000, "Can not sell more than max limit 0.5%");
                 if (_timeLimit[sender] >= block.timestamp) {
                     emit SniperDetected(sender);
                     return;
                 }
-                uint256 holderTokenPer = balanceOf(sender) * 100000 / _totalSupply;
                 if (!whiteList[sender]) {
-                    if (holder1TaxPer <= holderTokenPer) {
+                    // 0.01% holder wallet amount
+                    if ( _totalSupply / 10000 <= balanceOf(sender)) {
                         sellTax = _calculateTax(amount, HOLDER1SELLTAXPERCENT);
                         _transferTokens(sender, address(this), sellTax); 
-                    } else if (holder2TaxPer <= holderTokenPer) {
+                        //0.005% holder wallet amount
+                    } else if (5 * _totalSupply / 100000 <= balanceOf(sender)) {
                         sellTax = _calculateTax(amount, HOLDER2SELLTAXPERCENT);
                         _transferTokens(sender, address(this), sellTax); 
                     } else {
