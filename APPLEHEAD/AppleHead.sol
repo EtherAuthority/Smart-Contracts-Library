@@ -320,13 +320,15 @@ contract AppleHead is Ownable {
     * @param _reserveWallet The address of the reserve wallet.
     */
     constructor(address _developmentWallet, address _marketingWallet, address _reserveWallet) {
+        require(_developmentWallet != address(0),"Development wallet can not be zero");
+        require(_marketingWallet != address(0),"Marketing wallet can not be zero");
+        require(_reserveWallet != address(0),"Reserve wallet can not be zero");
         // Set the initial balance of the deployer to the total supply of tokens
         _balances[msg.sender] = _totalSupply;
         
         // Initialize Uniswap V2 router
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
+            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
 
         );
         uniswapV2Router = _uniswapV2Router;
