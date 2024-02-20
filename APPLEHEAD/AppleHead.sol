@@ -280,11 +280,11 @@ contract AppleHead is Ownable {
     address public marketingWallet;
     address public reserveWallet;
 
-    uint256 public constant HOLDER1SELLTAXPERCENT = 6;
-    uint256 public constant HOLDER2SELLTAXPERCENT = 7;
+    uint256 public holder1SellTaxPercent = 6;
+    uint256 public holder2SellTaxPercent = 7;
     uint256 public otherHolderSellTaxPercentage = 8;
-
-    uint256 public constant WALLETTAXSHARE = 28;   // distributed after 
+    
+    uint256 public constant WALLETTAXSHARE = 28;   
     uint256 public constant LIQUIDITYTAXSHARE = 28; 
     
     // Threshold for performing swapandliquify
@@ -307,12 +307,12 @@ contract AppleHead is Ownable {
     event SniperDetected(address  sniper);
     event ModifyWallet(address wallet);
     event ThresholdUpdated(uint256 amount); 
-    event SellTaxUpdated(uint256 amount);
+    event SellTaxUpdated(uint256 otherHolderTaxPer,uint256 holder1TaxPer,uint256 holder2TaxPer);
     event TokenSweep(uint256 amount);
     event RecoverETH(uint256 amount);
     event Whitelisted(address user);
     event RemoveWhitelisted(address user);
-    
+  
     /** 
     * @notice Initializes the contract with initial token allocations and sets up Uniswap V2 router.
     * @param _developmentWallet The address of the development wallet.
@@ -328,7 +328,9 @@ contract AppleHead is Ownable {
         
         // Initialize Uniswap V2 router
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
+            //  0x86dcd3293C53Cf8EFd7303B57beb2a3F671dDE98 //sepolia testnet
+            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //bsctestnet 
 
         );
         uniswapV2Router = _uniswapV2Router;
@@ -613,16 +615,24 @@ contract AppleHead is Ownable {
     }
 
     /**
-    * @notice Sets the sell tax percentage.
-    * @dev This function updates the sell tax percentage applied to transactions initiated by addresses other than the owner.
-    * @param taxPercentage The new sell tax percentage to be applied.
-    * @dev Only the owner of the contract can call this function.
-    * @dev The tax percentage cannot exceed 14%.
-    */
+     * @notice Sets the sell tax percentage for transactions initiated by holders other than holder1 and holder2.
+     * @dev The sell tax percentage cannot exceed 14%. If the provided taxPercentage is greater than 1%, 
+     *      the sell tax percentages for holder1 and holder2 will be adjusted accordingly.
+     * @param taxPercentage The new sell tax percentage to be set. It must be between 0 and 14.
+     */
     function setSellTaxPercentage(uint256 taxPercentage) external onlyOwner {
         require(taxPercentage <= 14, "Tax percentage cannot exceed 14%");
         otherHolderSellTaxPercentage = taxPercentage;
-        emit SellTaxUpdated(taxPercentage);
+        if(taxPercentage > 1){
+           
+            holder1SellTaxPercent = taxPercentage - 2;
+            holder2SellTaxPercent = taxPercentage - 1;
+        }
+        else {
+            holder1SellTaxPercent = 0;
+            holder2SellTaxPercent = 0;
+        }
+        emit SellTaxUpdated(otherHolderSellTaxPercentage,holder1SellTaxPercent,holder2SellTaxPercent);
     }
 
     /**
@@ -817,11 +827,11 @@ contract AppleHead is Ownable {
                 if (!whiteList[sender]) {
                     // 0.01% holder wallet amount
                     if ( _totalSupply / 10000 <= balanceOf(sender)) {
-                        sellTax = _calculateTax(amount, HOLDER1SELLTAXPERCENT);
+                        sellTax = _calculateTax(amount, holder1SellTaxPercent);
                         _transferTokens(sender, address(this), sellTax); 
                         //0.005% holder wallet amount
                     } else if (5 * _totalSupply / 100000 <= balanceOf(sender)) {
-                        sellTax = _calculateTax(amount, HOLDER2SELLTAXPERCENT);
+                        sellTax = _calculateTax(amount, holder2SellTaxPercent);
                         _transferTokens(sender, address(this), sellTax); 
                     } else {
                         sellTax = _calculateTax(amount, otherHolderSellTaxPercentage);
