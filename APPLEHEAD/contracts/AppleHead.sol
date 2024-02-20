@@ -290,7 +290,8 @@ contract AppleHead is Ownable {
     // Threshold for performing swapandliquify
     uint256 public taxThreshold = 100 * 10**uint256(DECIMAL); 
 
-    uint256 private  constant TIMEDELAY= 300;
+    //5 Minutes time delay
+    uint256 private  constant TIMEDELAY= 300; 
  
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapPair;
@@ -328,10 +329,7 @@ contract AppleHead is Ownable {
         
         // Initialize Uniswap V2 router
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-             0x86dcd3293C53Cf8EFd7303B57beb2a3F671dDE98 //sepolia testnet
-           
-
+            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
         );
         uniswapV2Router = _uniswapV2Router;
         
