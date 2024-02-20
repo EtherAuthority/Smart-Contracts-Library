@@ -1,13 +1,15 @@
-# Sample Hardhat Project
+# APPLEHEAD TOKEN
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
 
 Try running some of the following tasks:
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.js
+npm init --yes
+npm install --save-dev hardhat
+npm install --save-dev @nomiclabs/hardhat-ethers ethers @nomiclabs/hardhat-waffle ethereum-waffle chai
+npm install @nomiclabs/hardhat-etherscan 
+npx hardhat
+npx hardhat compile
+npx hardhat run scripts/deploy.js --network <network Name>
+npx hardhat verify --network <network name> <contract address> <arguments>
 ```
