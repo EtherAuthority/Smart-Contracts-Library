@@ -329,8 +329,8 @@ contract AppleHead is Ownable {
         // Initialize Uniswap V2 router
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
             // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
-            //  0x86dcd3293C53Cf8EFd7303B57beb2a3F671dDE98 //sepolia testnet
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //bsctestnet 
+             0x86dcd3293C53Cf8EFd7303B57beb2a3F671dDE98 //sepolia testnet
+           
 
         );
         uniswapV2Router = _uniswapV2Router;
