@@ -133,9 +133,7 @@ contract Stake is Ownable {
   }
   /**
    * @dev stake amount for particular duration.
-   * parameters : _staketime in days (exp: 30, 90, 180 ,360 )
-   *              _stakeamount ( need to set token amount for stake)
-   * it will increase activeStake result of particular wallet.
+   * parameters :  ( need to set token amount for stake)
    */
   function stake(uint256 _stakeamount) public returns (bool) {
     require(msg.sender != address(0), 'Wallet Address can not be zero');
@@ -229,14 +227,9 @@ contract Stake is Ownable {
     emit stakeEvent(msg.sender, _stakeamount);
     return true;
   }
-
-  /**
-   * @dev stake amount release.
-   * parameters : _stakeid is active stake ids which is getting from activeStake-1
-   *
-   * it will decrease activeStake result of particular wallet.
-   * result : If unstake happen before time duration it will set 50% penalty on profited amount else it will sent you all stake amount,
-   *          to the staking wallet.
+   /**
+   * @dev stake amount release.   
+   * result : user can unstake and get back stake amount and reward in ether.
    */
   function unStake() public payable returns (bool) {
     uint256 totalAmt;
@@ -246,13 +239,11 @@ contract Stake is Ownable {
     uint256 tenPerRew;
 
     require(staking[msg.sender]._stakeAmount > 0, 'You are not a staker');
-
     require(
       totNoOfDeposit >= staking[msg.sender]._depositNo,
       'Cannot unstake, you need to wait 2 weeks from your latest stake'
     );
     require(address(this).balance > 0, 'No rewards in pool');
-
     (normalreward, fourPerRew, tenPerRew) = reward();
     
     if (
@@ -296,7 +287,7 @@ contract Stake is Ownable {
 
   /**
    * @dev reward calulation.
-   * result :it will calculate normal reward and extra personage on 4M or 10M stake amount.
+   * result :it will calculate normal reward and extra personage on 400k or 10M stake amount.
    */
   function reward() public returns (uint256, uint256, uint256) {
     uint256 fourPerReward = 0;
