@@ -9,7 +9,6 @@
 */
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-
 interface TokenI {
   function transfer(address to, uint256 amount) external returns (bool);
 
@@ -97,9 +96,9 @@ contract Ownable {
 }
 
 /**
- * @dev To Main Stake contract  .
+ * @dev InsightX Staking contract  .
  */
-contract Stake is Ownable {
+contract InsightXStake is Ownable {
   struct _staking {
     uint256 _stakingCount;
     uint256 _stakingStarttime;
@@ -112,14 +111,13 @@ contract Stake is Ownable {
     uint256 _poolBalance;
     bool _claimed;
   }
-  address public rewardPoolAddress;
+
   address public immutable tokenAddress;
   mapping(address => _staking) public staking;
-  uint256 public extraReward;
-  uint256 public fourperCounter;
-  uint256 public tenPerCounter;
-  uint256 public normalPerCounter;
-  uint256 public totNoOfDeposit = 0;
+  uint256 public FourLakhsStakers;
+  uint256 public OneMillionStakers;
+  uint256 public normalStakers;
+  uint256 public totalNumberOfDeposits = 0;
 
   constructor(address _tokenContract) {
     tokenAddress = _tokenContract;
@@ -130,89 +128,98 @@ contract Stake is Ownable {
    */
   event stakeEvent(address _from, uint256 _stakeamount);
   event unStakeEvent(address _to, uint256 _amount);
-
-  /**
+  event Deposited(address, uint256, uint256);
+   /**
    * @dev To deposite ether in to the contract(pool).   * 
    * it will increase deposite counter for stake reward.
    */
   function deposite() public payable onlyOwner {
     require(msg.value > 0, 'Cannot be zero Ether');
-    totNoOfDeposit++;
-    emit Received(msg.sender, msg.value, totNoOfDeposit);
+    totalNumberOfDeposits++;
+    emit Deposited(msg.sender, msg.value, totalNumberOfDeposits);
   }
   /**
    * @dev stake amount for particular duration.
-   * parameters :  ( need to set token amount for stake)
+   * _stakeamount :  amount for stake)
+   * it will increase activeStake result of particular wallet.
    */
   function stake(uint256 _stakeamount) public returns (bool) {
     require(msg.sender != address(0), 'Wallet Address can not be zero');
     require(TokenI(tokenAddress).balanceOf(msg.sender) >= _stakeamount, 'Insufficient tokens');
     require(_stakeamount > 0, 'Amount should be greater then 0');
-    uint256 totStakeAmt = staking[msg.sender]._stakeAmount + _stakeamount;
+    uint256 totalStakeAmount = staking[msg.sender]._stakeAmount + _stakeamount;
     bool eligibleForExtraReward;
-     // new stakeing in extra reward 4 Percentage.
+    uint256 totalNormalReward;
+    uint256 totalExtraReward;
+    uint256 normalreward;
+    uint256 extraFourPercentReward;
+    uint256 extraTenPercentReward;
+    uint256 extraReward;
+    if (staking[msg.sender]._stakeAmount > 0) {
+      (normalreward, extraFourPercentReward, extraTenPercentReward) = reward();
+      totalNormalReward = normalreward * staking[msg.sender]._stakeAmount;
+      if (staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 && staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18) {
+        extraReward = extraFourPercentReward / FourLakhsStakers;
+        totalExtraReward = extraReward * staking[msg.sender]._stakeAmount;
+      } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
+        extraReward = extraTenPercentReward / OneMillionStakers;
+        totalExtraReward = extraReward * staking[msg.sender]._stakeAmount;
+      }
+    }
+    // new stakeing in extra reward 4 Percentage.
     if (
-      totStakeAmt >= 400000 * 10 ** 18 &&
-      totStakeAmt < 1000000 * 10 ** 18 &&
+      totalStakeAmount >= 400000 * 10 ** 18 &&
+      totalStakeAmount < 1000000 * 10 ** 18 &&
       staking[msg.sender]._eligibleForExtraReward == false
     ) {
-      eligibleForExtraReward = true;      
-      fourperCounter++; // to know how many stakers are stake uo to 400k
-      if(staking[msg.sender]._stakeAmount==0)
-         normalPerCounter++;
+      eligibleForExtraReward = true;
+      FourLakhsStakers++; // to know how many stakers are stake uo to 400k
+      if (staking[msg.sender]._stakeAmount == 0) normalStakers++;
     }
     // new stakeing in extra reward 10 Percentage.
-    else if (
-      totStakeAmt >= 1000000 * 10 ** 18 && staking[msg.sender]._eligibleForExtraReward == false
-    ) {
+    else if (totalStakeAmount >= 1000000 * 10 ** 18 && staking[msg.sender]._eligibleForExtraReward == false) {
       eligibleForExtraReward = true;
-      tenPerCounter++; // to know how many stakers stake up to 1M
-      if(staking[msg.sender]._stakeAmount==0)
-         normalPerCounter++;
-    } 
+      OneMillionStakers++; // to know how many stakers stake up to 1M
+      if (staking[msg.sender]._stakeAmount == 0) normalStakers++;
+    }
     //stake user already stake with extra reward but new stakeing changed extra reward 4 Percentage to 10 Percentage.
-    else if(staking[msg.sender]._eligibleForExtraReward == true &&
+    else if (
+      staking[msg.sender]._eligibleForExtraReward == true &&
       staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
       staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18 &&
-      totStakeAmt >= 1000000 * 10 ** 18 ) {  
-      eligibleForExtraReward = true; 
-      fourperCounter--;  
-      tenPerCounter++;
-    } 
-    //stake user already stake with above 400k token 
-    else if(staking[msg.sender]._eligibleForExtraReward == true &&
-      totStakeAmt >= 400000 * 10 ** 18 &&
-      totStakeAmt < 1000000 * 10 ** 18) {  
-      eligibleForExtraReward = true; 
+      totalStakeAmount >= 1000000 * 10 ** 18
+    ) {
+      eligibleForExtraReward = true;
+      FourLakhsStakers--;
+      OneMillionStakers++;
+    }
+    //stake user already stake with above 400k token
+    else if (
+      staking[msg.sender]._eligibleForExtraReward == true &&
+      totalStakeAmount >= 400000 * 10 ** 18 &&
+      totalStakeAmount < 1000000 * 10 ** 18
+    ) {
+      eligibleForExtraReward = true;
     }
     //stake user already stake with above 1M token
-    else if(staking[msg.sender]._eligibleForExtraReward == true &&
-      totStakeAmt >= 1000000 * 10 ** 18) {  
-      eligibleForExtraReward = true; 
+    else if (staking[msg.sender]._eligibleForExtraReward == true && totalStakeAmount >= 1000000 * 10 ** 18) {
+      eligibleForExtraReward = true;
     }
     //for new stake user and normal reward
-    else if(totStakeAmt < 400000 * 10 ** 18 &&
-      staking[msg.sender]._eligibleForExtraReward == false){
-      normalPerCounter++;
+    else if (totalStakeAmount < 400000 * 10 ** 18 && staking[msg.sender]._eligibleForExtraReward == false) {
+      normalStakers++;
     }
+
     TokenI(tokenAddress).transferFrom(msg.sender, address(this), _stakeamount);
+
     if (staking[msg.sender]._stakeAmount > 0) {
-      uint256 normalreward; uint256 fourPerRew; uint256 tenPerRew;
-      (normalreward, fourPerRew, tenPerRew) = reward(); 
-
-      if (staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 && staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18) {
-        extraReward = fourPerRew / fourperCounter;  
-      } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
-        extraReward = tenPerRew / tenPerCounter;
-      } 
-
       staking[msg.sender] = _staking(
         staking[msg.sender]._stakingCount + 1,
         block.timestamp,
         0,
-        totStakeAmt,
-        normalreward,
-        extraReward,
+        totalStakeAmount,
+        totalNormalReward,
+        totalExtraReward,
         eligibleForExtraReward,
         staking[msg.sender]._depositNo + 1,
         address(this).balance,
@@ -227,7 +234,7 @@ contract Stake is Ownable {
         0,
         0,
         eligibleForExtraReward,
-        (totNoOfDeposit + 2),
+        (totalNumberOfDeposits + 2),
         address(this).balance,
         false
       );
@@ -236,57 +243,53 @@ contract Stake is Ownable {
     emit stakeEvent(msg.sender, _stakeamount);
     return true;
   }
-   /**
-   * @dev stake amount release.   
-   * result : user can unstake and get back stake amount and reward in ether.
+
+  /**
+   * @dev stake amount release.
+   * it will unstake and distribute rewrds to stakers.
    */
   function unStake() public payable returns (bool) {
     uint256 totalAmt;
-    uint256 totreward;
+    uint256 totalReward;
     uint256 normalreward;
-    uint256 fourPerRew;
-    uint256 tenPerRew;
-
+    uint256 extraFourPercentReward;
+    uint256 extraTenPercentReward;
+    uint256 extraReward;
     require(staking[msg.sender]._stakeAmount > 0, 'You are not a staker');
+
     require(
-      totNoOfDeposit >= staking[msg.sender]._depositNo,
+      totalNumberOfDeposits >= staking[msg.sender]._depositNo,
       'Cannot unstake, you need to wait 2 weeks from your latest stake'
     );
     require(address(this).balance > 0, 'No rewards in pool');
-    (normalreward, fourPerRew, tenPerRew) = reward();
-    
-    if (
-      staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
-      staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18
-    ) {
-      extraReward = fourPerRew / fourperCounter;      
-      fourperCounter--;
+    uint256 totalExtraReward;
+    uint256 totalNormalReward;
+
+    (normalreward, extraFourPercentReward, extraTenPercentReward) = reward();    
+    totalNormalReward = normalreward * staking[msg.sender]._stakeAmount;
+    if (staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 && staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18) {
+      extraReward = extraFourPercentReward / FourLakhsStakers;
+      totalExtraReward = extraReward * staking[msg.sender]._stakeAmount;      
+      FourLakhsStakers--;
     } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
-      extraReward = tenPerRew / tenPerCounter;      
-      tenPerCounter--;
+      extraReward = extraTenPercentReward / OneMillionStakers;
+      totalExtraReward = extraReward * staking[msg.sender]._stakeAmount;
+      OneMillionStakers--;
     } else {
-      normalPerCounter--;
+      normalStakers--;
     }
 
-    // add updated stake reward
-    if(staking[msg.sender]._reward >= 0){
-      normalreward=normalreward+staking[msg.sender]._reward;
-    }
-    if(staking[msg.sender]._extraReward >=0){
-      extraReward=extraReward+staking[msg.sender]._extraReward;
-    }
-    //total reward and stake amount
-    totreward = normalreward + extraReward;   
-    totalAmt = staking[msg.sender]._stakeAmount;   
-    //
+    totalReward = (totalNormalReward + staking[msg.sender]._reward) + (totalExtraReward + staking[msg.sender]._extraReward);   
+    totalAmt = staking[msg.sender]._stakeAmount;  
+
     TokenI(tokenAddress).transfer(msg.sender, totalAmt);
-    (bool sent, ) = msg.sender.call{ value: totreward }('');
+    (bool sent, ) = msg.sender.call{value: totalReward}('');
     require(sent, 'Failed to send Ether');
 
     staking[msg.sender]._stakingEndtime = block.timestamp;
     staking[msg.sender]._stakeAmount = 0;
-    staking[msg.sender]._reward = normalreward;
-    staking[msg.sender]._extraReward = extraReward;
+    staking[msg.sender]._reward = 0;
+    staking[msg.sender]._extraReward = 0;
     staking[msg.sender]._eligibleForExtraReward = false;
     staking[msg.sender]._claimed = true;
 
@@ -296,37 +299,23 @@ contract Stake is Ownable {
 
   /**
    * @dev reward calulation.
-   * result :it will calculate normal reward and extra personage on 400k or 10M stake amount.
+   * result :it will calculate normal reward and extra personage on 400k or 1M stake amount.
    */
   function reward() public returns (uint256, uint256, uint256) {
-    uint256 fourPerReward = 0;
-    uint256 tenPerReward = 0;
+    uint256 extraFourPercentReward = 0;
+    uint256 extraTenPercentReward = 0;
     uint256 normal = 0;
-    uint256 stakebalance=TokenI(tokenAddress).balanceOf(address(this));
-    uint256 diffAmount = address(this).balance - staking[msg.sender]._poolBalance;
-   
-    if (fourperCounter > 0) {
-
-      fourPerReward =
-        (diffAmount/ (stakebalance / 10**18))*4;
-       
+    uint256 stakebalance = TokenI(tokenAddress).balanceOf(address(this));
+    uint256 diffAmount = address(this).balance - staking[msg.sender]._poolBalance;    
+    if (FourLakhsStakers > 0) {
+      extraFourPercentReward = (diffAmount / (stakebalance / 10 ** 18)) * 4;     
     }
-    if (tenPerCounter > 0) {
-      tenPerReward =(diffAmount/ (stakebalance / 10**18))*10;
-      
+    if (OneMillionStakers > 0) {
+      extraTenPercentReward = (diffAmount / (stakebalance / 10 ** 18)) * 10;      
     }
-    normal = diffAmount - ((fourPerReward) + (tenPerReward));
-   
-    return (
-      (normal/(stakebalance / 10**18)),
-      (fourPerReward),
-      (tenPerReward)
-    );
+    normal = diffAmount - ((extraFourPercentReward) + (extraTenPercentReward));   
+    return ((normal / (stakebalance / 10 ** 18)), (extraFourPercentReward), (extraTenPercentReward));
   }
-
- 
-
-  event Received(address, uint256, uint256);
 
   receive() external payable {}
 }
