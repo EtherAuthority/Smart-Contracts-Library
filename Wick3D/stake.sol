@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
-import 'hardhat/console.sol';
 
 interface TokenI {
   function transfer(address to, uint256 amount) external returns (bool);
@@ -276,11 +275,10 @@ contract Stake is Ownable {
     if(staking[msg.sender]._extraReward >=0){
       extraReward=extraReward+staking[msg.sender]._extraReward;
     }
-    totreward = normalreward + extraReward;
-    console.log('unStake totreward ', totreward);
-    totalAmt = staking[msg.sender]._stakeAmount;
-    console.log('unStake totalAmt ', totalAmt);
-
+    //total reward and stake amount
+    totreward = normalreward + extraReward;   
+    totalAmt = staking[msg.sender]._stakeAmount;   
+    //
     TokenI(tokenAddress).transfer(msg.sender, totalAmt);
     (bool sent, ) = msg.sender.call{ value: totreward }('');
     require(sent, 'Failed to send Ether');
