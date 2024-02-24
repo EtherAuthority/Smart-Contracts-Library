@@ -36,7 +36,6 @@ abstract contract Context {
 abstract contract Ownable is Context {
     address private _owner;
 
- 
     /**
      * @dev Throws if called by any account other than the owner.
      */
@@ -60,6 +59,9 @@ abstract contract Ownable is Context {
     }
 }
  
+/**
+ * @dev Interface of the ERC-20 standard
+ */
 interface IERC20 {
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -233,37 +235,29 @@ contract SCAIDoge is Ownable {
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
  
-    address public constant MARKETINGWALLET=0xE346a0156CdFe15D610c833E989E00eAd85cb16B;
+    address public constant MARKETINGWALLET=0xc53e91c3B0E6876959Ce44785327baD87c0fE1cF;
     uint256 public constant MARKETINGTAXPERCENTAGE = 5;        
     IUniswapV2Router02 public uniswapV2Router;
     address public _uniswapPair;
 
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    // Emitted when `value` tokens are moved from one account (`from`) to
+     event Transfer(address indexed from, address indexed to, uint256 value);
  
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);  
+    // Emitted when the allowance of a `spender` for an `owner` is set by
+     event Approval(address indexed owner, address indexed spender, uint256 value);  
  
     /**
      * @dev Constructor function to initialize the contract.
      * This constructor sets up the initial token distribution, initializes the Uniswap router, 
-     * creates a Uniswap pair for the token, approves unlimited token transfer to and from the Uniswap router,
-     * and sets the marketing wallet address.
+     * creates a Uniswap pair for the token, approves unlimited token transfer to and from the Uniswap router
      */
     constructor() {
         _balances[msg.sender] = _totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
- 
+            0x9fa6182C041c52b714d8b402C4e358881a53067d // SCAI MAINNET
         );
+
         uniswapV2Router = _uniswapV2Router;
         _uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
             address(this),
@@ -456,7 +450,7 @@ contract SCAIDoge is Ownable {
 
         if(isBuy || isSell){
             marketingTax = amount * (MARKETINGTAXPERCENTAGE) / (100);
-            _transferTokens(sender, MARKETINGWALLET, marketingTax); 
+            _transferTokens(sender, MARKETINGWALLET, marketingTax);
             amount -= marketingTax;
         }
 
