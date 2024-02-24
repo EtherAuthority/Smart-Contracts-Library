@@ -225,15 +225,15 @@ interface IUniswapV2Router02 is IRouter01 {
  
 contract SCAIDoge is Ownable {
  
-    string private constant _name = "- ScaiDoge";
-    string private constant _symbol = " $SDOG";
+    string private constant _name = "ScaiDoge";
+    string private constant _symbol = "$SDOG";
     uint8 private constant _decimals = 18;
     uint256 private _totalSupply = 1000000 * 10**uint256(_decimals);
  
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
  
-    address public  marketingWallet;
+    address public constant MARKETINGWALLET=0xE346a0156CdFe15D610c833E989E00eAd85cb16B;
     uint256 public constant MARKETINGTAXPERCENTAGE = 5;        
     IUniswapV2Router02 public uniswapV2Router;
     address public _uniswapPair;
@@ -272,8 +272,6 @@ contract SCAIDoge is Ownable {
  
         _approve(msg.sender, address(uniswapV2Router), type(uint256).max);
         _approve(address(this), address(uniswapV2Router), type(uint256).max);
- 
-        marketingWallet = 0xE346a0156CdFe15D610c833E989E00eAd85cb16B;
  
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
@@ -458,7 +456,7 @@ contract SCAIDoge is Ownable {
 
         if(isBuy || isSell){
             marketingTax = amount * (MARKETINGTAXPERCENTAGE) / (100);
-            _transferTokens(sender, marketingWallet, marketingTax); 
+            _transferTokens(sender, MARKETINGWALLET, marketingTax); 
             amount -= marketingTax;
         }
 
