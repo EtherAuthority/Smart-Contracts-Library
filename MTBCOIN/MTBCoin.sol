@@ -15,10 +15,6 @@ abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
- 
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
 }
  
 /**
@@ -272,18 +268,18 @@ interface IUniswapV2Router02 is IRouter01 {
  
 contract MTBCoin is Ownable {
  
-    string private constant _name = "MTBCoin";
-    string private constant _symbol = "MTBC";
-    uint8 private constant _decimals = 18;
-    uint256 private _totalSupply = 2000* 10**6 *10**uint256(_decimals);
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
  
-    mapping(address => uint256) internal _balances;
+    mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
  
     address public constant TREASURYWALLET=0x2841E6DFE43527Fa071C2A2EecED1D54FA91c189;
     uint256 public constant TAX = 2;        
-    IUniswapV2Router02 public uniswapV2Router;
-    address public _uniswapPair;
+    IUniswapV2Router02 public immutable uniswapV2Router;
+    address private immutable _uniswapPair;
 
     // Emitted when `value` tokens are moved from one account (`from`) to
      event Transfer(address indexed from, address indexed to, uint256 value);
@@ -297,12 +293,16 @@ contract MTBCoin is Ownable {
      * creates a Uniswap pair for the token, approves unlimited token transfer to and from the Uniswap router
      */
     constructor() {
-        _balances[msg.sender] = _totalSupply;
+
+        name = "MTBCoin";
+        symbol = "MTBC";
+        decimals = 18;
+        totalSupply = 2000* 10**6 *10**uint256(decimals);
+        _balances[msg.sender] = totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
             // 0x9fa6182C041c52b714d8b402C4e358881a53067d // SCAI MAINNET
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
-            
+            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet 
         );
 
         uniswapV2Router = _uniswapV2Router;
@@ -314,43 +314,7 @@ contract MTBCoin is Ownable {
         _approve(msg.sender, address(uniswapV2Router), type(uint256).max);
         _approve(address(this), address(uniswapV2Router), type(uint256).max);
  
-        emit Transfer(address(0), msg.sender, _totalSupply);
-    }
-
-    /**
-     * @dev Returns the name of the token.
-     * This function retrieves and returns the name of the token as a string.
-     * @return string representing the name of the token.
-     */
-    function name() external  view virtual  returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev Returns the symbol of the token.
-     * This function retrieves and returns the symbol of the token as a string.
-     * @return string representing the symbol of the token.
-     */
-    function symbol() external  view virtual  returns (string memory) {
-        return _symbol;
-    }
-    
-    /**
-     * @dev Returns the number of decimals used to represent the token.
-     * This function retrieves and returns the number of decimals used to represent the token.
-     * @return uint8 representing the number of decimals.
-     */
-    function decimals() external  view virtual  returns (uint8) {
-        return _decimals;
-    }
- 
-    /**
-     * @dev Returns the total supply of the token.
-     * This function retrieves and returns the total supply of the token.
-     * @return uint256 representing the total supply of the token.
-     */
-    function totalSupply() external  view virtual  returns (uint256) {
-        return _totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
  
     /**
