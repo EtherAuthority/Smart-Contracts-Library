@@ -13,20 +13,6 @@ pragma solidity 0.8.21;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface TokenI {
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-
-    function balanceOf(address to) external returns (uint256);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-}
-
 /**
  * @dev InsightX Staking contract  .
  */
@@ -57,7 +43,7 @@ contract InsightXStake is ERC20, Ownable {
         uint256 _stakeBalance;
     }
 
-    address public immutable tokenAddress;
+    ERC20 public immutable tokenAddress;
     mapping(address => _staking) public staking;
     uint256 public totalNumberOfDeposits = 0;
     mapping(uint256 => _deposit) public deposit;
@@ -70,7 +56,7 @@ contract InsightXStake is ERC20, Ownable {
         address _tokenContract,
         address initialOwner
     ) ERC20("InsightX Staking", "stINX") Ownable(initialOwner) {
-        tokenAddress = _tokenContract;
+        tokenAddress = ERC20(_tokenContract);
     }
 
     /**
@@ -81,10 +67,13 @@ contract InsightXStake is ERC20, Ownable {
     event Deposited(address, uint256, uint256);
     event claimedRewards(address _to, uint256 _reward);
 
+    // Only staking contracts or burn are allowed.
+    error UnauthorizedTransfer();
+
     function depositReward() public payable onlyOwner {
         require(msg.value > 0, "Cannot be zero Ether");
         require(
-            TokenI(tokenAddress).balanceOf(address(this)) > 0,
+            tokenAddress.balanceOf(address(this)) > 0,
             "No stakers from previous deposit"
         );
         uint256 normalreward;
@@ -106,7 +95,7 @@ contract InsightXStake is ERC20, Ownable {
             extraTenPercentReward,
             existingPoolBalance + msg.value,
             existingPoolBalance,
-            TokenI(tokenAddress).balanceOf(address(this))
+            tokenAddress.balanceOf(address(this))
         );
         existingPoolBalance += msg.value;
         emit Deposited(msg.sender, msg.value, totalNumberOfDeposits);
@@ -120,7 +109,7 @@ contract InsightXStake is ERC20, Ownable {
     function stake(uint256 _stakeamount) public returns (bool) {
         require(msg.sender != address(0), "Wallet Address can not be zero");
         require(
-            TokenI(tokenAddress).balanceOf(msg.sender) >= _stakeamount,
+            tokenAddress.balanceOf(msg.sender) >= _stakeamount,
             "Insufficient tokens"
         );
         require(_stakeamount > 0, "Amount should be greater then 0");
@@ -210,11 +199,7 @@ contract InsightXStake is ERC20, Ownable {
         }
 
         require(
-            TokenI(tokenAddress).transferFrom(
-                msg.sender,
-                address(this),
-                _stakeamount
-            ),
+            tokenAddress.transferFrom(msg.sender, address(this), _stakeamount),
             "INX transfer failed"
         );
 
@@ -336,7 +321,7 @@ contract InsightXStake is ERC20, Ownable {
 
         _burn(msg.sender, totalAmt);
         require(
-            TokenI(tokenAddress).transfer(msg.sender, totalAmt),
+            tokenAddress.transfer(msg.sender, totalAmt),
             "INX transfer failed"
         );
 
@@ -374,13 +359,17 @@ contract InsightXStake is ERC20, Ownable {
      * @dev reward calulation.
      * result :it will calculate normal reward and extra personage on 400k or 1M stake amount.
      */
-    function calculateRewards() internal returns (uint256, uint256, uint256) {
+    function calculateRewards()
+        internal
+        view
+        returns (uint256, uint256, uint256)
+    {
         uint256 extraFourPercentReward = 0;
         uint256 extraTenPercentReward = 0;
         uint256 normalReward = 0;
         uint256 stakebalance = 0;
-        if (TokenI(tokenAddress).balanceOf(address(this)) > 0) {
-            stakebalance = TokenI(tokenAddress).balanceOf(address(this));
+        if (tokenAddress.balanceOf(address(this)) > 0) {
+            stakebalance = tokenAddress.balanceOf(address(this));
 
             uint256 diffrenceInPoolBalance = address(this).balance -
                 existingPoolBalance;
@@ -413,6 +402,21 @@ contract InsightXStake is ERC20, Ownable {
             (extraFourPercentReward),
             (extraTenPercentReward)
         );
+    }
+
+    function transfer(
+        address to,
+        uint256 value
+    ) public override returns (bool) {
+        revert UnauthorizedTransfer();
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public override returns (bool) {
+        revert UnauthorizedTransfer();
     }
 
     receive() external payable {}
