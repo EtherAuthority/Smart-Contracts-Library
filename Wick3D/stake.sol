@@ -8,7 +8,10 @@
                                                                                                                                                                   
 */
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.21;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface TokenI {
     function transfer(address to, uint256 amount) external returns (bool);
@@ -24,89 +27,10 @@ interface TokenI {
     function approve(address spender, uint256 amount) external returns (bool);
 }
 
-//*******************************************************************//
-//------------------ Contract to Manage Ownership -------------------//
-//*******************************************************************//
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    address private _owner;
-
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    constructor() {
-        _owner = msg.sender;
-        emit OwnershipTransferred(address(0), _owner);
-    }
-
-    /**
-     * @return the address of the owner.
-     */
-    function owner() public view returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(isOwner());
-        _;
-    }
-
-    /**
-     * @return true if `msg.sender` is the owner of the contract.
-     */
-    function isOwner() public view returns (bool) {
-        return msg.sender == _owner;
-    }
-
-    /**
-     * @dev Allows the current owner to relinquish control of the contract.
-     * It will not be possible to call the functions with the `onlyOwner`
-     * modifier anymore.
-     * @notice Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
-
 /**
  * @dev InsightX Staking contract  .
  */
-contract InsightXStake is Ownable {
+contract InsightXStake is ERC20, Ownable {
     struct _staking {
         uint256 _stakingCount;
         uint256 _stakingStarttime;
@@ -142,7 +66,10 @@ contract InsightXStake is Ownable {
     uint256 public normalStakers;
     uint256 public existingPoolBalance;
 
-    constructor(address _tokenContract) {
+    constructor(
+        address _tokenContract,
+        address initialOwner
+    ) ERC20("InsightX Staking", "stINX") Ownable(initialOwner) {
         tokenAddress = _tokenContract;
     }
 
@@ -152,11 +79,7 @@ contract InsightXStake is Ownable {
     event stakeEvent(address _from, uint256 _stakeamount);
     event unStakeEvent(address _to, uint256 _amount, uint256 _reward);
     event Deposited(address, uint256, uint256);
-
-    /**
-     * @dev To deposite ether in to the contract(pool).   *
-     * it will increase deposite counter for stake reward.
-     */
+    event claimedRewards(address _to, uint256 _reward);
 
     function depositReward() public payable onlyOwner {
         require(msg.value > 0, "Cannot be zero Ether");
@@ -286,11 +209,16 @@ contract InsightXStake is Ownable {
             normalStakers++;
         }
 
-        TokenI(tokenAddress).transferFrom(
-            msg.sender,
-            address(this),
-            _stakeamount
+        require(
+            TokenI(tokenAddress).transferFrom(
+                msg.sender,
+                address(this),
+                _stakeamount
+            ),
+            "INX transfer failed"
         );
+
+        _mint(msg.sender, _stakeamount);
 
         if (staking[msg.sender]._stakeAmount > 0) {
             staking[msg.sender] = _staking(
@@ -395,10 +323,6 @@ contract InsightXStake is Ownable {
 
         totalAmt = staking[msg.sender]._stakeAmount;
 
-        TokenI(tokenAddress).transfer(msg.sender, totalAmt);
-        (bool sent, ) = msg.sender.call{value: totalReward}("");
-        require(sent, "Failed to send Ether");
-
         staking[msg.sender]._stakingEndtime = block.timestamp;
         staking[msg.sender]._stakeAmount = 0;
         staking[msg.sender]._reward = 0;
@@ -409,11 +333,42 @@ contract InsightXStake is Ownable {
         staking[msg.sender]._canWithdrawOndepositNo = 0;
         staking[msg.sender]._poolBalance = 0;
         existingPoolBalance -= totalReward;
+
+        _burn(msg.sender, totalAmt);
+        require(
+            TokenI(tokenAddress).transfer(msg.sender, totalAmt),
+            "INX transfer failed"
+        );
+
+        (bool sent, ) = msg.sender.call{value: totalReward}("");
+        require(sent, "Failed to send Rewards");
+
         emit unStakeEvent(msg.sender, totalAmt, totalReward);
         return true;
     }
 
-    function claimRewards() public returns (bool) {}
+    function claimRewards() public returns (bool) {
+        require(staking[msg.sender]._stakeAmount > 0, "You are not a staker");
+        require(staking[msg.sender]._reward > 0, "No rewards claim");
+        require(
+            address(this).balance > staking[msg.sender]._reward,
+            "No rewards in pool"
+        );
+        uint256 totalReward;
+        totalReward = (staking[msg.sender]._reward +
+            staking[msg.sender]._extraReward);
+
+        staking[msg.sender]._reward = 0;
+        staking[msg.sender]._extraReward = 0;
+        existingPoolBalance -= totalReward;
+
+        (bool sent, ) = msg.sender.call{value: totalReward}("");
+        require(sent, "Failed to send Rewards");
+
+        emit claimedRewards(msg.sender, totalReward);
+
+        return true;
+    }
 
     /**
      * @dev reward calulation.
