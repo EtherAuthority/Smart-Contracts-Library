@@ -14,7 +14,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @dev InsightX Staking contract  .
+ * @title InsightXStake
+ * @notice A contract for InsightX Staking, allowing users to stake and earn rewards.
+ * @dev This contract extends the ERC20 token standard and adds staking functionality.
+ * It allows users to stake their tokens and earn rewards based on the amount and duration of their stake.
+ * The contract also includes ownership functionalities to manage the contract.
  */
 contract InsightXStake is ERC20, Ownable {
     struct _staking {
@@ -47,11 +51,18 @@ contract InsightXStake is ERC20, Ownable {
     mapping(address => _staking) public staking;
     uint256 public totalNumberOfDeposits = 0;
     mapping(uint256 => _deposit) public deposit;
-    uint256 public FourLakhsStakers;
-    uint256 public OneMillionStakers;
-    uint256 public normalStakers;
+    uint256 public fourLakhsStakers;
+    uint256 public oneMillionStakers;
+    uint256 public totalNoOfStakers;   
     uint256 public existingPoolBalance;
-
+    /**
+    * @notice Constructor function for initializing the InsightX Staking contract.
+    * @dev This constructor initializes the InsightX Staking contract with the provided token contract address
+    * and sets the initial owner of the contract. It also initializes the ERC20 token with the name "InsightX Staking"
+    * and symbol "stINX". The token contract address must be provided to interact with the staking contract.
+    * @param _tokenContract The address of the ERC20 token contract to be used for staking.
+    * @param initialOwner The address of the initial owner of the staking contract.
+    */
     constructor(
         address _tokenContract,
         address initialOwner
@@ -70,6 +81,14 @@ contract InsightXStake is ERC20, Ownable {
     // Only staking contracts or burn are allowed.
     error UnauthorizedTransfer();
 
+    /**
+    * @notice Deposits ETH rewards into the staking pool.
+    * @dev This function allows the contract owner to deposit ETH rewards into the staking pool.
+    * It checks if the deposited ETH amount is greater than zero and if there are stakers eligible for rewards.
+    * The function calculates rewards for stakers based on the current pool balances.
+    * After depositing rewards, the function records deposit information and updates pool balances. Additionally,
+    * it emits a deposit event to notify observers about the deposit action.
+    */
     function depositReward() public payable onlyOwner {
         require(msg.value > 0, "Cannot be zero Ether");
         require(
@@ -102,10 +121,17 @@ contract InsightXStake is ERC20, Ownable {
     }
 
     /**
-     * @dev stake amount for particular duration.
-     * _stakeamount :  amount for stake)
-     * it will increase activeStake result of particular wallet.
-     */
+    * @notice Stakes tokens into the staking pool.
+    * @dev This function allows users to stake their tokens into the staking pool.
+    * It checks various conditions such as the availability of tokens, stake amount,
+    * and eligibility for extra rewards based on stake thresholds. The function also
+    * calculates and updates rewards for existing stakes if applicable. After a successful
+    * stake, the tokens are transferred from the caller's address to the staking pool,
+    * and new staking information is recorded for the caller. Additionally, the function
+    * emits a stake event to notify observers about the stake action.
+    * @param _stakeamount The amount of tokens to be staked.
+    * @return A boolean indicating the success of the stake operation.
+    */
     function stake(uint256 _stakeamount) public returns (bool) {
         require(msg.sender != address(0), "Wallet Address can not be zero");
         require(
@@ -151,8 +177,8 @@ contract InsightXStake is ERC20, Ownable {
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
             eligibleForExtraReward = true;
-            FourLakhsStakers++; // to know how many stakers are stake uo to 400k
-            if (staking[msg.sender]._stakeAmount == 0) normalStakers++;
+            fourLakhsStakers++; // to know how many stakers are stake uo to 400k
+            if (staking[msg.sender]._stakeAmount == 0) totalNoOfStakers++;
         }
         // new stakeing in extra reward 10 Percentage.
         else if (
@@ -160,8 +186,8 @@ contract InsightXStake is ERC20, Ownable {
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
             eligibleForExtraReward = true;
-            OneMillionStakers++; // to know how many stakers stake up to 1M
-            if (staking[msg.sender]._stakeAmount == 0) normalStakers++;
+            oneMillionStakers++; // to know how many stakers stake up to 1M
+            if (staking[msg.sender]._stakeAmount == 0) totalNoOfStakers++;
         }
         //stake user already stake with extra reward but new stakeing changed extra reward 4 Percentage to 10 Percentage.
         else if (
@@ -171,8 +197,8 @@ contract InsightXStake is ERC20, Ownable {
             totalStakeAmount >= 1000000 * 10 ** 18
         ) {
             eligibleForExtraReward = true;
-            FourLakhsStakers--;
-            OneMillionStakers++;
+            fourLakhsStakers--;
+            oneMillionStakers++;
         }
         //stake user already stake with above 400k token
         else if (
@@ -195,7 +221,7 @@ contract InsightXStake is ERC20, Ownable {
             totalStakeAmount < 400000 * 10 ** 18 &&
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
-            normalStakers++;
+            totalNoOfStakers++;
         }
 
         require(
@@ -240,9 +266,16 @@ contract InsightXStake is ERC20, Ownable {
     }
 
     /**
-     * @dev stake amount release.
-     * it will unstake and distribute rewrds to stakers.
-     */
+    * @notice Unstakes tokens and claims rewards for the caller.
+    * @dev This function allows stakers to unstake their tokens and claim their accumulated rewards from the staking pool.
+    * It checks if the caller is a staker and has tokens staked, and verifies if the staker has passed the waiting period
+    * required for unstaking. It then calculates the total rewards for the staker, including both base rewards and any extra
+    * rewards earned based on their stake amount. The function updates staker-related variables, including resetting balances
+    * and flags. The claimed rewards and unstaked tokens are transferred to the staker's address. If the staker's stake amount
+    * falls within certain thresholds, it also updates the corresponding staker counts. The function also burns the unstaked tokens
+    * from the staker's balance. After successful execution, it emits an event indicating the unstake action.
+    * @return A boolean indicating the success of the unstake operation.
+    */
     function unStake() public payable returns (bool) {
         uint256 totalAmt;
         uint256 totalReward;
@@ -290,16 +323,16 @@ contract InsightXStake is ERC20, Ownable {
             totalExtraFourPercentReward += extraFourPercentReward;
             totalExtraTenPercentReward = 0;
 
-            FourLakhsStakers--;
+            fourLakhsStakers--;
         } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
             totalExtraTenPercentReward += extraTenPercentReward;
             totalExtraFourPercentReward = 0;
 
-            OneMillionStakers--;
+            oneMillionStakers--;
         } else {
             totalExtraFourPercentReward = 0;
             totalExtraTenPercentReward = 0;
-            normalStakers--;
+            totalNoOfStakers--;
         }
 
         totalReward = (totalNormalReward +
@@ -331,7 +364,16 @@ contract InsightXStake is ERC20, Ownable {
         emit unStakeEvent(msg.sender, totalAmt, totalReward);
         return true;
     }
-
+    /**
+    * @notice Claims rewards for the caller from the staking pool.
+    * @dev This function allows stakers to claim their accumulated rewards from the staking pool.
+    * It checks if the caller is a staker and has rewards to claim, and ensures that the contract
+    * has sufficient ETH balance to fulfill the reward payment. The total reward includes both
+    * the base reward and any extra reward earned by the staker. After claiming rewards, the staker's
+    * reward and extra reward balances are reset to zero, and the claimed amount is subtracted from
+    * the existing pool balance. The claimed rewards are transferred to the staker's address.
+    * @return A boolean indicating the success of the reward claim operation.
+    */
     function claimRewards() public returns (bool) {
         require(staking[msg.sender]._stakeAmount > 0, "You are not a staker");
         require(staking[msg.sender]._reward > 0, "No rewards claim");
@@ -356,9 +398,15 @@ contract InsightXStake is ERC20, Ownable {
     }
 
     /**
-     * @dev reward calulation.
-     * result :it will calculate normal reward and extra personage on 400k or 1M stake amount.
-     */
+    * @notice Calculates the rewards for stakers based on the current contract ETH deposit.
+    * @dev This internal function calculates the rewards to be distributed among stakers based on the difference
+    * between the current contract balance and the previous balance, and the number of stakers meeting certain thresholds.
+    * It considers extra rewards for stakers holding certain amounts of tokens.
+    * @return A tuple containing the calculated rewards: (normalReward, extraFourPercentReward, extraTenPercentReward).
+    * - normalReward: The portion of rewards distributed equally among all stakers.
+    * - extraFourPercentReward: Additional reward allocated for stakers holding at least four lakhs of tokens.
+    * - extraTenPercentReward: Additional reward allocated for stakers holding at least one million tokens.
+    */
     function calculateRewards()
         internal
         view
@@ -374,22 +422,22 @@ contract InsightXStake is ERC20, Ownable {
             uint256 diffrenceInPoolBalance = address(this).balance -
                 existingPoolBalance;
 
-            if (FourLakhsStakers > 0) {
+            if (fourLakhsStakers > 0) {
                 extraFourPercentReward =
                     (diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
                     4;
 
                 extraFourPercentReward = (extraFourPercentReward /
-                    FourLakhsStakers);
+                    fourLakhsStakers);
             }
-            if (OneMillionStakers > 0) {
+            if (oneMillionStakers > 0) {
                 extraTenPercentReward =
                     (diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
                     10;
 
                 extraTenPercentReward =
                     extraTenPercentReward /
-                    OneMillionStakers;
+                    oneMillionStakers;
             }
             normalReward =
                 diffrenceInPoolBalance -
@@ -404,6 +452,13 @@ contract InsightXStake is ERC20, Ownable {
         );
     }
 
+    /**
+    * @notice Transfers tokens to a specified address.
+    * @dev This function is disabled in this contract and will always revert with an UnauthorizedTransfer error.
+    * @param to The address to which the tokens will be transferred.
+    * @param value The amount of tokens to be transferred.
+    * @return Always reverts with an UnauthorizedTransfer error.
+    */
     function transfer(
         address to,
         uint256 value
@@ -411,6 +466,14 @@ contract InsightXStake is ERC20, Ownable {
         revert UnauthorizedTransfer();
     }
 
+    /**
+    * @notice Transfers tokens from one address to another using an approved allowance.
+    * @dev This function is disabled in this contract and will always revert with an UnauthorizedTransfer error.
+    * @param from The address from which the tokens will be transferred.
+    * @param to The address to which the tokens will be transferred.
+    * @param value The amount of tokens to be transferred.
+    * @return Always reverts with an UnauthorizedTransfer error.
+    */
     function transferFrom(
         address from,
         address to,
@@ -419,5 +482,19 @@ contract InsightXStake is ERC20, Ownable {
         revert UnauthorizedTransfer();
     }
 
+    /**
+    * @notice Withdraws ETH from the contract and sends it to the owner.
+    * @dev This function allows the contract owner to withdraw ETH from the contract balance.
+    * The specified amount of ETH is transferred to the owner's address.
+    * @param amount The amount of ETH to be withdrawn.
+    * @return A boolean indicating the success of the withdrawal operation.
+    */
+    function withdrowETH(uint256 amount)public onlyOwner returns (bool){
+
+        (bool sent, ) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send ETH");
+
+        return true;
+    }
     receive() external payable {}
 }
