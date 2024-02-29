@@ -482,19 +482,6 @@ contract InsightXStake is ERC20, Ownable {
         revert UnauthorizedTransfer();
     }
 
-    /**
-    * @notice Withdraws ETH from the contract and sends it to the owner.
-    * @dev This function allows the contract owner to withdraw ETH from the contract balance.
-    * The specified amount of ETH is transferred to the owner's address.
-    * @param amount The amount of ETH to be withdrawn.
-    * @return A boolean indicating the success of the withdrawal operation.
-    */
-    function withdrowETH(uint256 amount)public onlyOwner returns (bool){
-
-        (bool sent, ) = msg.sender.call{value: amount}("");
-        require(sent, "Failed to send ETH");
-
-        return true;
-    }
+  
     receive() external payable {}
 }
