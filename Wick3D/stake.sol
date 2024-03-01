@@ -322,12 +322,12 @@ contract InsightXStake is ERC20, Ownable {
         ) {
             totalExtraFourPercentReward += extraFourPercentReward;
             totalExtraTenPercentReward = 0;
-
+            totalNoOfStakers--;
             fourLakhsStakers--;
         } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
             totalExtraTenPercentReward += extraTenPercentReward;
             totalExtraFourPercentReward = 0;
-
+            totalNoOfStakers--;
             oneMillionStakers--;
         } else {
             totalExtraFourPercentReward = 0;
