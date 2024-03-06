@@ -588,8 +588,6 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 }
 
 contract BLOOH is ERC20, Ownable {
-
-    mapping(address => uint256) private timeOfRewardSend;
     
     address public constant SEEDWALLET = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
     uint256 public unLockTime=1749117600; // Date and time (GMT): Thursday, 5 June 2025 10:00:00
