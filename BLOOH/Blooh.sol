@@ -592,13 +592,27 @@ contract BLOOH is ERC20, Ownable {
     mapping(address => uint256) private timeOfRewardSend;
     
     address public constant SEEDWALLET = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
-    uint256 public unLockTime=300 + block.timestamp;
+    uint256 public unLockTime=1749117600; // Date and time (GMT): Thursday, 5 June 2025 10:00:00
+
+    event DistributedReward(address from, address to, uint256 amount);
 
     constructor() ERC20("BLOOH", "BLOOH"){  
         uint256 totalSupply = 650000000;
         _mint(msg.sender, totalSupply * (10**decimals()));
     }
 
+
+    /**
+     * @notice Internal function to perform a token transfer.
+     * @param from The address sending the tokens.
+     * @param to The address receiving the tokens.
+     * @param amount The amount of tokens to be transferred.
+     * @dev Only allows transfers from and to non-zero addresses.
+     * @dev If the sender is the genesis wallet or seed wallet, allows unrestricted transfer.
+     * @dev Checks for the unlocked balance if the transfer is within the lock period.
+     * @dev If the recipient is the SEEDWALLET, deducts the unlocked balance and updates reward balances.
+     * @dev Reverts if the unlocked balance is insufficient for the transfer.
+    */
     
     function _transfer(
         address from,
@@ -616,24 +630,24 @@ contract BLOOH is ERC20, Ownable {
         uint256 unLockedBalance = amount;
         
         if(unLockTime > block.timestamp ) {
-        if(_rewardBalances[from] > 0)  
-        unLockedBalance = _balances[from] - _rewardBalances[from];
+           if(_rewardBalances[from] > 0)  
+              unLockedBalance = _balances[from] - _rewardBalances[from];
     
-         if(to == SEEDWALLET) {
-           super._transfer(from, to, amount);
+           if(to == SEEDWALLET) {
+              super._transfer(from, to, amount);
 
-           if(unLockedBalance < amount){
-            uint256 amt = amount - unLockedBalance;
-            _rewardBalances[from] -=amt;
-           }
+             if(unLockedBalance < amount){
+                uint256 amt = amount - unLockedBalance;
+                _rewardBalances[from] -=amt;
+              }
            return;
         }    
 
         else if(unLockedBalance < amount){
-            revert();
+              revert();
         } else {
-            super._transfer(from, to, amount);
-             return;
+              super._transfer(from, to, amount);
+              return;
         }
 
         }
@@ -641,12 +655,21 @@ contract BLOOH is ERC20, Ownable {
         super._transfer(from, to, unLockedBalance);
         return;
     }
-
-    function DistributeRewardToken(address _user, uint256 _amount) external {
+    
+    /**
+     * @notice Distributes reward tokens to a specified user.
+     * @param _user The address of the user receiving the reward tokens.
+     * @param _amount The amount of reward tokens to be distributed.
+     * @dev Only the owner (genesisWallet) or the seed wallet (SEEDWALLET) can call this function.
+     * @dev Reverts if the user address is zero.
+     */
+    function distributeRewardToken(address _user, uint256 _amount) external {
         require(_user != address(0),"you can not send on zero address");
         require(msg.sender == genesisWallet() || msg.sender == SEEDWALLET,"You are not owner or seed");
         _rewardBalances[_user] += _amount;
         _transfer(msg.sender,_user,_amount);
+        emit DistributedReward(msg.sender,_user,_amount);
+        
 
     }
 
