@@ -647,9 +647,4 @@ contract BLOOH is ERC20, Ownable {
 
     }
 
-    function changeUnlockTime(uint256 _time) external {
-        unLockTime = block.timestamp + _time;
-    }
-
-
 }
