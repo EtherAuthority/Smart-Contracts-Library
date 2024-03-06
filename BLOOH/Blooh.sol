@@ -8,6 +8,7 @@
 */
                                           
 
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
@@ -159,7 +160,7 @@ contract Ownable is Context {
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view virtual returns (address) {
+    function genesisWallet() public view virtual returns (address) {
         return _owner;
     }
  
@@ -167,7 +168,7 @@ contract Ownable is Context {
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view virtual {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        require(genesisWallet() == _msgSender(), "Ownable: caller is not the owner");
     }
  
     /**
@@ -586,10 +587,6 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     ) internal virtual {}
 }
 
-
-
-
-
 contract BLOOH is ERC20, Ownable {
 
     mapping(address => uint256) private timeOfRewardSend;
@@ -603,48 +600,55 @@ contract BLOOH is ERC20, Ownable {
     }
 
     
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {
+        require(from != address(0), "ERC20: transfer from the zero address");
+        require(to != address(0), "ERC20: transfer to the zero address");
 
-        if(msg.sender == owner() || msg.sender == SEEDWALLET) {
-          _transfer(msg.sender, to, amount);
-          return true;
+        if(from == genesisWallet() || from == SEEDWALLET) {
+          super._transfer(from, to, amount);
+          return;
         }
         
         uint256 unLockedBalance = amount;
         
         if(unLockTime > block.timestamp ) {
-        if(_rewardBalances[msg.sender] > 0)  
-        unLockedBalance = _balances[msg.sender] - _rewardBalances[msg.sender];
+        if(_rewardBalances[from] > 0)  
+        unLockedBalance = _balances[from] - _rewardBalances[from];
     
          if(to == SEEDWALLET) {
-           _transfer(msg.sender, to, amount);
+           super._transfer(from, to, amount);
 
            if(unLockedBalance < amount){
             uint256 amt = amount - unLockedBalance;
-            _rewardBalances[msg.sender] -=amt;
+            _rewardBalances[from] -=amt;
            }
-           return true;
+           return;
         }    
 
         else if(unLockedBalance < amount){
             revert();
         } else {
-            _transfer(msg.sender, to, amount);
-             return true;
+            super._transfer(from, to, amount);
+             return;
         }
 
         }
         
-        _transfer(msg.sender, to, unLockedBalance);
-        return true;
+        super._transfer(from, to, unLockedBalance);
+        return;
     }
 
     function DistributeRewardToken(address _user, uint256 _amount) external {
         require(_user != address(0),"you can not send on zero address");
-        require(msg.sender == owner() || msg.sender == SEEDWALLET,"You are not owner or seed");
+        require(msg.sender == genesisWallet() || msg.sender == SEEDWALLET,"You are not owner or seed");
         _rewardBalances[_user] += _amount;
         _transfer(msg.sender,_user,_amount);
 
     }
+
 
 }
