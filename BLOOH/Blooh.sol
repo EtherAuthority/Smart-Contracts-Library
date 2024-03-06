@@ -670,8 +670,5 @@ contract BLOOH is ERC20, Ownable {
         _transfer(msg.sender,_user,_amount);
         emit DistributedReward(msg.sender,_user,_amount);
         
-
     }
-
-
 }
