@@ -1,7 +1,14 @@
-// SPDX-License-Identifier: GPL-3.0
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Context.sol
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
+/**
+                        ██████╗ ██╗      ██████╗  ██████╗ ██╗  ██╗
+                        ██╔══██╗██║     ██╔═══██╗██╔═══██╗██║  ██║
+                        ██████╔╝██║     ██║   ██║██║   ██║███████║
+                        ██╔══██╗██║     ██║   ██║██║   ██║██╔══██║
+                        ██████╔╝███████╗╚██████╔╝╚██████╔╝██║  ██║
+                        ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝
+*/
+                                          
 
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
 /**
@@ -24,10 +31,6 @@ abstract contract Context {
     }
 }
 
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol
-
-
-// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
 
 
 /**
@@ -107,12 +110,6 @@ interface IERC20 {
         uint256 amount
     ) external returns (bool);
 }
-
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol
-
-
-// OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
-
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -206,13 +203,6 @@ contract Ownable is Context {
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 }
-
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
-
-
-// OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
-
-
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -598,19 +588,24 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 
 
-contract TestToken is ERC20, Ownable {
+
+
+contract BLOOH is ERC20, Ownable {
+
+    mapping(address => uint256) private timeOfRewardSend;
     
-    address public seedAccount = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
+    address public constant SEEDWALLET = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
     uint256 public unLockTime=300 + block.timestamp;
 
-    constructor() ERC20("TestToken", "TEST"){  
-        uint256 totalSupply = 1000000000;
+    constructor() ERC20("BLOOH", "BLOOH"){  
+        uint256 totalSupply = 650000000;
         _mint(msg.sender, totalSupply * (10**decimals()));
     }
-   
+
+    
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
 
-        if(msg.sender == owner() || msg.sender == seedAccount) {
+        if(msg.sender == owner() || msg.sender == SEEDWALLET) {
           _transfer(msg.sender, to, amount);
           return true;
         }
@@ -621,7 +616,7 @@ contract TestToken is ERC20, Ownable {
         if(_rewardBalances[msg.sender] > 0)  
         unLockedBalance = _balances[msg.sender] - _rewardBalances[msg.sender];
     
-         if(to == seedAccount) {
+         if(to == SEEDWALLET) {
            _transfer(msg.sender, to, amount);
 
            if(unLockedBalance < amount){
@@ -637,19 +632,24 @@ contract TestToken is ERC20, Ownable {
             _transfer(msg.sender, to, amount);
              return true;
         }
+
         }
         
         _transfer(msg.sender, to, unLockedBalance);
         return true;
     }
 
-    function DistributeRewardTokn(address _user, uint256 _amount) external onlyOwner {
+    function DistributeRewardToken(address _user, uint256 _amount) external {
         require(_user != address(0),"you can not send on zero address");
+        require(msg.sender == owner() || msg.sender == SEEDWALLET,"You are not owner or seed");
         _rewardBalances[_user] += _amount;
         _transfer(msg.sender,_user,_amount);
+
     }
 
     function changeUnlockTime(uint256 _time) external {
         unLockTime = block.timestamp + _time;
     }
+
+
 }
