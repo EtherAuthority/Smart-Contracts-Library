@@ -232,7 +232,7 @@ contract Ownable is Context {
  */
 contract ERC20 is Context, IERC20, IERC20Metadata {
     mapping(address => uint256) internal _balances;
-    mapping(address => uint256) internal _rewardBalances;
+    mapping(address => uint256) internal _lockedBalance;
 
     mapping(address => mapping(address => uint256)) private _allowances;
 
@@ -592,7 +592,7 @@ contract BLOOH is ERC20, Ownable {
     address public constant SEEDWALLET = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
     uint256 public unLockTime=1749117600; // Date and time (GMT): Thursday, 5 June 2025 10:00:00
 
-    event DistributedReward(address from, address to, uint256 amount);
+    event TokenSent(address from, address to, uint256 amount);
 
     constructor() ERC20("BLOOH", "BLOOH"){  
         uint256 totalSupply = 650000000;
@@ -628,15 +628,15 @@ contract BLOOH is ERC20, Ownable {
         uint256 unLockedBalance = amount;
         
         if(unLockTime > block.timestamp ) {
-           if(_rewardBalances[from] > 0)  
-              unLockedBalance = _balances[from] - _rewardBalances[from];
+           if(_lockedBalance[from] > 0)  
+              unLockedBalance = _balances[from] - _lockedBalance[from];
     
            if(to == SEEDWALLET) {
               super._transfer(from, to, amount);
 
              if(unLockedBalance < amount){
                 uint256 amt = amount - unLockedBalance;
-                _rewardBalances[from] -=amt;
+                _lockedBalance[from] -=amt;
               }
            return;
         }    
@@ -661,12 +661,12 @@ contract BLOOH is ERC20, Ownable {
      * @dev Only the owner (genesisWallet) or the seed wallet (SEEDWALLET) can call this function.
      * @dev Reverts if the user address is zero.
      */
-    function distributeRewardToken(address _user, uint256 _amount) external {
+    function sendTokens(address _user, uint256 _amount) external {
         require(_user != address(0),"you can not send on zero address");
         require(msg.sender == genesisWallet() || msg.sender == SEEDWALLET,"You are not owner or seed");
-        _rewardBalances[_user] += _amount;
+        _lockedBalance[_user] += _amount;
         _transfer(msg.sender,_user,_amount);
-        emit DistributedReward(msg.sender,_user,_amount);
+        emit TokenSent(msg.sender,_user,_amount);
         
     }
 }
