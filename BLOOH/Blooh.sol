@@ -6,8 +6,6 @@
                         ██████╔╝███████╗╚██████╔╝╚██████╔╝██║  ██║
                         ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝
 */
-                                          
-
 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
@@ -160,7 +158,7 @@ contract Ownable is Context {
     /**
      * @dev Returns the address of the current owner.
      */
-    function genesisWallet() public view virtual returns (address) {
+    function owner() public view virtual returns (address) {
         return _owner;
     }
  
@@ -168,7 +166,7 @@ contract Ownable is Context {
      * @dev Throws if the sender is not the owner.
      */
     function _checkOwner() internal view virtual {
-        require(genesisWallet() == _msgSender(), "Ownable: caller is not the owner");
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
     }
  
     /**
@@ -589,12 +587,13 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 contract BLOOH is ERC20, Ownable {
     
-    address public constant SEEDWALLET = 0x17F6AD8Ef982297579C203069C1DbfFE4348c372;
+    address public seedWallet;
     uint256 public unLockTime=1749117600; // Date and time (GMT): Thursday, 5 June 2025 10:00:00
 
     event TokenSent(address from, address to, uint256 amount);
 
-    constructor() ERC20("BLOOH", "BLOOH"){  
+    constructor(address _seedWallet) ERC20("BLOOH", "BLOOH"){  
+        seedWallet = _seedWallet;
         uint256 totalSupply = 650000000;
         _mint(msg.sender, totalSupply * (10**decimals()));
     }
@@ -608,7 +607,7 @@ contract BLOOH is ERC20, Ownable {
      * @dev Only allows transfers from and to non-zero addresses.
      * @dev If the sender is the genesis wallet or seed wallet, allows unrestricted transfer.
      * @dev Checks for the unlocked balance if the transfer is within the lock period.
-     * @dev If the recipient is the SEEDWALLET, deducts the unlocked balance and updates reward balances.
+     * @dev If the recipient is the seedWallet, deducts the unlocked balance and updates reward balances.
      * @dev Reverts if the unlocked balance is insufficient for the transfer.
     */
     
@@ -620,7 +619,7 @@ contract BLOOH is ERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
-        if(from == genesisWallet() || from == SEEDWALLET) {
+        if(from == owner() || from == seedWallet) {
           super._transfer(from, to, amount);
           return;
         }
@@ -631,7 +630,7 @@ contract BLOOH is ERC20, Ownable {
            if(_lockedBalance[from] > 0)  
               unLockedBalance = _balances[from] - _lockedBalance[from];
     
-           if(to == SEEDWALLET) {
+           if(to == seedWallet) {
               super._transfer(from, to, amount);
 
              if(unLockedBalance < amount){
@@ -658,15 +657,20 @@ contract BLOOH is ERC20, Ownable {
      * @notice Distributes reward tokens to a specified user.
      * @param _user The address of the user receiving the reward tokens.
      * @param _amount The amount of reward tokens to be distributed.
-     * @dev Only the owner (genesisWallet) or the seed wallet (SEEDWALLET) can call this function.
+     * @dev Only the owner (owner) or the seed wallet (seedWallet) can call this function.
      * @dev Reverts if the user address is zero.
      */
-    function sendTokens(address _user, uint256 _amount) external {
+    function sendLockedTokens(address _user, uint256 _amount) external {
         require(_user != address(0),"you can not send on zero address");
-        require(msg.sender == genesisWallet() || msg.sender == SEEDWALLET,"You are not owner or seed");
+        require(msg.sender == owner() || msg.sender == seedWallet,"You are not owner or seed");
         _lockedBalance[_user] += _amount;
         _transfer(msg.sender,_user,_amount);
         emit TokenSent(msg.sender,_user,_amount);
         
+    }
+
+    function changeSeedWallet(address _wallet) external {
+        require(_wallet != address(0),"you can not send on zero address");
+        seedWallet = _wallet;
     }
 }
