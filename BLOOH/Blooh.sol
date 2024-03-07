@@ -591,6 +591,7 @@ contract BLOOH is ERC20, Ownable {
     uint256 public unLockTime=1749117600; // Date and time (GMT): Thursday, 5 June 2025 10:00:00
 
     event TokenSent(address from, address to, uint256 amount);
+    event ChangeSeed(address newSeed);
 
     constructor(address _seedWallet) ERC20("BLOOH", "BLOOH"){  
         seedWallet = _seedWallet;
@@ -672,5 +673,6 @@ contract BLOOH is ERC20, Ownable {
     function changeSeedWallet(address _wallet) external {
         require(_wallet != address(0),"seed wallet can not be zero");
         seedWallet = _wallet;
+        emit ChangeSeed(address _wallet);
     }
 }
