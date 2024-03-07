@@ -672,6 +672,7 @@ contract BLOOH is ERC20, Ownable {
 
     function changeSeedWallet(address _wallet) external {
         require(_wallet != address(0),"seed wallet can not be zero");
+        require(msg.sender == owner(),"You are not owner");
         seedWallet = _wallet;
         emit ChangeSeed(address _wallet);
     }
