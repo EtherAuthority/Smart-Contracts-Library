@@ -767,11 +767,11 @@ interface IUniswapV2Router02 is IRouter01 {
 contract MemecoinInvestor is ERC20, Ownable {
 
     uint256 public maxAmount = 20000000 * 10 ** uint256(decimals()); // Max Buy/Sell Limit
-    uint256 public tax = 150;  //1.5%
+    uint256 public constant Tax = 150;  //1.5%
     uint256 public _taxThreshold = 100 * 10**uint256(decimals()); // Threshold for performing swapandliquify 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
-    address public immutable _uniswapPair;
+    address public immutable uniswapPair;
  
     bool private swapping;
     
@@ -784,14 +784,13 @@ contract MemecoinInvestor is ERC20, Ownable {
         _mint(msg.sender, totalSupply * (10**decimals()));
         // Define Uniswap router address based on the network 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-        //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D //Ethereum
         0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
         );
         // Set Uniswap router and create a Uniswap pair for the token
         uniswapV2Router = _uniswapV2Router;
-        _uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
+        uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
         address(this),
-        _uniswapV2Router.WETH()
+        _uniswapV2Router.WETH()   
         );
         
         // Approve maximum token transfer allowance for Uniswap router
@@ -891,8 +890,8 @@ contract MemecoinInvestor is ERC20, Ownable {
             return;
         }
  
-        bool isBuy = sender == _uniswapPair;
-        bool isSell = recipient == _uniswapPair;
+        bool isBuy = sender == uniswapPair;
+        bool isSell = recipient == uniswapPair;
  
         uint256 liquidityTax;
         uint256 burnTax;
@@ -913,7 +912,7 @@ contract MemecoinInvestor is ERC20, Ownable {
  
         if ( isBuy || isSell) {
             require (amount <= maxAmount, "Cannot buy and sell more than max limit");
-            fee = _calculateTax(amount, tax);
+            fee = _calculateTax(amount, Tax);
             liquidityTax = fee /2;
             burnTax = fee - liquidityTax;
             _update(sender, address(this), liquidityTax); 
