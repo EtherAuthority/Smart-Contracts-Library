@@ -779,12 +779,14 @@ contract MemecoinInvestor is ERC20, Ownable {
 
     uint256 public maxAmount = 20000000 * 10 ** uint256(decimals()); // Max Buy/Sell Limit
     uint256 public constant Tax = 150;  //1.5%
-    uint256 public _taxThreshold = 100 * 10**uint256(decimals()); // Threshold for performing swapandliquify 
+    uint256 public taxThreshold = 100 * 10**uint256(decimals()); // Threshold for performing swapandliquify 
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapPair;
  
     bool private swapping;
+
+    event UpdateThreshold(uint256 newThreshold);
     
     /**
      * @notice Initializes the Memecoin Investor token contract and sets up liquidity provision on Uniswap.
@@ -818,7 +820,8 @@ contract MemecoinInvestor is ERC20, Ownable {
      */
     function setTaxThreshold(uint256 threshold) external onlyOwner {
        require(threshold > 0 && threshold <= 5 * 10**5 * 10**18, "Amount should be more than zero and less than 500k tokens");
-       _taxThreshold = threshold;
+       taxThreshold = threshold;
+       emit UpdateThreshold(taxThreshold);
     }
 
     /**
@@ -906,10 +909,10 @@ contract MemecoinInvestor is ERC20, Ownable {
  
         uint256 liquidityTax;
         uint256 burnTax;
-        uint256 fee;
+        
  
         uint256 contractTokenBalance = balanceOf(address(this));
-        bool canSwap = contractTokenBalance >= _taxThreshold;
+        bool canSwap = contractTokenBalance >= taxThreshold;
  
         if (
             canSwap &&
@@ -923,15 +926,17 @@ contract MemecoinInvestor is ERC20, Ownable {
  
         if ( isBuy || isSell) {
             require (amount <= maxAmount, "Cannot buy and sell more than max limit");
+            uint256 fee;
             fee = _calculateTax(amount, Tax);
             liquidityTax = fee /2;
             burnTax = fee - liquidityTax;
             _update(sender, address(this), liquidityTax); 
             _burn(sender, burnTax);
-            fee = liquidityTax + burnTax;    
+            fee = liquidityTax + burnTax;  
+            amount -= fee;  
         } 
 
-        amount -= fee;
+        
 
         _update(sender, recipient, amount);
     }
