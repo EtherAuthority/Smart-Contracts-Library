@@ -1,14 +1,19 @@
+/**
 
- /**
-                                         
-                                         ██████╗ ██╗   ██╗ ██████╗ ██████╗ 
-                                         ██╔══██╗╚██╗ ██╔╝██╔═══██╗██╔══██╗
-                                         ██║  ██║ ╚████╔╝ ██║   ██║██████╔╝
-                                         ██║  ██║  ╚██╔╝  ██║   ██║██╔══██╗
-                                         ██████╔╝   ██║   ╚██████╔╝██║  ██║
-                                         ╚═════╝    ╚═╝    ╚═════╝ ╚═╝  ╚═╝
- */ 
-
+                 ███╗   ███╗███████╗███╗   ███╗ ██████╗ ██████╗ ██╗███╗   ██╗
+                 ████╗ ████║██╔════╝████╗ ████║██╔════╝██╔═══██╗██║████╗  ██║
+                 ██╔████╔██║█████╗  ██╔████╔██║██║     ██║   ██║██║██╔██╗ ██║
+                 ██║╚██╔╝██║██╔══╝  ██║╚██╔╝██║██║     ██║   ██║██║██║╚██╗██║
+                 ██║ ╚═╝ ██║███████╗██║ ╚═╝ ██║╚██████╗╚██████╔╝██║██║ ╚████║
+                 ╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝                                               
+                                        ██╗███╗   ██╗██╗   ██╗███████╗███████╗████████╗ ██████╗ ██████╗ 
+                                        ██║████╗  ██║██║   ██║██╔════╝██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗
+                                        ██║██╔██╗ ██║██║   ██║█████╗  ███████╗   ██║   ██║   ██║██████╔╝
+                                        ██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  ╚════██║   ██║   ██║   ██║██╔══██╗
+                                        ██║██║ ╚████║ ╚████╔╝ ███████╗███████║   ██║   ╚██████╔╝██║  ██║
+                                        ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+                                                                                                                          
+*/
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
@@ -787,17 +792,14 @@ contract MemecoinInvestor is ERC20, Ownable {
     bool private swapping;
 
     event UpdateThreshold(uint256 newThreshold);
-    
-    /**
-     * @notice Initializes the Memecoin Investor token contract and sets up liquidity provision on Uniswap.
-     */
-    constructor()ERC20("Memecoin Investor", "DYOR")Ownable(msg.sender){ 
+
+    constructor()ERC20("Memcoin Investor", "DYOR")Ownable(msg.sender){ 
         // Total token supply
         uint256 totalSupply = 777777777;
         _mint(msg.sender, totalSupply * (10**decimals()));
         // Define Uniswap router address based on the network 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-        0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
+        0x96b244391D98B62D19aE89b1A4dCcf0fc56970C7 //beamswap
         );
         // Set Uniswap router and create a Uniswap pair for the token
         uniswapV2Router = _uniswapV2Router;
@@ -909,8 +911,7 @@ contract MemecoinInvestor is ERC20, Ownable {
  
         uint256 liquidityTax;
         uint256 burnTax;
-        
- 
+
         uint256 contractTokenBalance = balanceOf(address(this));
         bool canSwap = contractTokenBalance >= taxThreshold;
  
@@ -936,8 +937,6 @@ contract MemecoinInvestor is ERC20, Ownable {
             amount -= fee;  
         } 
 
-        
-
         _update(sender, recipient, amount);
     }
 
@@ -948,7 +947,7 @@ contract MemecoinInvestor is ERC20, Ownable {
      * @param taxPercentage The tax percentage to apply.
      * @return The calculated tax amount.
      */
-    function _calculateTax(uint256 amount, uint256 taxPercentage) internal pure returns (uint256) {
+    function _calculateTax(uint256 amount, uint256 taxPercentage) private pure returns (uint256) {
         return amount * (taxPercentage) / (10000);
     }
  
