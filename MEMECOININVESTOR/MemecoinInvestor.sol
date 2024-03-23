@@ -793,7 +793,7 @@ contract MemecoinInvestor is ERC20, Ownable {
 
     event UpdateThreshold(uint256 newThreshold);
 
-    constructor()ERC20("Memcoin Investor", "DYOR")Ownable(msg.sender){ 
+    constructor()ERC20("Memecoin Investor", "DYOR")Ownable(msg.sender){ 
         // Total token supply
         uint256 totalSupply = 777777777;
         _mint(msg.sender, totalSupply * (10**decimals()));
@@ -950,8 +950,6 @@ contract MemecoinInvestor is ERC20, Ownable {
     function _calculateTax(uint256 amount, uint256 taxPercentage) private pure returns (uint256) {
         return amount * (taxPercentage) / (10000);
     }
- 
-    fallback() external payable {}
  
     receive() external payable {}
 }
