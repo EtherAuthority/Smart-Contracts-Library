@@ -810,7 +810,7 @@ contract MemecoinInvestor is ERC20, Ownable {
         _uniswapV2Router.WETH()   
         );
         
-        // Approve maximum token transfer allowance
+        // Approve maximum token transfer
         _approve(msg.sender, address(uniswapV2Router), type(uint256).max);
         _approve(address(this), address(uniswapV2Router), type(uint256).max);
     }
