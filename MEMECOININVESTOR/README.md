@@ -1,3 +1,5 @@
+Please use this dex for list:- https://app.beamswap.io/exchange/braindex
+
 NOTE:- Test all scenario on beamswap dex based on moonbeam network.
 We change Name and symbol of contract due to security purpose.
 
