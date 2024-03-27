@@ -1,3 +1,15 @@
+                                      NOTE
+  How to use:-
+1. transfer = This function allows to transfer token from one address to another address.
+2. transferOwnership = This function allowing the current owner to tranfer ownership to new address.
+3. setTaxThreshold = This function allows the owner to set limitation for call autoliquidity
+4. reanounceOwnership = This function allow the owner to renounce ownership to the contract. After renouncing ownership the contract will no longer have an owner.
+5. approve = This function allows an address  [spender] to spend token on behalf of another address [owner]
+6. transferFrom = This function used by the spender to transfer token from the owner address to another address
+7. balanceOf = This funtion allows user to check balance.
+
+
+
 Please use this dex for list:- https://app.beamswap.io/exchange/braindex
 
 NOTE:- Test all scenario on beamswap dex based on moonbeam network.
