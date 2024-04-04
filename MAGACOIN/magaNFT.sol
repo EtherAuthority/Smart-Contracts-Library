@@ -1546,7 +1546,7 @@ contract MagaNFT is ERC721,Ownable {
      */
     function setMagaCoinAddress(address _magaCoinAddress)external onlyOwner{
         require(_magaCoinAddress != address(0),"Address can not be zero");
-        require(!implemented,"magacoin address already set");
+        require(!implemented,"Magacoin address already set");
         magaCoin = MagaCoin(_magaCoinAddress);
         implemented = true;
     } 
@@ -1575,14 +1575,14 @@ contract MagaNFT is ERC721,Ownable {
     /**
      * @dev Generates a random number within a specified range based on certain factors.
      * @notice This function uses block.timestamp, msg.sender, and block.number as inputs
-     *         to generate a pseudorandom number within the range of minNumber and maxNumber.
+     *         to generate a pseudorandom number within the range of minMonths and maxMonths.
      */
-    function random() internal  view returns(uint amount){
-        uint maxNumber=12; 
-        uint minNumber=6;
-        amount = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % (maxNumber-minNumber);
-        amount = amount + minNumber;
-        return amount;
+    function random() internal  view returns(uint months){
+        uint maxMonths=12; 
+        uint minMonths=6;
+        months = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % (maxMonths-minMonths);
+        months = months + minMonths;
+        return months;
     }
 
     /** 
@@ -1609,7 +1609,7 @@ contract MagaNFT is ERC721,Ownable {
      */
     function claimMagaCoin(uint _nftId)external {
         require(magaCoinClaimTime[_nftId] <= block.timestamp,"You can not claim now please wait more");
-        require(!coinMinted[_nftId],"MagaCoin already claim for this NFT Id");
+        require(!coinMinted[_nftId],"Magacoin already claim for this NFT Id");
         
         address nftOwner= _requireOwned(_nftId);
         require(msg.sender == nftOwner,"You are not the owner of this NFT Id");
