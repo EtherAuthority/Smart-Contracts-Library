@@ -1567,7 +1567,7 @@ contract MagaNFT is ERC721,Ownable {
         require(totalSupply <= MAX_SUPPLY,"You can not mint more than max supply");
         payable(owner()).transfer(msg.value);
         _safeMint(msg.sender,nftId);
-        magaCoinClaimTime[nftId] = block.timestamp + random() * 31 days;
+        magaCoinClaimTime[nftId] = block.timestamp + random() * 30 days;
         nftId++;
         totalSupply++;
     }
