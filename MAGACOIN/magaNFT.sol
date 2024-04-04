@@ -1,3 +1,12 @@
+/**
+                    ███╗   ███╗ █████╗  ██████╗  █████╗ ███╗   ██╗███████╗████████╗
+                    ████╗ ████║██╔══██╗██╔════╝ ██╔══██╗████╗  ██║██╔════╝╚══██╔══╝
+                    ██╔████╔██║███████║██║  ███╗███████║██╔██╗ ██║█████╗     ██║   
+                    ██║╚██╔╝██║██╔══██║██║   ██║██╔══██║██║╚██╗██║██╔══╝     ██║   
+                    ██║ ╚═╝ ██║██║  ██║╚██████╔╝██║  ██║██║ ╚████║██║        ██║   
+                    ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝        ╚═╝   
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -1512,11 +1521,12 @@ contract MagaNFT is ERC721,Ownable {
     uint256 public  nftPrice = 2*10**16;
     uint256 public constant MAX_SUPPLY = 1000;
     uint256 public  totalSupply;
+    bool private implemented;
 
     mapping (uint256 => uint256) public magaCoinClaimTime;
     mapping (uint256 => bool) private coinMinted;
     
-    MagaCoin private  _magaCoin;
+    MagaCoin public magaCoin;
 
     event UpdateNFTPrice(uint256 updatedPrice);
     event ClaimCoin(address NFTOwner,uint256 amount);
@@ -1528,23 +1538,36 @@ contract MagaNFT is ERC721,Ownable {
     {}
     
     /**
-     * @dev Sets the address of the MagaCoin contract.
-     * @param _magaCoinAddress The address of the MagaCoin contract to set.
+     * @dev Sets the address of the MagaCoin token contract.
+     * @param _magaCoinAddress The address of the MagaCoin token contract.
+     * Requirements:
+     * - `_magaCoinAddress` cannot be the zero address.
+     * - The MagaCoin address cannot be set more than once.
      */
     function setMagaCoinAddress(address _magaCoinAddress)external onlyOwner{
-        _magaCoin = MagaCoin(_magaCoinAddress);
+        require(_magaCoinAddress != address(0),"Address can not be zero");
+        require(!implemented,"magacoin address already set");
+        magaCoin = MagaCoin(_magaCoinAddress);
+        implemented = true;
     } 
 
     /**
-     * @dev Mints a new NFT token to the caller if conditions are met.
-     * @notice Requires payment of a specific amount of AVAX and checks against max supply.
+     * @dev Allows users to safely mint NFTs by paying the specified AVAX amount.
+     * Requirements:
+     * - `msg.value` must be equal to `nftPrice`.
+     * - Total supply of NFTs must not exceed `MAX_SUPPLY`.
+     * Effects:
+     * - Transfers the specified AVAX amount to the contract owner.
+     * - Mints a new NFT to the caller.
+     * - Sets the MagaCoin claim time for the minted NFT.
+     * - Increments the NFT ID and total supply counters.
      */
     function safeMint() external  payable  {
-        require(msg.value >= nftPrice,"Not sufficient AVAX amount");
+        require(msg.value == nftPrice,"Not sufficient AVAX amount");
         require(totalSupply <= MAX_SUPPLY,"You can not mint more than max supply");
         payable(owner()).transfer(msg.value);
         _safeMint(msg.sender,nftId);
-        magaCoinClaimTime[nftId] = block.timestamp + random() * 1 minutes;// change 
+        magaCoinClaimTime[nftId] = block.timestamp + random() * 31 days;
         nftId++;
         totalSupply++;
     }
@@ -1572,9 +1595,17 @@ contract MagaNFT is ERC721,Ownable {
     }
 
     /**
-     * @dev Claims MagaCoin tokens based on the specified NFT ID.
-     * @notice Allows the owner of an NFT to claim a certain amount of MagaCoin tokens.
-     * @param _nftId The ID of the NFT for which MagaCoin tokens are being claimed.
+     * @dev Allows NFT owners to claim MagaCoin tokens based on their NFT ID.
+     * @param _nftId The ID of the NFT to claim MagaCoin tokens for.
+     * Requirements:
+     * - The claim time for the NFT must have passed.
+     * - MagaCoin tokens must not have been claimed for the specified NFT ID before.
+     * - The caller must be the owner of the specified NFT.
+     * Effects:
+     * - Determines the amount of MagaCoin tokens to be claimed based on the NFT ID.
+     * - Mints the determined amount of MagaCoin tokens to the caller.
+     * - Marks the MagaCoin tokens as claimed for the specified NFT ID.
+     * - Emits a ClaimCoin event.
      */
     function claimMagaCoin(uint _nftId)external {
         require(magaCoinClaimTime[_nftId] <= block.timestamp,"You can not claim now please wait more");
@@ -1593,7 +1624,7 @@ contract MagaNFT is ERC721,Ownable {
            amount = 3750 * 10**18;
         }
        
-        _magaCoin.mint(msg.sender, amount);
+        magaCoin.mint(msg.sender, amount);
         coinMinted[_nftId] = true;
 
         emit ClaimCoin(msg.sender,amount);
