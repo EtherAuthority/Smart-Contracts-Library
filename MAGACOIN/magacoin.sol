@@ -691,16 +691,16 @@ abstract contract Ownable is Context {
 contract Magacoin is ERC20,Ownable {
     uint256 private _initialSupply;
     uint256 public  Max_Supply= 10000000 * 10**(decimals());
-    address private immutable _magaNft;
+    address public immutable magaNFT;
 
     /**
      * @dev Constructor for the MagaCoin ERC20 token contract.
      * @param magaNFT The address of the Maga NFT contract.
      */
-    constructor(address magaNFT) ERC20("Magacoin", "MAGA") Ownable(msg.sender) {
+    constructor(address _magaNFT) ERC20("Magacoin", "MAGA") Ownable(msg.sender) {
         _initialSupply = 5000000* 10**(decimals());
         _mint(msg.sender, _initialSupply);
-        _magaNft = magaNFT;
+        magaNFT = _magaNFT;
     }
  
     /**
@@ -708,7 +708,7 @@ contract Magacoin is ERC20,Ownable {
      * @notice Requires that the sender is the Maga NFT contract and not the null address.
      */
     modifier onlyNftContract() {
-        require(_magaNft == msg.sender && _magaNft != address(0), "Only magaNFT contract can mint");
+        require(magaNFT == msg.sender && magaNFT != address(0), "Only magaNFT contract can mint");
         _;
     }
 
