@@ -708,7 +708,7 @@ contract Magacoin is ERC20,Ownable {
      * @notice Requires that the sender is the Maga NFT contract and not the null address.
      */
     modifier onlyNftContract() {
-        require(_magaNft == msg.sender && _magaNft != address(0), "Only NFT contract can mint");
+        require(_magaNft == msg.sender && _magaNft != address(0), "Only magaNFT contract can mint");
         _;
     }
 
