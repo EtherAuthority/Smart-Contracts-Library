@@ -554,9 +554,7 @@ contract ExaProtocol is ERC20 {
     */
     constructor() ERC20("Exa Protocol", "XAP"){
         
-        uint256 totalSupply = 1000000000;
-        
-        _mint(msg.sender, totalSupply * (10**decimals()));
+        _mint(msg.sender, 1000000000 * (10**decimals()));
 
     }
 
