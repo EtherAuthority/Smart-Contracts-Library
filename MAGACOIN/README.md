@@ -22,3 +22,15 @@
 2. Deploy Magacoin using magaNFT contract address.(The initial supply of 5,000,000 MAGA will be minted by the entity deploying this contract.)
 3. call "setMagaCoinAddress" function using Magacoin contract address.
 ```
+# Testnet Transaction
+```
+Deploy magaNFT:-  https://testnet.bscscan.com/address/0x139fa7DeFB26D177474Fdccd4274fE619a22317A#code
+Deploy Magacoin:- https://testnet.bscscan.com/address/0xC30573f1D8b50F1Dd7e6E00E37e9dFcbf0757981#code 
+setMagaCoinAddress:-  https://testnet.bscscan.com/tx/0x1949f12f735d39ffd143b91a112ada70ebc28e73d2f527f39c4645d8e9dc2896 (onlyOwner)
+SafeMint:- https://testnet.bscscan.com/tx/0x79572d097400e9e8476584260eede47874a8a03eaa97b173821b5781e4281ff8
+updateNFTPrice:- https://testnet.bscscan.com/tx/0x203835c6777d5688b6ef1394cf6c7ecbb7763fb42078e5bf8c05daf6c9934e33 (onlyOwner)
+approve:- https://testnet.bscscan.com/tx/0x4d3819c4202a490b71b0ed69b55be8dda5f8ae20051442987da5ab73de705a27
+transferFrom:- https://testnet.bscscan.com/tx/0x9449d50523a4f30d806c17304ea38471fbf22b803c9d94422a87e5c1868c335b
+claimMagaCoin:- https://testnet.bscscan.com/tx/0x67fdcb3fc343b4b321eae45af91371691dd694d633199111040558077fe410d6 (Note:- it will fail because claim time is Sunday, March 2nd 2025, 4:08:44 pm)
+transferOwnership:- https://testnet.bscscan.com/tx/0x84630ce0a0851b7e1caab5493a3f8cf28d0f23f007dd83bb994636c037d31973 (onlyOwner)
+```
