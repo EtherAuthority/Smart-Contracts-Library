@@ -26,7 +26,7 @@ describe("magacoin contract",function(){
 
   });
  
-  describe("magacoin", async function () {
+  describe("--magacoin--", async function () {
     it("total supply should be equal to", async function (){
     
     const totalSupply = await magacoin.totalSupply();
