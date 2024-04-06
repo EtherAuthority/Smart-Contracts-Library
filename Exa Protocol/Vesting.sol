@@ -66,7 +66,7 @@ contract Vesting {
             _wallet.length == _tokenamount.length && 
             _wallet.length == _vestingTime.length &&
             _wallet.length == _cliffperiod.length &&
-            _wallet.length == _readytoUse.length
+            _wallet.length == _readytoUsePercentage.length,
             "Please check parameter values"
         );
 
