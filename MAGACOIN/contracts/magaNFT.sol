@@ -1575,11 +1575,11 @@ contract MagaNFT is ERC721,Ownable {
      * @notice This function uses block.timestamp, msg.sender, and block.number as inputs
      *         to generate a pseudorandom number within the range of minMonths and maxMonths.
      */
-    function random() private returns (uint) {
-        uint minMonths = 7;
-        uint maxMonths = 11;
-        uint range = (maxMonths - minMonths) + 1;
-        uint months = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % range;
+    function random() private returns (uint256) {
+        uint256 minMonths = 7;
+        uint256 maxMonths = 11;
+        uint256 range = (maxMonths - minMonths) + 1;
+        uint256 months = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % range;
         months = months + minMonths;
         return months;
     }
