@@ -8,10 +8,9 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {  
+contract Vesting {    
     address public immutable owner; // Contract owner
-    address public immutable tokenContract; // Address of the token contract
-    uint256 public immutable deployTimestamp; // Deployment timestamp
+    address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
 
     // Mapping to store locked token amounts for each wallet
@@ -22,6 +21,9 @@ contract Vesting {
     
     // Mapping to store cliff periods for each wallet
     mapping(address => uint256) public cliffperiod;
+
+    // Mapping to store starting withdrawable amount of each wallet
+    mapping(address => uint256) public readytoUseAmt;
     
     // Mapping to store unlock dates for each wallet
     mapping(address => uint256) public unlockDate;
@@ -36,38 +38,44 @@ contract Vesting {
     event withdraw(address indexed _to, uint256 _amount);
   
     /**
-    * @dev Constructor function to initialize the vesting contract.
-    * @param _wallet An array of addresses representing the wallets to vest tokens.
-    * @param _tokenamount An array of token amounts corresponding to each wallet.
-    * @param _vestingTime An array of vesting periods in months for each wallet.
-    * @param _cliffperiod An array of cliff periods in months for each wallet.
+    * @dev Constructor function to initialize the vesting contract.   
     * @param _tokenContract The address of the token contract.
     */
-    constructor(
+    constructor(address _tokenContract) {
+        owner = msg.sender; // Set the contract owner        
+        tokenContract = _tokenContract; // Set the address of the token contract             
+    } 
+
+    /**
+    * @dev Function to add investors and initialize vesting parameters for each investor.
+    * @param _wallet An array of addresses representing the wallets of the investors.
+    * @param _tokenamount An array of token amounts corresponding to each investor.
+    * @param _vestingTime An array of vesting periods in months for each investor.
+    * @param _cliffperiod An array of cliff periods in months for each investor.
+    * @param _readytoUsePercentage An array of percentages representing the portion of tokens ready to use for each investor.
+    */
+    function addInvestors(
         address[] memory _wallet,
         uint[] memory _tokenamount,
         uint[] memory _vestingTime,
         uint[] memory _cliffperiod,
-        address _tokenContract
-    ) {
-        owner = msg.sender; // Set the contract owner
-        
-        tokenContract = _tokenContract; // Set the address of the token contract
-        deployTimestamp = block.timestamp; // Record the deployment timestamp
-        
+        uint[] memory _readytoUsePercentage       
+    ) public {  
         // Validate input parameter lengths
         require(
             _wallet.length == _tokenamount.length && 
             _wallet.length == _vestingTime.length &&
-            _wallet.length == _cliffperiod.length,
+            _wallet.length == _cliffperiod.length &&
+            _wallet.length == _readytoUse.length
             "Please check parameter values"
         );
 
         // Initialize vesting parameters for each wallet
         for(uint i = 0; i < _wallet.length; i++) {      
-            lockingWallet[_wallet[i]] = _tokenamount[i]; // Set the locked token amount for the wallet
+            lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
             VestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
             cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
+            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
             
             // Calculate and set the unlock date for the wallet based on the cliff period
             unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days)); 
@@ -106,7 +114,7 @@ contract Vesting {
     * @param user The address of the user for whom the vesting amount is being viewed.
     * @return The total vesting amount available for withdrawal.
     */
-    function releasedVestingAmount(address user) public view returns (uint){ 
+    function withdrawableAmount(address user) public view returns (uint){ 
         uint vestingAmt = 0; // Initialize the vesting amount
     
         // Iterate over the vesting periods
@@ -125,7 +133,7 @@ contract Vesting {
                 break; // Exit loop if the current period is not yet unlocked 
             } 
         } 
-        return vestingAmt; // Return the total vesting amount 
+        return readytoUseAmt[user]+vestingAmt; // Return the total vesting amount 
     }
     
     /**
@@ -158,8 +166,10 @@ contract Vesting {
             }
         }
 
-         // Transfer the accumulated withdrawal amount to the sender
+        withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
+        // Transfer the accumulated withdrawal amount to the sender
         Token(tokenContract).transfer(msg.sender, withdrawAMT);
+        readytoUseAmt[msg.sender]=0;
     
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
@@ -167,5 +177,7 @@ contract Vesting {
         // Return success
         return true;
     }
+   
+
     
 }
