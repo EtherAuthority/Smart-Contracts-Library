@@ -8,8 +8,7 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {    
-   
+contract Vesting {  
     address public immutable owner; // Contract owner
     address public immutable tokenContract; // Address of the token contract
     uint256 public immutable deployTimestamp; // Deployment timestamp
@@ -101,15 +100,13 @@ contract Vesting {
         } 
         return vestingMonth; // Return the number of completed vesting months 
     }
-
-
    
     /**
     * @dev View the total vesting amount available for withdrawal by the specified user.
     * @param user The address of the user for whom the vesting amount is being viewed.
     * @return The total vesting amount available for withdrawal.
     */
-    function ViewVestingAmount(address user) public view returns (uint){ 
+    function releasedVestingAmount(address user) public view returns (uint){ 
         uint vestingAmt = 0; // Initialize the vesting amount
     
         // Iterate over the vesting periods
@@ -130,7 +127,6 @@ contract Vesting {
         } 
         return vestingAmt; // Return the total vesting amount 
     }
-
     
     /**
     * @dev Allows users to withdraw tokens based on a vesting schedule.
@@ -171,7 +167,5 @@ contract Vesting {
         // Return success
         return true;
     }
-   
-
     
 }
