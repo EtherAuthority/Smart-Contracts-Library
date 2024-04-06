@@ -8,7 +8,7 @@
 */
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 /**
  * @dev Standard ERC20 Errors
@@ -1521,15 +1521,15 @@ contract MagaNFT is ERC721,Ownable {
     uint256 public  nftPrice = 2*10**16;
     uint256 public constant MAX_SUPPLY = 1000;
     uint256 public  totalSupply;
-    bool private implemented;
 
     mapping (uint256 => uint256) public magaCoinClaimTime;
-    mapping (uint256 => bool) private coinMinted;
+    mapping (uint256 => bool) public coinMinted;
     
     MagaCoin public magaCoin;
 
     event UpdateNFTPrice(uint256 updatedPrice);
     event ClaimCoin(address NFTOwner,uint256 amount);
+    event MagaCoinAddressSet(MagaCoin magaCoinAddress);
  
     // @dev Constructor to initialize the contract with a name and symbol, and set the initial owner.
     constructor()
@@ -1542,13 +1542,11 @@ contract MagaNFT is ERC721,Ownable {
      * @param _magaCoinAddress The address of the MagaCoin token contract.
      * Requirements:
      * - `_magaCoinAddress` cannot be the zero address.
-     * - The MagaCoin address cannot be set more than once.
      */
     function setMagaCoinAddress(address _magaCoinAddress)external onlyOwner{
         require(_magaCoinAddress != address(0),"Address can not be zero");
-        require(!implemented,"Magacoin address already set");
         magaCoin = MagaCoin(_magaCoinAddress);
-        implemented = true;
+        emit MagaCoinAddressSet(magaCoin);
     } 
 
     /**
