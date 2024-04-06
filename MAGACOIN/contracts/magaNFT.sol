@@ -1579,7 +1579,7 @@ contract MagaNFT is ERC721,Ownable {
         uint256 minMonths = 7;
         uint256 maxMonths = 11;
         uint256 range = (maxMonths - minMonths) + 1;
-        uint256 months = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % range;
+        uint256 months = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, block.number))) % range;
         months = months + minMonths;
         return months;
     }
@@ -1606,7 +1606,7 @@ contract MagaNFT is ERC721,Ownable {
      * - Marks the MagaCoin tokens as claimed for the specified NFT ID.
      * - Emits a ClaimCoin event.
      */
-    function claimMagaCoin(uint _nftId)external {
+    function claimMagaCoin(uint256 _nftId)external {
         require(magaCoinClaimTime[_nftId] <= block.timestamp,"You can not claim now please wait more");
         require(!coinMinted[_nftId],"Magacoin already claim for this NFT Id");
         
