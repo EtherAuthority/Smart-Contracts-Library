@@ -9,9 +9,9 @@ interface Token {
 }
 
 contract Vesting {    
-    address public immutable owner; // Contract owner
+    
     address public immutable tokenContract; // Address of the token contract   
-    uint256 private immutable onemonth = 31 days; // set onemonth
+    uint256 private immutable onemonth = 1 minutes; // set onemonth
 
     // Mapping to store locked token amounts for each wallet
     mapping(address => uint256) public lockingWallet;
@@ -41,8 +41,7 @@ contract Vesting {
     * @dev Constructor function to initialize the vesting contract.   
     * @param _tokenContract The address of the token contract.
     */
-    constructor(address _tokenContract) {
-        owner = msg.sender; // Set the contract owner        
+    constructor(address _tokenContract) {          
         tokenContract = _tokenContract; // Set the address of the token contract             
     } 
 
@@ -60,7 +59,8 @@ contract Vesting {
         uint[] memory _vestingTime,
         uint[] memory _cliffperiod,
         uint[] memory _readytoUsePercentage       
-    ) public {  
+    ) public { 
+       
         // Validate input parameter lengths
         require(
             _wallet.length == _tokenamount.length && 
@@ -71,14 +71,17 @@ contract Vesting {
         );
 
         // Initialize vesting parameters for each wallet
-        for(uint i = 0; i < _wallet.length; i++) {      
+        for(uint i = 0; i < _wallet.length; i++) {  
+            require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
+            require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
             lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
             VestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
             cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
             readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
             
             // Calculate and set the unlock date for the wallet based on the cliff period
-            unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days)); 
+            //unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days));
+            unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (300)); 
         }        
     }   
 
@@ -93,18 +96,19 @@ contract Vesting {
         // Iterate over the vesting periods
         for(uint i = 0; i < VestingTime[user]; i++) { 
             // Ensure the unlock date has passed for the current period
-            require(unlockDate[user] <= block.timestamp, "Unable to Withdraw"); 
+            if(unlockDate[user] <= block.timestamp){ 
             
-            // Check if the current period's unlock date has been reached
-            if(block.timestamp >= unlockDate[user] + (onemonth * i)) { 
-                // Check if the withdrawal for this period has not already occurred
-                if(withdrawdetails[user][i].time == 0) { 
-                    // Increment the count of completed vesting months
-                    vestingMonth++;                        
+                // Check if the current period's unlock date has been reached
+                if(block.timestamp >= unlockDate[user] + (onemonth * i)) { 
+                    // Check if the withdrawal for this period has not already occurred
+                    if(withdrawdetails[user][i].time == 0) { 
+                        // Increment the count of completed vesting months
+                        vestingMonth++;                        
+                    } 
+                } else { 
+                    break; // Exit loop if the current period is not yet unlocked 
                 } 
-            } else { 
-                break; // Exit loop if the current period is not yet unlocked 
-            } 
+            }
         } 
         return vestingMonth; // Return the number of completed vesting months 
     }
@@ -120,18 +124,18 @@ contract Vesting {
         // Iterate over the vesting periods
         for(uint i = 0; i < VestingTime[user]; i++) { 
             // Ensure the unlock date has passed for the current period
-            require(unlockDate[user] <= block.timestamp, "Unable to Withdraw"); 
-        
-            // Check if the current period's unlock date has been reached
-            if(block.timestamp >= unlockDate[user] + (onemonth * i)) { 
-            // Check if the withdrawal for this period has not already occurred
-                if(withdrawdetails[user][i].time == 0) { 
-                // Accumulate the vesting amount
-                vestingAmt += lockingWallet[user] / VestingTime[user];                        
+            if(unlockDate[user] <= block.timestamp){         
+                // Check if the current period's unlock date has been reached
+                if(block.timestamp >= unlockDate[user] + (onemonth * i)) { 
+                // Check if the withdrawal for this period has not already occurred
+                    if(withdrawdetails[user][i].time == 0) { 
+                    // Accumulate the vesting amount
+                    vestingAmt += lockingWallet[user] / VestingTime[user];                        
+                    } 
+                } else { 
+                    break; // Exit loop if the current period is not yet unlocked 
                 } 
-            } else { 
-                break; // Exit loop if the current period is not yet unlocked 
-            } 
+            }
         } 
         return readytoUseAmt[user]+vestingAmt; // Return the total vesting amount 
     }
@@ -145,28 +149,33 @@ contract Vesting {
         require(lockingWallet[msg.sender] > 0, "Wallet Address is not Exist"); 
     
         uint withdrawAMT = 0; // Initialize the withdrawal amount
+        //uint temp=0;
     
         // Iterate over the vesting periods
-        for(uint i = 1; i <= VestingTime[msg.sender]; i++) {
+        for(uint i = 0; i < VestingTime[msg.sender]; i++) {
             // Ensure the unlock date has passed for the current period
-            require(unlockDate[msg.sender] <= block.timestamp, "Unable to Withdraw");
+            if(unlockDate[msg.sender] <= block.timestamp){ 
         
-            // Check if the current period's unlock date has been reached
-            if(block.timestamp >= unlockDate[msg.sender] + (onemonth * i)) {
-                // Check if the withdrawal for this period has not already occurred
-                if(withdrawdetails[msg.sender][i].time == 0) {
-                // Calculate and accumulate the withdrawal amount
-                withdrawAMT += lockingWallet[msg.sender] / VestingTime[msg.sender];
-                
-                // Record the withdrawal details
-                withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / VestingTime[msg.sender]);
-                 }
-            } else {
-                break; // Exit loop if the current period is not yet unlocked
+                // Check if the current period's unlock date has been reached
+                if(block.timestamp >= unlockDate[msg.sender] + (onemonth * i)) {
+                    // Check if the withdrawal for this period has not already occurred
+                    if(withdrawdetails[msg.sender][i].time == 0) {
+                    // Calculate and accumulate the withdrawal amount
+                    withdrawAMT += lockingWallet[msg.sender] / VestingTime[msg.sender];
+                   // temp++;
+                    
+                    // Record the withdrawal details
+                    withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / VestingTime[msg.sender]);
+                    }
+                } else {
+                    break; // Exit loop if the current period is not yet unlocked
+                }
             }
         }
 
         withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
+        require(withdrawAMT!=0, "Unable to Withdraw"); 
+
         // Transfer the accumulated withdrawal amount to the sender
         Token(tokenContract).transfer(msg.sender, withdrawAMT);
         readytoUseAmt[msg.sender]=0;
