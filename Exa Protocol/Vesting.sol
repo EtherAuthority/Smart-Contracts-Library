@@ -53,7 +53,9 @@ contract Vesting {
     * @param _vestingTime An array of vesting periods in months for each investor.
     * @param _cliffperiod An array of cliff periods in months for each investor.
     * @param _readytoUsePercentage An array of percentages representing the portion of tokens ready to use for each investor.
-    */
+    * Auditor Note:- To overcome infinite loop of wallet length, we set max wallet array limit, to any one can add only 100 wallet addresses Max.
+    **/
+    
     function addInvestors(
         address[] memory _wallet,
         uint[] memory _tokenamount,
@@ -92,6 +94,7 @@ contract Vesting {
     * @dev View the number of completed vesting months for the specified user.
     * @param user The address of the user for whom the completed vesting months are being viewed.
     * @return The number of completed vesting months.
+    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     */
     function CompletedVestingMonth(address user) public view returns(uint){
         uint vestingMonth = 0; // Initialize the number of completed vesting months
@@ -101,7 +104,8 @@ contract Vesting {
             // Iterate over the vesting periods
             for(uint i = 0; i < VestingTime[user]; i++) { 
                 // Ensure the unlock date has passed for the current period
-                if(unlockDate[user] <= block.timestamp){                 
+                if(unlockDate[user] <= block.timestamp){ 
+                
                     // Check if the current period's unlock date has been reached
                     if(block.timestamp >= unlockDate[user] + (onemonth * i)) { 
                         // Check if the withdrawal for this period has not already occurred
@@ -122,6 +126,7 @@ contract Vesting {
     * @dev View the total vesting amount available for withdrawal by the specified user.
     * @param user The address of the user for whom the vesting amount is being viewed.
     * @return The total vesting amount available for withdrawal.
+    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     */
     function withdrawableAmount(address user) public view returns (uint){ 
         uint vestingAmt = 0; // Initialize the vesting amount
@@ -150,6 +155,7 @@ contract Vesting {
     /**
     * @dev Allows users to withdraw tokens based on a vesting schedule.
     * @return A boolean indicating the success of the withdrawal operation.
+    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     */
     function withdrawTokens() public returns (bool){
         // Ensure the sender has a locked wallet
@@ -157,12 +163,13 @@ contract Vesting {
 
         // Initialize the withdrawal amount
         uint withdrawAMT = 0; 
-        // check max vesting time limit
+       // check max vesting time limit
         if(maxVestingTime >= VestingTime[msg.sender]){
             // Iterate over the vesting periods
             for(uint i = 0; i < VestingTime[msg.sender]; i++) {
                 // Ensure the unlock date has passed for the current period
-                if(unlockDate[msg.sender] <= block.timestamp){             
+                if(unlockDate[msg.sender] <= block.timestamp){ 
+            
                     // Check if the current period's unlock date has been reached
                     if(block.timestamp >= unlockDate[msg.sender] + (onemonth * i)) {
                         // Check if the withdrawal for this period has not already occurred
@@ -171,7 +178,8 @@ contract Vesting {
                             withdrawAMT += lockingWallet[msg.sender] / VestingTime[msg.sender]; 
                             // Record the withdrawal details
                             withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / VestingTime[msg.sender]);
-                        }                        
+                        }
+                        
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
