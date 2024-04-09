@@ -8,7 +8,8 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {
+contract Vesting {    
+    
     address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
@@ -18,7 +19,7 @@ contract Vesting {
     mapping(address => uint256) public lockingWallet;
     
     // Mapping to store vesting periods for each wallet
-    mapping(address => uint256) public VestingTime;
+    mapping(address => uint256) public vestingTime;
     
     // Mapping to store cliff periods for each wallet
     mapping(address => uint256) public cliffperiod;
@@ -57,7 +58,7 @@ contract Vesting {
     *                To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     **/
     
-    function addInvestors(
+    function createVesting(
         address[] memory _wallet,
         uint[] memory _tokenamount,
         uint[] memory _vestingTime,
@@ -80,11 +81,12 @@ contract Vesting {
          // Initialize vesting parameters for each wallet
         for(uint i = 0; i < _wallet.length; i++) {  
             require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
+            require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
             require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
             lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
-            VestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
+            vestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
 
             require(maxVestingTime >= _cliffperiod[i],"You can add maximum 100 months!");
             cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
@@ -106,7 +108,7 @@ contract Vesting {
         uint vestingMonth = 0; // Initialize the number of completed vesting months        
 
             // Iterate over the vesting periods
-            for(uint i = 0; i < VestingTime[user]; i++) { 
+            for(uint i = 0; i < vestingTime[user]; i++) { 
                 // Ensure the unlock date has passed for the current period
                 if(unlockDate[user] <= block.timestamp){ 
                 
@@ -135,7 +137,7 @@ contract Vesting {
         uint vestingAmt = 0; // Initialize the vesting amount
         
             // Iterate over the vesting periods
-            for(uint i = 0; i < VestingTime[user]; i++) { 
+            for(uint i = 0; i < vestingTime[user]; i++) { 
                 // Ensure the unlock date has passed for the current period
                 if(unlockDate[user] <= block.timestamp){         
                     // Check if the current period's unlock date has been reached
@@ -143,7 +145,7 @@ contract Vesting {
                     // Check if the withdrawal for this period has not already occurred
                         if(withdrawdetails[user][i].time == 0) { 
                         // Accumulate the vesting amount
-                        vestingAmt += lockingWallet[user] / VestingTime[user];                        
+                        vestingAmt += lockingWallet[user] / vestingTime[user];                        
                         } 
                     } else { 
                         break; // Exit loop if the current period is not yet unlocked 
@@ -166,7 +168,7 @@ contract Vesting {
         uint withdrawAMT = 0; 
        
             // Iterate over the vesting periods
-            for(uint i = 0; i < VestingTime[msg.sender]; i++) {
+            for(uint i = 0; i < vestingTime[msg.sender]; i++) {
                 // Ensure the unlock date has passed for the current period
                 if(unlockDate[msg.sender] <= block.timestamp){ 
             
@@ -175,9 +177,9 @@ contract Vesting {
                         // Check if the withdrawal for this period has not already occurred
                         if(withdrawdetails[msg.sender][i].time == 0) {
                             // Calculate and accumulate the withdrawal amount
-                            withdrawAMT += lockingWallet[msg.sender] / VestingTime[msg.sender]; 
+                            withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
                             // Record the withdrawal details
-                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / VestingTime[msg.sender]);
+                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
                         }
                         
                     } else {
