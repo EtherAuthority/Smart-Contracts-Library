@@ -8,8 +8,7 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {    
-    
+contract Vesting {
     address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
