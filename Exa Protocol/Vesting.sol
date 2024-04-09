@@ -8,7 +8,8 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {
+contract Vesting {    
+    
     address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
@@ -54,6 +55,7 @@ contract Vesting {
     * @param _cliffperiod An array of cliff periods in months for each investor.
     * @param _readytoUsePercentage An array of percentages representing the portion of tokens ready to use for each investor.
     * Auditor Note:- To overcome infinite loop of wallet length, we set max wallet array limit, to any one can add only 100 wallet addresses Max.
+    *                To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     **/
     
     function addInvestors(
@@ -74,33 +76,36 @@ contract Vesting {
         );
 
         // check max wallet limit
-        if(maxWalletLimit >= _wallet.length){
-            // Initialize vesting parameters for each wallet
-            for(uint i = 0; i < _wallet.length; i++) {  
-                require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
-                require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
-                lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
-                VestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
-                cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
-                readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
+        require(maxWalletLimit >= _wallet.length,"You can add maximum 100 wallets!");
+       
+         // Initialize vesting parameters for each wallet
+        for(uint i = 0; i < _wallet.length; i++) {  
+            require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
+            require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
+            lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
+
+            require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
+            VestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
+
+            require(maxVestingTime >= _cliffperiod[i],"You can add maximum 100 months!");
+            cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
+
+            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
                 
-                // Calculate and set the unlock date for the wallet based on the cliff period
-                unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days));                
-            } 
-        }       
+            // Calculate and set the unlock date for the wallet based on the cliff period
+            unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days));                
+        } 
+               
     }   
 
     /**
     * @dev View the number of completed vesting months for the specified user.
     * @param user The address of the user for whom the completed vesting months are being viewed.
-    * @return The number of completed vesting months.
-    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
+    * @return The number of completed vesting months.   
     */
     function CompletedVestingMonth(address user) public view returns(uint){
-        uint vestingMonth = 0; // Initialize the number of completed vesting months
+        uint vestingMonth = 0; // Initialize the number of completed vesting months        
 
-        // check max vesting time limit
-        if(maxVestingTime >= VestingTime[user]){
             // Iterate over the vesting periods
             for(uint i = 0; i < VestingTime[user]; i++) { 
                 // Ensure the unlock date has passed for the current period
@@ -118,20 +123,18 @@ contract Vesting {
                     } 
                 }
             } 
-        }
+        
         return vestingMonth; // Return the number of completed vesting months 
     }
    
     /**
     * @dev View the total vesting amount available for withdrawal by the specified user.
     * @param user The address of the user for whom the vesting amount is being viewed.
-    * @return The total vesting amount available for withdrawal.
-    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
+    * @return The total vesting amount available for withdrawal.    
     */
     function withdrawableAmount(address user) public view returns (uint){ 
         uint vestingAmt = 0; // Initialize the vesting amount
-        // check max vesting time limit
-        if(maxVestingTime >= VestingTime[user]){
+        
             // Iterate over the vesting periods
             for(uint i = 0; i < VestingTime[user]; i++) { 
                 // Ensure the unlock date has passed for the current period
@@ -148,14 +151,13 @@ contract Vesting {
                     } 
                 }
             } 
-        }
+        
         return readytoUseAmt[user]+vestingAmt; // Return the total vesting amount 
     }
     
     /**
     * @dev Allows users to withdraw tokens based on a vesting schedule.
     * @return A boolean indicating the success of the withdrawal operation.
-    * Auditor Note:- To overcome infinite loop of vesting time array length, we set max vesting time limit, to any one can add only 100 months Max.
     */
     function withdrawTokens() public returns (bool){
         // Ensure the sender has a locked wallet
@@ -163,8 +165,7 @@ contract Vesting {
 
         // Initialize the withdrawal amount
         uint withdrawAMT = 0; 
-       // check max vesting time limit
-        if(maxVestingTime >= VestingTime[msg.sender]){
+       
             // Iterate over the vesting periods
             for(uint i = 0; i < VestingTime[msg.sender]; i++) {
                 // Ensure the unlock date has passed for the current period
@@ -185,7 +186,7 @@ contract Vesting {
                     }
                 }
             }
-        }
+        
         withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
         require(withdrawAMT!=0, "Unable to Withdraw"); 
 
