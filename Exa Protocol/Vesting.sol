@@ -14,7 +14,7 @@ contract Vesting {
     uint256 public immutable maxWalletLimit=100; //set wallet limit
     uint256 public immutable maxVestingTime=100; // set vesting time limit
     uint256 private  totalNoOfvesting=0; //set total number of vesting
-    uint256 public totalvestingAMT; // set total vesting amount 
+    uint256 private  totalVestingAMT; // set total vesting amount 
 
     // Mapping to store locked token amounts for each wallet
     mapping(address => uint256) public lockingWallet;
@@ -86,7 +86,7 @@ contract Vesting {
             require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
             require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");                 
 
-            totalvestingAMT += _tokenamount[i];
+            totalVestingAMT += _tokenamount[i];
             
             require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
             readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
@@ -102,13 +102,10 @@ contract Vesting {
             
             // Calculate and set the unlock date for the wallet based on the cliff period
             unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days)); 
-            
-            
-
             totalNoOfvesting++;              
         } 
-
-        Token(tokenContract).transferFrom(msg.sender,address(this),totalvestingAMT);       
+        // transfer total vesting amount to the vesting contract
+        Token(tokenContract).transferFrom(msg.sender,address(this),totalVestingAMT);       
     }   
 
     /**
