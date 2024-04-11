@@ -8,8 +8,7 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {    
-    
+contract Vesting { 
     address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
@@ -84,8 +83,11 @@ contract Vesting {
             require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
             require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
             require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
-
-            require(maxVestingTime > totalNoOfvesting,"You can add maximum 100 wallets!");
+            
+            require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
+            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
+                
+            require(maxWalletLimit > totalNoOfvesting,"You can add maximum 100 wallets!");
             lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
@@ -93,10 +95,7 @@ contract Vesting {
 
             require(maxVestingTime >= _cliffperiod[i],"You can add maximum 100 months!");
             cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
-
-            require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
-            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
-                
+            
             // Calculate and set the unlock date for the wallet based on the cliff period
             unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days));  
 
@@ -186,8 +185,7 @@ contract Vesting {
                             withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
                             // Record the withdrawal details
                             withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
-                        }
-                        
+                        }                        
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
