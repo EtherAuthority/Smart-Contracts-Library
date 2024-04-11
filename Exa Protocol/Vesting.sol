@@ -8,12 +8,13 @@ interface Token {
     function balanceOf(address to) external returns(uint256);
 }
 
-contract Vesting {    
-    
+contract Vesting { 
     address public immutable tokenContract; // Address of the token contract   
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
-    uint256 public immutable maxVestingTime=100; // set vesting time limit 
+    uint256 public immutable maxVestingTime=100; // set vesting time limit
+    uint256 private  totalNoOfvesting=0; //set total number of vesting
+    uint256 private  totalVestingAMT; // set total vesting amount 
 
     // Mapping to store locked token amounts for each wallet
     mapping(address => uint256) public lockingWallet;
@@ -66,6 +67,7 @@ contract Vesting {
         uint[] memory _readytoUsePercentage       
     ) public { 
        
+        require(Token(tokenContract).balanceOf(msg.sender)>0,"Only token holder can create vesting!");
         // Validate input parameter lengths
         require(
             _wallet.length == _tokenamount.length && 
@@ -76,27 +78,34 @@ contract Vesting {
         );
 
         // check max wallet limit
-        require(maxWalletLimit >= _wallet.length,"You can add maximum 100 wallets!");
+        require(maxWalletLimit >= _wallet.length ,"You can add maximum 100 wallets!");
        
          // Initialize vesting parameters for each wallet
         for(uint i = 0; i < _wallet.length; i++) {  
             require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
             require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
-            require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
-            lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
+            require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");                 
+
+            totalVestingAMT += _tokenamount[i];
+            
+            require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
+            readytoUseAmt[_wallet[i]]=((_tokenamount[i]*10**8) * _readytoUsePercentage[i]) / 100;
+                
+            require(maxWalletLimit > totalNoOfvesting,"You can add maximum 100 wallets!");
+            lockingWallet[_wallet[i]] = ((_tokenamount[i]*10**8) * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
             vestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
 
             require(maxVestingTime >= _cliffperiod[i],"You can add maximum 100 months!");
             cliffperiod[_wallet[i]] = _cliffperiod[i]; // Set the cliff period for the wallet
-
-            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
-                
+            
             // Calculate and set the unlock date for the wallet based on the cliff period
-            unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days));                
+            unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days)); 
+            totalNoOfvesting++;              
         } 
-               
+        // transfer total vesting amount to the vesting contract
+        Token(tokenContract).transferFrom(msg.sender,address(this),totalVestingAMT);       
     }   
 
     /**
@@ -153,7 +162,7 @@ contract Vesting {
                 }
             } 
         
-        return readytoUseAmt[user]+vestingAmt; // Return the total vesting amount 
+        return (readytoUseAmt[user]+vestingAmt)/10**8; // Return the total vesting amount // Return the total vesting amount 
     }
     
     /**
@@ -177,9 +186,9 @@ contract Vesting {
                         // Check if the withdrawal for this period has not already occurred
                         if(withdrawdetails[msg.sender][i].time == 0) {
                             // Calculate and accumulate the withdrawal amount
-                            withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
+                            withdrawAMT += (lockingWallet[msg.sender] / vestingTime[msg.sender]); 
                             // Record the withdrawal details
-                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
+                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, (lockingWallet[msg.sender] / vestingTime[msg.sender])/10**8);
                         }
                         
                     } else {
@@ -188,13 +197,14 @@ contract Vesting {
                 }
             }
         
-        withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
+        withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender])/10**8;
         require(withdrawAMT!=0, "Unable to Withdraw"); 
 
+        readytoUseAmt[msg.sender]=0;
+        lockingWallet[msg.sender]=0;
         // Transfer the accumulated withdrawal amount to the sender
         Token(tokenContract).transfer(msg.sender, withdrawAMT);
-        readytoUseAmt[msg.sender]=0;
-    
+      
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
     
