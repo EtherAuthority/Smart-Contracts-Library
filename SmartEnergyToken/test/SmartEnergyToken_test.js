@@ -262,6 +262,33 @@ describe("smartEnergyToken contract", function () {
         await expect(ico.connect(address1).buyTokens(numberOfTokens, { value: totalCost - 1 }))
           .to.be.revertedWith("Insufficient ETH sent");
       });
+      it("recover tokens", async function () {
+        const ownerInitialBalance = await smartEnergyToken.balanceOf(owner.address);
+        await smartEnergyToken.connect(owner).transfer(ico,smartEnergyToken.balanceOf(owner.address));
+ 
+        // Call recoverToken function
+        await ico.connect(owner).recoverToken();
+    
+        // Check if tokens are transferred back to the owner
+        const ownerFinalBalance = await smartEnergyToken.balanceOf(owner.address);
+        expect(await ownerInitialBalance).to.equal(ownerFinalBalance);
+      });
+      it("should revert try to recover tokens from non-owner address", async function () {
+        await smartEnergyToken.connect(owner).transfer(ico,smartEnergyToken.balanceOf(owner.address));
+        // Call recoverToken function will reverted
+        await expect(ico.connect(address1).recoverToken()).to.reverted;
+      });
+      it("Should return available tokens", async function () {
+        //transfer token to ico contract
+        await smartEnergyToken.connect(owner).transfer(ico,smartEnergyToken.balanceOf(owner.address));
+
+        // Call availableToken function
+        const availableTokens = await ico.availableToken();
+    
+        // Check if the returned value matches the balance of tokens held by the ICO contract
+        const expectedTokens = await smartEnergyToken.balanceOf(ico);
+        expect(availableTokens).to.equal(expectedTokens);
+      });
     });
        
         
