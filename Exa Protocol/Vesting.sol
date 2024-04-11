@@ -189,8 +189,7 @@ contract Vesting {
                             withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
                             // Record the withdrawal details
                             withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
-                        }
-                        
+                        }                        
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
@@ -200,10 +199,12 @@ contract Vesting {
         withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
         require(withdrawAMT!=0, "Unable to Withdraw"); 
 
-        // Transfer the accumulated withdrawal amount to the sender
-        Token(tokenContract).transfer(msg.sender, withdrawAMT);
         readytoUseAmt[msg.sender]=0;
-    
+        lockingWallet[msg.sender]=0;
+
+        // Transfer the accumulated withdrawal amount to the sender
+        Token(tokenContract).transfer(msg.sender, withdrawAMT); 
+
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
     
