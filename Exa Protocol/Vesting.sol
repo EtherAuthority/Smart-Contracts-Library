@@ -89,10 +89,10 @@ contract Vesting {
             totalVestingAMT += _tokenamount[i];
             
             require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
-            readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
+            readytoUseAmt[_wallet[i]]=((_tokenamount[i]*10**8) * _readytoUsePercentage[i]) / 100;
                 
             require(maxWalletLimit > totalNoOfvesting,"You can add maximum 100 wallets!");
-            lockingWallet[_wallet[i]] = (_tokenamount[i] * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
+            lockingWallet[_wallet[i]] = ((_tokenamount[i]*10**8) * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
             vestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
@@ -162,7 +162,7 @@ contract Vesting {
                 }
             } 
         
-        return readytoUseAmt[user]+vestingAmt; // Return the total vesting amount 
+        return (readytoUseAmt[user]+vestingAmt)/10**8; // Return the total vesting amount // Return the total vesting amount 
     }
     
     /**
@@ -186,25 +186,25 @@ contract Vesting {
                         // Check if the withdrawal for this period has not already occurred
                         if(withdrawdetails[msg.sender][i].time == 0) {
                             // Calculate and accumulate the withdrawal amount
-                            withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
+                            withdrawAMT += (lockingWallet[msg.sender] / vestingTime[msg.sender]); 
                             // Record the withdrawal details
-                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
-                        }                        
+                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, (lockingWallet[msg.sender] / vestingTime[msg.sender])/10**8);
+                        }
+                        
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
                 }
             }
         
-        withdrawAMT=withdrawAMT+readytoUseAmt[msg.sender];
+        withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender])/10**8;
         require(withdrawAMT!=0, "Unable to Withdraw"); 
 
         readytoUseAmt[msg.sender]=0;
         lockingWallet[msg.sender]=0;
-
         // Transfer the accumulated withdrawal amount to the sender
-        Token(tokenContract).transfer(msg.sender, withdrawAMT); 
-
+        Token(tokenContract).transfer(msg.sender, withdrawAMT);
+      
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
     
