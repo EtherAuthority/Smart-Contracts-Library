@@ -66,7 +66,7 @@ contract Vesting {
         uint[] memory _readytoUsePercentage       
     ) public { 
        
-        require(Token(tokenContract).balanceOf(msg.sender)>0,"Only token holder can add vesting!");
+        require(Token(tokenContract).balanceOf(msg.sender)>0,"Only token holder can create vesting!");
         // Validate input parameter lengths
         require(
             _wallet.length == _tokenamount.length && 
