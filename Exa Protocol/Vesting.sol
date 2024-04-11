@@ -66,6 +66,7 @@ contract Vesting {
         uint[] memory _readytoUsePercentage       
     ) public { 
        
+        require(Token(tokenContract).balanceOf(msg.sender)>0,"Only token holder can add vesting!");
         // Validate input parameter lengths
         require(
             _wallet.length == _tokenamount.length && 
@@ -83,6 +84,7 @@ contract Vesting {
             require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
             require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
             require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");     
+            
             
             require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
             readytoUseAmt[_wallet[i]]=(_tokenamount[i] * _readytoUsePercentage[i]) / 100;
@@ -185,7 +187,8 @@ contract Vesting {
                             withdrawAMT += lockingWallet[msg.sender] / vestingTime[msg.sender]; 
                             // Record the withdrawal details
                             withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, lockingWallet[msg.sender] / vestingTime[msg.sender]);
-                        }                        
+                        }
+                        
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
