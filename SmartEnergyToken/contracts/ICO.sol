@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-interface SmartEnergyToken{
+interface IERC20{
  function transfer(address to, uint256 numberOfTokens) external;
   function balanceOf(address account) external view returns (uint256);
 }
@@ -103,7 +103,7 @@ contract Ownable is Context {
 }
 
 contract ICO is Ownable{
-    SmartEnergyToken public token; // The token being sold
+    IERC20 public token; // The token being sold
     
     uint256 public tokenPrice; // Price of each token in Wei
 
@@ -113,7 +113,7 @@ contract ICO is Ownable{
     event RecoveredToken(uint256 recoverToken);
 
     constructor(address _tokenAddress, uint256 _tokenPriceInWei) Ownable(msg.sender) {
-        token = SmartEnergyToken(_tokenAddress);
+        token = IERC20(_tokenAddress);
         tokenPrice = _tokenPriceInWei;
     }
 
@@ -147,5 +147,13 @@ contract ICO is Ownable{
         require(tokenBalance > 0,"Not sufficient token balance");
         token.transfer((owner()), tokenBalance);
         emit RecoveredToken(tokenBalance);
+    }
+    /**
+    * @notice Retrieves the number of tokens available in the ICO contract.
+    * @dev This function allows external callers to check the balance of tokens held by the ICO contract.
+    * @return The number of tokens available in the ICO contract.
+    */
+    function availableToken() external view returns(uint256){
+        return token.balanceOf(address(this));
     }
 }
