@@ -253,6 +253,21 @@ describe("smartEnergyToken contract", function () {
         console.log(await smartEnergyToken.balanceOf(address1.address));
         expect(await ico.availableToken()).to.equal(balanceAfterTransfer);
     });
+    it("buy token using address1 and transfer to address2",async function(){
+        await smartEnergyToken.connect(owner).transfer(ico,smartEnergyToken.balanceOf(owner.address));
+        expect(await ico.availableToken()).to.equal("500000000000000000000000000000");
+        let numberOfToken = 10;
+        let totalCost = 100*numberOfToken;
+        await ico.connect(address1).buyTokens(numberOfToken, { value: totalCost });
+        expect (await smartEnergyToken.balanceOf(address1.address)).to.equal("10000000000000000000");
+        let balanceAfterTransfer = 500000000000000000000000000000n - 10000000000000000000n;
+        console.log(await ico.availableToken());
+        console.log(await smartEnergyToken.balanceOf(address1.address));
+        expect(await ico.availableToken()).to.equal(balanceAfterTransfer);
+        await smartEnergyToken.connect(address1).transfer(address2.address,"2000000000000000000");
+        expect(await smartEnergyToken.balanceOf(address2.address)).to.equal("2000000000000000000");
+        expect(await smartEnergyToken.balanceOf(address1.address)).to.equal(10000000000000000000n-2000000000000000000n);
+    });
     it("Should revert if insufficient ETH sent", async function () {
 
         const numberOfTokens = 5;
