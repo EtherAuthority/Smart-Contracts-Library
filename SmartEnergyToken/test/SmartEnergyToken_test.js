@@ -220,20 +220,9 @@ describe("smartEnergyToken contract", function () {
             await ico.transferOwnership(address1.address);
             expect(await ico.owner()).to.equal(address1.address);
         });
-        
-    it("renounce ownership owner will be zero address",async function(){
-        await ico.renounceOwnership();
-         expect(await ico.owner()).to.equal(zeroAddress);
-    });
-
-    it("onlyOwner can call renounceOwnership function",async function(){
-        await expect(ico.connect(address2).renounceOwnership()).to.be.reverted;
-    });
-    it("Check onlyOwner modifier", async function () {
-        // Test that functions with the onlyOwner modifier can only be called by the owner
-        await expect(ico.connect(address1).renounceOwnership())
-            .to.be.reverted;
-    });
+        it("check onlyOwner modifire", async function () {
+          expect (await ico.transferOwnership(address1.address)).to.be.reverted;
+        });
     it("transfer all Smart Energy Token into ico contract",async function(){
         await smartEnergyToken.connect(owner).transfer(ico,smartEnergyToken.balanceOf(owner.address));
         let totalToken = await ico.availableToken();

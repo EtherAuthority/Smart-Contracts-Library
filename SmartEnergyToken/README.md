@@ -20,7 +20,7 @@ This README provides an overview of the functionalities and usage of the Smart E
 ## Overview of ICO
 
 ### Initialization
-- Initializes the contract with the token address and the token price in Wei. Only the contract deployer becomes the initial owner.
+- Initializes the contract with the Smart EnergyT Token address and the token price in Wei. Only the contract deployer becomes the initial owner.
 ### Featurns
 #### To use the ICO contract, follow these steps:
 ##### 1. Token Purchase Function (buyTokens):
@@ -81,6 +81,25 @@ This README provides an overview of the functionalities and usage of the Smart E
 
 ## BSC Testnet Transaction
 ```
+Smart Energy Token contract testnet address
+[Smart Energy Token contract](https://testnet.bscscan.com/address/0xcae23B9777Efd004C11B50C297700dD1167A6FBa#code)
+
+ICO smart contract testnet address
+      I have set token price 1 Wei for testing purpose
+[ICO SMART CONTRACT](https://testnet.bscscan.com/address/0xEd9B8dBBb9a9b85223e45353Fd23B7a493C1a5bd#code)
+
+Sent token to ICO contract
+https://testnet.bscscan.com/tx/0xca3f7f56e93d1179f92e6819cade2a7661c6eab56d0feb8cbbb666872eadefdf
+
+Buy token
+https://testnet.bscscan.com/tx/0xa2151ea1c2d657efb5b10bd42836c5b0f1d13fcd7e4840001a8d254e2dfa073e
+
+Transfer ownership using owner address
+https://testnet.bscscan.com/tx/0x80ff0cd2b00ceeb6da0526e1fda382f786dfb8d2cf11e57ef2621b9f7ae06c7f
+
+recover token using owner address
+https://testnet.bscscan.com/tx/0x6652c435c0182ab6c75d43308bd97500c3b84e899acca0edfcc515a446246b51
+
 
 Notes
 
