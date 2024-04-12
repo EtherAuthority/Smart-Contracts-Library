@@ -445,7 +445,7 @@ contract CENTI is owned {
         for(uint i = 0; i < totalAddresses; i++)
         {
           //This will loop through all the recipients and send them the specified tokens
-          //Input data validation is unncessary, as that is done by SafeMath and which also saves some gas.
+          //Input data validation is unnecessary, as that is done by SafeMath and which also saves some gas.
           transfer(recipients[i], tokenAmount[i]);
         }
         return true;
