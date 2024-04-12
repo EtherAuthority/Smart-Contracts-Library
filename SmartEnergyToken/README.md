@@ -82,24 +82,23 @@ This README provides an overview of the functionalities and usage of the Smart E
 ## BSC Testnet Transaction
 ```
 Smart Energy Token contract testnet address
-[Smart Energy Token contract](https://testnet.bscscan.com/address/0xcae23B9777Efd004C11B50C297700dD1167A6FBa#code)
+[Smart Energy Token contract](https://testnet.bscscan.com/address/0x479ff45f7BCe645CCca22B33ADcac0c664Cd0B45#code)
 
 ICO smart contract testnet address
       I have set token price 1 Wei for testing purpose
-[ICO SMART CONTRACT](https://testnet.bscscan.com/address/0xEd9B8dBBb9a9b85223e45353Fd23B7a493C1a5bd#code)
+[ICO SMART CONTRACT](https://testnet.bscscan.com/address/0xE99f24451335D85111040527097756B292B5cAc9#code)
 
 Sent token to ICO contract
-https://testnet.bscscan.com/tx/0xca3f7f56e93d1179f92e6819cade2a7661c6eab56d0feb8cbbb666872eadefdf
+https://testnet.bscscan.com/tx/0xf0ab87b6d161bcc7f5bf960325099af4adb02056e7affec65e50843024e0aa1b
 
 Buy token
-https://testnet.bscscan.com/tx/0xa2151ea1c2d657efb5b10bd42836c5b0f1d13fcd7e4840001a8d254e2dfa073e
+https://testnet.bscscan.com/tx/0xc7ed8973fecf69c8123f42b7cd9c3605593947288040919a4104187ed649bc08
 
 Transfer ownership using owner address
-https://testnet.bscscan.com/tx/0x80ff0cd2b00ceeb6da0526e1fda382f786dfb8d2cf11e57ef2621b9f7ae06c7f
+https://testnet.bscscan.com/tx/0x6b6ecc0edc49a2b01340a3964d383abcfddaf68a6ae1e243b0d2e62f1e981c1d
 
 recover token using owner address
-https://testnet.bscscan.com/tx/0x6652c435c0182ab6c75d43308bd97500c3b84e899acca0edfcc515a446246b51
-
+https://testnet.bscscan.com/tx/0x1127122350f3c86d3103fb102b27eb2d2663a0818650c239b2f84c9d00848777
 
 Notes
 
