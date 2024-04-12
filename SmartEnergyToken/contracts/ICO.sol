@@ -119,8 +119,8 @@ contract ICO is Ownable{
         uint256 totalCost = numberOfTokens * tokenPrice;
         require(msg.value >= totalCost, "Insufficient ETH sent");
         token.transfer(msg.sender, numberOfTokens*10**18);
-        payable(owner()).transfer(totalCost);
-        emit TokensPurchased(msg.sender, numberOfTokens, totalCost);
+        payable(owner()).transfer(msg.value);
+        emit TokensPurchased(msg.sender, numberOfTokens, msg.value);
     }
     
     /* 
