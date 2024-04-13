@@ -116,9 +116,9 @@ contract ICO is Ownable{
      * @return No return value. Emits a TokensPurchased event upon successful token purchase.
     */
     function buyTokens(uint256 numberOfTokens) external payable {
-        uint256 totalCost = numberOfTokens * tokenPrice;
+        uint256 totalCost = numberOfTokens * tokenPrice / 1*10**18;
         require(msg.value >= totalCost, "Insufficient ETH sent");
-        token.transfer(msg.sender, numberOfTokens*10**18);
+        token.transfer(msg.sender, numberOfTokens);
         payable(owner()).transfer(msg.value);
         emit TokensPurchased(msg.sender, numberOfTokens, msg.value);
     }
