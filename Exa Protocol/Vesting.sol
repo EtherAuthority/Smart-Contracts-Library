@@ -6,6 +6,7 @@ interface Token {
     function transfer(address to, uint256 amount) external returns(bool);
     function transferFrom(address from, address to, uint256 amount) external returns(bool);
     function balanceOf(address to) external returns(uint256);
+    function decimals() external view returns (uint8);
 }
 
 contract Vesting { 
@@ -82,17 +83,17 @@ contract Vesting {
        
          // Initialize vesting parameters for each wallet
         for(uint i = 0; i < _wallet.length; i++) {  
-            require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
-            require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");
-            require(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0,"Please check added info, it must be greater then 0!");                 
-
-            totalVestingAMT += _tokenamount[i];
             
+            if(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0){ 
+
+            require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
             require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
-            readytoUseAmt[_wallet[i]]=((_tokenamount[i]*10**8) * _readytoUsePercentage[i]) / 100;
-                
+            readytoUseAmt[_wallet[i]]=((_tokenamount[i]) * _readytoUsePercentage[i]) / 100;
+            
+            require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");              
             require(maxWalletLimit > totalNoOfvesting,"You can add maximum 100 wallets!");
-            lockingWallet[_wallet[i]] = ((_tokenamount[i]*10**8) * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
+            lockingWallet[_wallet[i]] = ((_tokenamount[i]) * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
+            totalVestingAMT += _tokenamount[i]; 
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
             vestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
@@ -102,7 +103,8 @@ contract Vesting {
             
             // Calculate and set the unlock date for the wallet based on the cliff period
             unlockDate[_wallet[i]] = block.timestamp + (_cliffperiod[i] * (31 days)); 
-            totalNoOfvesting++;              
+            totalNoOfvesting++; 
+            }             
         } 
         // transfer total vesting amount to the vesting contract
         Token(tokenContract).transferFrom(msg.sender,address(this),totalVestingAMT);       
@@ -162,7 +164,7 @@ contract Vesting {
                 }
             } 
         
-        return (readytoUseAmt[user]+vestingAmt)/10**8; // Return the total vesting amount // Return the total vesting amount 
+        return (readytoUseAmt[user]+vestingAmt); // Return the total vesting amount 
     }
     
     /**
@@ -188,7 +190,7 @@ contract Vesting {
                             // Calculate and accumulate the withdrawal amount
                             withdrawAMT += (lockingWallet[msg.sender] / vestingTime[msg.sender]); 
                             // Record the withdrawal details
-                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, (lockingWallet[msg.sender] / vestingTime[msg.sender])/10**8);
+                            withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, (lockingWallet[msg.sender] / vestingTime[msg.sender]));
                         }
                         
                     } else {
@@ -197,14 +199,13 @@ contract Vesting {
                 }
             }
         
-        withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender])/10**8;
-        require(withdrawAMT!=0, "Unable to Withdraw"); 
-
+        withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender]);
+        require(withdrawAMT!=0, "Unable to Withdraw");
         readytoUseAmt[msg.sender]=0;
-        lockingWallet[msg.sender]=0;
+
         // Transfer the accumulated withdrawal amount to the sender
-        Token(tokenContract).transfer(msg.sender, withdrawAMT);
-      
+        Token(tokenContract).transfer(msg.sender, withdrawAMT);     
+    
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
     
