@@ -87,7 +87,7 @@ contract Vesting {
          // Initialize vesting parameters for each wallet
         for(uint i = 0; i < _wallet.length; i++) {  
             
-            if(_tokenamount[i]>0 && _vestingTime[i]>0 && _readytoUsePercentage[i] >0){ 
+            if(_tokenamount[i]>0 && _vestingTime[i]>0){ 
 
             require(_wallet[i]!=address(0),"Please add valid wallet address!"); 
             require(_readytoUsePercentage[i] <= 100,"You can add maximum 100 Percentage!");
@@ -191,24 +191,26 @@ contract Vesting {
                     if(block.timestamp >= unlockDate[msg.sender] + (onemonth * i)) {
                         // Check if the withdrawal for this period has not already occurred
                         if(withdrawdetails[msg.sender][i].time == 0) {
+                           
                             // Calculate and accumulate the withdrawal amount
                             withdrawAMT += (lockingWallet[msg.sender] / vestingTime[msg.sender]); 
                             // Record the withdrawal details
                             withdrawdetails[msg.sender][i] = _withdrawdetails(block.timestamp, (lockingWallet[msg.sender] / vestingTime[msg.sender]));
+
+                            // for transfering all locked amount
+                            if(i==(vestingTime[msg.sender]-1)){
+                                withdrawAMT += (lockedAmount[msg.sender]-withdrawAMT);
+                            }
                         }
                         
                     } else {
                         break; // Exit loop if the current period is not yet unlocked
                     }
                 }
-            }
-
-         
+            }         
         
         withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender]);
-        require(withdrawAMT!=0, "Unable to Withdraw"); 
-
-        
+        require(withdrawAMT!=0, "Unable to Withdraw");         
         
         // Transfer the accumulated withdrawal amount to the sender
         Token(tokenContract).transfer(msg.sender, withdrawAMT);
