@@ -14,11 +14,14 @@ contract Vesting {
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
     uint256 public immutable maxVestingTime=100; // set vesting time limit
-    uint256 private  totalNoOfvesting=0; //set total number of vesting
-    uint256 private  totalVestingAMT; // set total vesting amount 
+    uint256 private totalNoOfvesting=0; //set total number of vesting
+    uint256 private totalVestingAMT; // set total vesting amount 
 
     // Mapping to store locked token amounts for each wallet
-    mapping(address => uint256) public lockingWallet;
+    mapping(address => uint256) private lockingWallet;
+
+    // Mapping to store locked token amounts for each wallet
+    mapping(address => uint256) public lockedAmount;
     
     // Mapping to store vesting periods for each wallet
     mapping(address => uint256) public vestingTime;
@@ -93,7 +96,8 @@ contract Vesting {
             require(lockingWallet[_wallet[i]] == 0, "Wallet Address is already Exist");              
             require(maxWalletLimit > totalNoOfvesting,"You can add maximum 100 wallets!");
             lockingWallet[_wallet[i]] = ((_tokenamount[i]) * (100-_readytoUsePercentage[i])) / 100; // Set the locked token amount for the wallet
-            totalVestingAMT += _tokenamount[i]; 
+            lockedAmount[_wallet[i]] = lockingWallet[_wallet[i]];
+            totalVestingAMT += _tokenamount[i]; // all wallet token amount
 
             require(maxVestingTime >= _vestingTime[i],"You can add maximum 100 months!");
             vestingTime[_wallet[i]] = _vestingTime[i]; // Set the vesting period for the wallet
@@ -198,13 +202,18 @@ contract Vesting {
                     }
                 }
             }
+
+         
         
         withdrawAMT=(withdrawAMT+readytoUseAmt[msg.sender]);
-        require(withdrawAMT!=0, "Unable to Withdraw");
-        readytoUseAmt[msg.sender]=0;
+        require(withdrawAMT!=0, "Unable to Withdraw"); 
 
+        
+        
         // Transfer the accumulated withdrawal amount to the sender
-        Token(tokenContract).transfer(msg.sender, withdrawAMT);     
+        Token(tokenContract).transfer(msg.sender, withdrawAMT);
+        lockedAmount[msg.sender]=lockedAmount[msg.sender]-(withdrawAMT-readytoUseAmt[msg.sender]);
+        readytoUseAmt[msg.sender]=0;
     
         // Emit an event to log the withdrawal
         emit withdraw(msg.sender, withdrawAMT);
