@@ -14,7 +14,7 @@ contract Vesting {
     uint256 private immutable onemonth = 31 days; // set onemonth
     uint256 public immutable maxWalletLimit=100; //set wallet limit
     uint256 public immutable maxVestingTime=100; // set vesting time limit
-    uint256 private totalNoOfvesting=0; //set total number of vesting
+    uint256 private totalNoOfvesting; //set total number of vesting
     uint256 private totalVestingAMT; // set total vesting amount 
 
     // Mapping to store locked token amounts for each wallet
@@ -41,8 +41,9 @@ contract Vesting {
         uint256 amount; // Amount withdrawn
     }
     mapping(address=>mapping(uint=>_withdrawdetails)) public withdrawdetails;
+
     // Event to log token withdrawals
-    event withdraw(address indexed _to, uint256 _amount);
+    event Withdraw(address indexed _to, uint256 _amount);
   
     /**
     * @dev Constructor function to initialize the vesting contract.   
@@ -218,7 +219,7 @@ contract Vesting {
         readytoUseAmt[msg.sender]=0;
     
         // Emit an event to log the withdrawal
-        emit withdraw(msg.sender, withdrawAMT);
+        emit Withdraw(msg.sender, withdrawAMT);
     
         // Return success
         return true;
