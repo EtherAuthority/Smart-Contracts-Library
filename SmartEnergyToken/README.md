@@ -3,6 +3,7 @@
 This README provides an overview of the functionalities and usage of the Smart Energy Token and ICO smart contract.
 
 The Deployed Token smart contract: 0x4c5d8d027e97b52542dc66399752c76e017dc6e9
+
 ICO smart contract: 0xe82d9249a8b8903e0bdb3784fb3a6d1d995e9cab
 
 ## Overview of Smart Energy Token
