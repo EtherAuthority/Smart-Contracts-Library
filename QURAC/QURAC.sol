@@ -602,7 +602,7 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
  * @dev ERC20 token implementation for QURAC token.
  */
 contract QURAC is ERC20 {
-   
+    
     /**
      * @dev Constructor that initializes the QURAC token.
      **/
