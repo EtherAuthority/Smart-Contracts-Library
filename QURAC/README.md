@@ -55,5 +55,17 @@ This README provides an overview of the functionalities and usage of the QURAC s
 ## BSC Testnet Transaction
 ```
 QURAC Token contract testnet address
+https://testnet.bscscan.com/address/0xb66D9BD5E4B1893C29A8A6BC946Af76083194871#code
+Transfer token one address to other address
+https://testnet.bscscan.com/tx/0xd7e60e6dfdc1fd5e50023df8b8a4c2fa996c97f9e39036ff01a05c6b7265d395
+Approve to spender address
+https://testnet.bscscan.com/tx/0x148063e55929a846c967599d21be5804fb4ee73f334dfb9a5341350f641f7284
+Transferfrom
+https://testnet.bscscan.com/tx/0xc9433c2a8f733d685137a688f9b4d816cef1277a09a7fe2ae05912dc26162240
 
+Notes
+
+- Ensure you are connected to the BSC Testnet network on your MetaMask to view these transactions and contracts.
+- Check transaction details for gas fees and confirmations.
+```
 
