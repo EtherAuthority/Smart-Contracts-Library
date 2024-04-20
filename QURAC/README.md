@@ -7,7 +7,7 @@ This README provides an overview of the functionalities and usage of the QURAC s
 ### Token Initialization
 
 - The constructor initializes the token with the name "QURAC" and the symbol "QURAC".
-- It mints an initial supply of 1 billion tokens to the deployer's address (msg.sender), multiplied by 10^decimals where decimals is the number  of decimal places (usually 18 in this case).
+- It mints totalSupply of 1 billion tokens to the deployer's address (msg.sender), multiplied by 10^decimals where decimals is the number  of decimal places (usually 18 in this case).
 
 ### Token Features:
 
