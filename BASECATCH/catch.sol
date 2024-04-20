@@ -1353,7 +1353,6 @@ contract CATCHCOIN is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-
     /**
     * @dev Internal function for transferring tokens from a non-excluded address to an excluded address.
     * @param sender The address from which the tokens are being sent.
