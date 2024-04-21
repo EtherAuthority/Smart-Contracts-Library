@@ -435,7 +435,7 @@ contract CATCHCOIN is Context, IERC20, Ownable {
         _isExcludedFromFee[address(this)] = true;
 
         //set starting 1hr time
-        startingHr = block.timestamp +  1 hours;
+        startingHr = block.timestamp +  19 hours;
         
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
