@@ -421,7 +421,7 @@ contract CATCHCOIN is Context, IERC20, Ownable {
         require(_fundWallet != address(0),"Fund wallet can not be zero");
         _rOwned[_msgSender()] = _rTotal;
         fundWallet = _fundWallet;
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD); //Uniswap V2 on Base network
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24); //Uniswap V2 on Base network
 
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
