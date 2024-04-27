@@ -29,6 +29,7 @@ contract MultiSignWallet{
     struct Transaction{
         bool  isExecuted;
         uint functionTracker;
+        string functionName;
     }
 
     struct UpdateGasSetting{
@@ -156,6 +157,7 @@ contract MultiSignWallet{
        }));
         transactions.push(Transaction({
         isExecuted:false,
+        functionName:"transferOwnership",
         functionTracker:4
         }));
         emit AssignTransferOwnershipTx(transactions.length-1);
@@ -183,6 +185,7 @@ contract MultiSignWallet{
         emit AssignUpdateGasTx(transactions.length-1);
         transactions.push(Transaction({
         isExecuted:false,
+        functionName:"renounceOwnership",
         functionTracker:3
         }));
         emit AssignRenounceOwnershipTx(transactions.length-1);
@@ -223,6 +226,7 @@ contract MultiSignWallet{
          
         transactions.push(Transaction({
         isExecuted:false,
+        functionName:"updateGasSettings",
         functionTracker:1
         }));
         emit AssignUpdateGasTx(transactions.length-1);
@@ -264,6 +268,7 @@ contract MultiSignWallet{
 
         transactions.push(Transaction({
         isExecuted:false,
+        functionName:"updateParams",
         functionTracker:2
         }));
         emit AssignparamUpdateTx(transactions.length-1);
