@@ -40,13 +40,13 @@ contract MultiSignWallet{
         uint ownerPoolPercent;
         uint foundationPercent;
     }
-    UpdateGasSetting public updateGasSettingInfo;
+    UpdateGasSetting[] public updateGasSettingInfo;
 
     struct TransferOwnerTo{
         address to;
     }
 
-    TransferOwnerTo public transferOwner;
+    TransferOwnerTo[] public transferOwner;
 
 
     struct UpdateParam{
@@ -59,7 +59,7 @@ contract MultiSignWallet{
        uint256 minimumValidatorStaking;
     }
    
-   UpdateParam public paramsInfo;
+   UpdateParam[] public paramsInfo;
 
    /*
     Constructor Function:
@@ -131,6 +131,21 @@ contract MultiSignWallet{
         _;
     }
 
+    modifier currentId(uint256 _trnxId){
+        require(_trnxId == transactions.length - 1,"Enter current Transaction Id");
+        _;
+    }
+
+    modifier notActiveTransaction(){
+        if(transactions.length == 0){
+
+        } else{
+            Transaction storage _transactions = transactions[transactions.length - 1];
+            require(_transactions.isExecuted,"Already active transaction approve that");
+        }
+        _;
+    }
+
     /*
      Description:
     - Enables an owner to transfer ownership of the contract to another address.
@@ -150,8 +165,8 @@ contract MultiSignWallet{
     - It also creates a new transaction entry in the transactions array with a functionTracker value of 4.
     - An event is emitted to signify the assignment of a transfer ownership transaction.
    */
-    function transferOwnership(address _to) external onlyOwner returns(uint256){
-       transferOwner=(TransferOwnerTo({
+    function transferOwnership(address _to) external onlyOwner notActiveTransaction returns(uint256){
+       transferOwner.push(TransferOwnerTo({
         to:_to
 
        }));
@@ -181,7 +196,7 @@ contract MultiSignWallet{
       indicating a renouncement of ownership.
     - Emits events to signal the assignment of a gas update transaction and the renouncement of ownership.
    */
-    function renounceOwnership() external onlyOwner returns(uint) {
+    function renounceOwnership() external onlyOwner notActiveTransaction returns(uint) {
         emit AssignUpdateGasTx(transactions.length-1);
         transactions.push(Transaction({
         isExecuted:false,
@@ -214,8 +229,9 @@ contract MultiSignWallet{
     Returns:
     - The index of the recorded transaction in the transactions array.
     */
-    function updateGasSettings(uint _validatorPartPercent,uint _burnPartPercent,uint _burnStopAmount,uint _coinPoolPercent,uint _ownerPoolPercent,uint _foundationPercent) external onlyOwner returns(uint256){
-        updateGasSettingInfo=(UpdateGasSetting({
+    function updateGasSettings(uint _validatorPartPercent,uint _burnPartPercent,uint _burnStopAmount,uint _coinPoolPercent,uint _ownerPoolPercent,uint _foundationPercent) 
+    external onlyOwner notActiveTransaction returns(uint256){
+        updateGasSettingInfo.push(UpdateGasSetting({
             validatorPartPercent: _validatorPartPercent,
             burnPartPercent:_burnPartPercent,
             burnStopAmount:_burnStopAmount,
@@ -255,8 +271,9 @@ contract MultiSignWallet{
     Returns:
     - The index of the recorded transaction in the transactions array.
    */
-    function updateParams(address _foundationWallet,address _ownerPool,address _coinPool,uint _ownerPoolColLimit,uint16 _MaxValidators, uint256 _MinimalStakingCoin, uint256 _minimumValidatorStaking) external onlyOwner returns(uint256){
-        paramsInfo=(UpdateParam({
+    function updateParams(address _foundationWallet,address _ownerPool,address _coinPool,uint _ownerPoolColLimit,uint16 _MaxValidators, uint256 _MinimalStakingCoin, uint256 _minimumValidatorStaking) 
+    external onlyOwner notActiveTransaction returns(uint256){
+        paramsInfo.push(UpdateParam({
             foundationWallet:_foundationWallet,
             ownerPool:_ownerPool,
             coinPool:_coinPool,
@@ -298,6 +315,7 @@ contract MultiSignWallet{
      trnxExists(_trnxId)
      notApproved(_trnxId)
      notExecuted(_trnxId)
+     currentId(_trnxId)
 
     {
         approved[_trnxId][msg.sender]=true;
@@ -359,14 +377,14 @@ contract MultiSignWallet{
 
         if(_transactions.functionTracker == 1)
         {
-                UpdateGasSetting  storage _updateGasSettings = updateGasSettingInfo;
+                UpdateGasSetting  storage _updateGasSettings = updateGasSettingInfo[updateGasSettingInfo.length-1];
                 validatorContract.updateGasSettings(_updateGasSettings.validatorPartPercent,_updateGasSettings.burnPartPercent,
                 _updateGasSettings.burnStopAmount, _updateGasSettings.coinPoolPercent,
                 _updateGasSettings.ownerPoolPercent, _updateGasSettings.foundationPercent);
                 
         }
         else if(_transactions.functionTracker == 2){
-                UpdateParam  storage _updateParams = paramsInfo;
+                UpdateParam  storage _updateParams = paramsInfo[paramsInfo.length-1];
                 validatorContract.updateParams(_updateParams.foundationWallet,_updateParams.ownerPool, _updateParams.coinPool,
                 _updateParams.ownerPoolColLimit, _updateParams.maxValidators, _updateParams.minimalStakingCoin,
                 _updateParams.minimumValidatorStaking);
@@ -377,7 +395,7 @@ contract MultiSignWallet{
                 
         }
          else if(_transactions.functionTracker == 4){
-                TransferOwnerTo storage _transferOwnership = transferOwner;
+                TransferOwnerTo storage _transferOwnership = transferOwner[transferOwner.length-1];
                 validatorContract.transferOwnership(_transferOwnership.to);
                 
         }
@@ -416,4 +434,4 @@ contract MultiSignWallet{
     }
 }
 
-
+// ["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db"]
