@@ -137,9 +137,7 @@ contract MultiSignWallet{
     }
 
     modifier notActiveTransaction(){
-        if(transactions.length == 0){
-
-        } else{
+        if(transactions.length != 0){
             Transaction storage _transactions = transactions[transactions.length - 1];
             require(_transactions.isExecuted,"Already active transaction approve that");
         }
@@ -372,7 +370,6 @@ contract MultiSignWallet{
     - Depending on the functionTracker value of the transaction, different functions on the validator contract are called.
    */
     function executeTransaction(uint256 _trnxId) internal trnxExists(_trnxId) notExecuted(_trnxId){
-        require(_getAprrovalCount(_trnxId)>=WalletRequired,"you do not have sufficient approval");
         Transaction storage _transactions = transactions[_trnxId];
 
         if(_transactions.functionTracker == 1)
