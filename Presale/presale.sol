@@ -2,6 +2,303 @@
 pragma solidity 0.8.24;
 
 /**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * [IMPORTANT]
+     * ====
+     * It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     *
+     * Among others, `isContract` will return false for the following
+     * types of addresses:
+     *
+     *  - an externally-owned account
+     *  - a contract in construction
+     *  - an address where a contract will be created
+     *  - an address where a contract lived, but was destroyed
+     * ====
+     *
+     * [IMPORTANT]
+     * ====
+     * You shouldn't rely on `isContract` to protect against flash loan attacks!
+     *
+     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets
+     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
+     * constructor.
+     * ====
+     */
+    function isContract(address account) internal view returns (bool) {
+        return account.code.length > 0;
+    }
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        (bool success, ) = recipient.call{value: amount}("");
+        require(success, "Address: unable to send value, recipient may have reverted");
+    }
+
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain `call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason, it is bubbled up by this
+     * function (like regular Solidity function calls).
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionCall(target, data, "Address: low-level call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with
+     * `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, 0, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value
+    ) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but
+     * with `errorMessage` as a fallback revert reason when `target` reverts.
+     */
+    function functionCallWithValue(
+        address target,
+        bytes memory data,
+        uint256 value,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
+        require(address(this).balance >= value, "Address: insufficient balance for call");
+        require(isContract(target), "Address: call to non-contract");
+
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
+        return verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
+        return functionStaticCall(target, data, "Address: low-level static call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a static call.
+     *
+     * _Available since v3.3._
+     */
+    function functionStaticCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal view returns (bytes memory) {
+        require(isContract(target), "Address: static call to non-contract");
+
+        (bool success, bytes memory returndata) = target.staticcall(data);
+        return verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.4._
+     */
+    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
+        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+     * but performing a delegate call.
+     *
+     * _Available since v3.4._
+     */
+    function functionDelegateCall(
+        address target,
+        bytes memory data,
+        string memory errorMessage
+    ) internal returns (bytes memory) {
+        require(isContract(target), "Address: delegate call to non-contract");
+
+        (bool success, bytes memory returndata) = target.delegatecall(data);
+        return verifyCallResult(success, returndata, errorMessage);
+    }
+
+    /**
+     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the
+     * revert reason using the provided one.
+     *
+     * _Available since v4.3._
+     */
+    function verifyCallResult(
+        bool success,
+        bytes memory returndata,
+        string memory errorMessage
+    ) internal pure returns (bytes memory) {
+        if (success) {
+            return returndata;
+        } else {
+            // Look for revert reason and bubble it up if present
+            if (returndata.length > 0) {
+                // The easiest way to bubble the revert reason is using memory via assembly
+
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                revert(errorMessage);
+            }
+        }
+    }
+}
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure (when the token
+ * contract returns false). Tokens that return no value (and instead revert or
+ * throw on failure) are also supported, non-reverting calls are assumed to be
+ * successful.
+ * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+    using Address for address;
+
+    function safeTransfer(
+        IERC20 token,
+        address to,
+        uint256 value
+    ) internal {
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
+    }
+
+    function safeTransferFrom(
+        IERC20 token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
+        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
+    }
+
+    /**
+     * @dev Deprecated. This function has issues similar to the ones found in
+     * {IERC20-approve}, and its usage is discouraged.
+     *
+     * Whenever possible, use {safeIncreaseAllowance} and
+     * {safeDecreaseAllowance} instead.
+     */
+    function safeApprove(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
+        require(
+            (value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        );
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
+    }
+
+    function safeIncreaseAllowance(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
+        uint256 newAllowance = token.allowance(address(this), spender) + value;
+        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+    }
+
+    function safeDecreaseAllowance(
+        IERC20 token,
+        address spender,
+        uint256 value
+    ) internal {
+        unchecked {
+            uint256 oldAllowance = token.allowance(address(this), spender);
+            require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
+            uint256 newAllowance = oldAllowance - value;
+            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+        }
+    }
+
+    /**
+     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
+     * on the return value: the return value is optional (but if data is returned, it must not be false).
+     * @param token The token targeted by the call.
+     * @param data The call data (encoded using abi.encode or one of its variants).
+     */
+    function _callOptionalReturn(IERC20 token, bytes memory data) private {
+        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
+        if (returndata.length > 0) {
+            // Return data is optional
+            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+        }
+    }
+}
+
+/**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
 interface IERC20 {
@@ -17,9 +314,7 @@ interface IERC20 {
 
     /**
      * @dev Moves `amount` tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
+     * Returns a boolean value indicating whether the operation succeeded
      * Emits a {Transfer} event.
      */
     function transfer(address to, uint256 amount) external returns (bool);
@@ -28,7 +323,6 @@ interface IERC20 {
      * @dev Returns the remaining number of tokens that `spender` will be
      * allowed to spend on behalf of `owner` through {transferFrom}. This is
      * zero by default.
-     *
      * This value changes when {approve} or {transferFrom} are called.
      */
     function allowance(address owner, address spender) external view returns (uint256);
@@ -169,10 +463,21 @@ abstract contract Ownable is Context {
     }
 }
 
-interface IUniswapV2Router01 {
+/**
+ * @title IRouter01
+ * @dev Interface for the  Router version 01 contract.
+*/  
+interface IRouter01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
-
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -183,23 +488,6 @@ interface IUniswapV2Router01 {
         address to,
         uint deadline
     ) external returns (uint amountA, uint amountB, uint liquidity);
-    function addLiquidityETH(
-        address token,
-        uint amountTokenDesired,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
-    function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
     function removeLiquidityETH(
         address token,
         uint liquidity,
@@ -207,480 +495,91 @@ interface IUniswapV2Router01 {
         uint amountETHMin,
         address to,
         uint deadline
-    ) external returns (uint amountToken, uint amountETH);
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountA, uint amountB);
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountToken, uint amountETH);
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapTokensForExactTokens(
-        uint amountOut,
-        uint amountInMax,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-
-    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
+        ) external returns (uint amountToken, uint amountETH);
+    function swapExactETHForTokens(
+        uint amountOutMin, 
+        address[] calldata path, 
+        address to, uint deadline
+    ) external payable returns (uint[] memory amounts);
     function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
     function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
 }
 
-interface IUniswapV2Router02 is IUniswapV2Router01 {
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountETH);
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint liquidity,
-        uint amountTokenMin,
-        uint amountETHMin,
-        address to,
-        uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountETH);
+contract Presale is Ownable {
 
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable;
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external;
-}
-
-/**
- * @dev Collection of functions related to the address type
- */
-library Address {
-    /**
-     * @dev Returns true if `account` is a contract.
-     *
-     * [IMPORTANT]
-     * ====
-     * It is unsafe to assume that an address for which this function returns
-     * false is an externally-owned account (EOA) and not a contract.
-     *
-     * Among others, `isContract` will return false for the following
-     * types of addresses:
-     *
-     *  - an externally-owned account
-     *  - a contract in construction
-     *  - an address where a contract will be created
-     *  - an address where a contract lived, but was destroyed
-     * ====
-     *
-     * [IMPORTANT]
-     * ====
-     * You shouldn't rely on `isContract` to protect against flash loan attacks!
-     *
-     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets
-     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
-     * constructor.
-     * ====
-     */
-    function isContract(address account) internal view returns (bool) {
-        // This method relies on extcodesize/address.code.length, which returns 0
-        // for contracts in construction, since the code is only stored at the end
-        // of the constructor execution.
-
-        return account.code.length > 0;
-    }
-
-    /**
-     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
-     * `recipient`, forwarding all available gas and reverting on errors.
-     *
-     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
-     * of certain opcodes, possibly making contracts go over the 2300 gas limit
-     * imposed by `transfer`, making them unable to receive funds via
-     * `transfer`. {sendValue} removes this limitation.
-     *
-     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
-     *
-     * IMPORTANT: because control is transferred to `recipient`, care must be
-     * taken to not create reentrancy vulnerabilities. Consider using
-     * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
-     */
-    function sendValue(address payable recipient, uint256 amount) internal {
-        require(address(this).balance >= amount, "Address: insufficient balance");
-
-        (bool success, ) = recipient.call{value: amount}("");
-        require(success, "Address: unable to send value, recipient may have reverted");
-    }
-
-    /**
-     * @dev Performs a Solidity function call using a low level `call`. A
-     * plain `call` is an unsafe replacement for a function call: use this
-     * function instead.
-     *
-     * If `target` reverts with a revert reason, it is bubbled up by this
-     * function (like regular Solidity function calls).
-     *
-     * Returns the raw returned data. To convert to the expected return value,
-     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
-     *
-     * Requirements:
-     *
-     * - `target` must be a contract.
-     * - calling `target` with `data` must not revert.
-     *
-     * _Available since v3.1._
-     */
-    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionCall(target, data, "Address: low-level call failed");
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with
-     * `errorMessage` as a fallback revert reason when `target` reverts.
-     *
-     * _Available since v3.1._
-     */
-    function functionCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, 0, errorMessage);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but also transferring `value` wei to `target`.
-     *
-     * Requirements:
-     *
-     * - the calling contract must have an ETH balance of at least `value`.
-     * - the called Solidity function must be `payable`.
-     *
-     * _Available since v3.1._
-     */
-    function functionCallWithValue(
-        address target,
-        bytes memory data,
-        uint256 value
-    ) internal returns (bytes memory) {
-        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but
-     * with `errorMessage` as a fallback revert reason when `target` reverts.
-     *
-     * _Available since v3.1._
-     */
-    function functionCallWithValue(
-        address target,
-        bytes memory data,
-        uint256 value,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
-        require(address(this).balance >= value, "Address: insufficient balance for call");
-        require(isContract(target), "Address: call to non-contract");
-
-        (bool success, bytes memory returndata) = target.call{value: value}(data);
-        return verifyCallResult(success, returndata, errorMessage);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a static call.
-     *
-     * _Available since v3.3._
-     */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        return functionStaticCall(target, data, "Address: low-level static call failed");
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
-     * but performing a static call.
-     *
-     * _Available since v3.3._
-     */
-    function functionStaticCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal view returns (bytes memory) {
-        require(isContract(target), "Address: static call to non-contract");
-
-        (bool success, bytes memory returndata) = target.staticcall(data);
-        return verifyCallResult(success, returndata, errorMessage);
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a delegate call.
-     *
-     * _Available since v3.4._
-     */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
-     * but performing a delegate call.
-     *
-     * _Available since v3.4._
-     */
-    function functionDelegateCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
-        require(isContract(target), "Address: delegate call to non-contract");
-
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResult(success, returndata, errorMessage);
-    }
-
-    /**
-     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the
-     * revert reason using the provided one.
-     *
-     * _Available since v4.3._
-     */
-    function verifyCallResult(
-        bool success,
-        bytes memory returndata,
-        string memory errorMessage
-    ) internal pure returns (bytes memory) {
-        if (success) {
-            return returndata;
-        } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                // The easiest way to bubble the revert reason is using memory via assembly
-
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
-            }
-        }
-    }
-}
-
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure (when the token
- * contract returns false). Tokens that return no value (and instead revert or
- * throw on failure) are also supported, non-reverting calls are assumed to be
- * successful.
- * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-    using Address for address;
-
-    function safeTransfer(
-        IERC20 token,
-        address to,
-        uint256 value
-    ) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
-    }
-
-    function safeTransferFrom(
-        IERC20 token,
-        address from,
-        address to,
-        uint256 value
-    ) internal {
-        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
-    }
-
-    /**
-     * @dev Deprecated. This function has issues similar to the ones found in
-     * {IERC20-approve}, and its usage is discouraged.
-     *
-     * Whenever possible, use {safeIncreaseAllowance} and
-     * {safeDecreaseAllowance} instead.
-     */
-    function safeApprove(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        // safeApprove should only be called when setting an initial allowance,
-        // or when resetting it to zero. To increase and decrease it, use
-        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-        require(
-            (value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
-    }
-
-    function safeIncreaseAllowance(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        uint256 newAllowance = token.allowance(address(this), spender) + value;
-        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-    }
-
-    function safeDecreaseAllowance(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        unchecked {
-            uint256 oldAllowance = token.allowance(address(this), spender);
-            require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
-            uint256 newAllowance = oldAllowance - value;
-            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-        }
-    }
-
-    /**
-     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-     * on the return value: the return value is optional (but if data is returned, it must not be false).
-     * @param token The token targeted by the call.
-     * @param data The call data (encoded using abi.encode or one of its variants).
-     */
-    function _callOptionalReturn(IERC20 token, bytes memory data) private {
-        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
-        // we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
-        // the target address contains contract code and also asserts for success in the low-level call.
-
-        bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) {
-            // Return data is optional
-            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
-        }
-    }
-}
-
-
-contract PresaleRegistry is Ownable {
+    IERC20 public immutable WETH;
+    IERC20 public immutable USDT;
+    IERC20 public immutable USDC;
+    IERC20 public immutable DAI;
+    IRouter01 private immutable _uniSwapRouter;
 
     address public paymentWallet;
 
-    IERC20 public USDTInterface; // USDT on Ethereum
-    IERC20 public USDCInterface; // USDC on Ethereum
-    IERC20 public DAIInterface ; // DAI on Ethereum
-    IERC20 public WETH;
-
-    IUniswapV2Router02 private router;
-
     uint256 public currentPrice=300;// $0.0003 * 10**6
     uint256 public lastPriceUpdateTime;
-    uint256 public priceIncrement = 1; // $0.000001 * 10**6
+    uint256 private constant PRICEINCREMENT = 1; // $0.000001 * 10**6
+ 
+    mapping(address => bool) public approvedContracts; // Mapping to track approved contract addresses
 
-    
-    event TokensBoughtWithEth(address indexed buyer, uint256 ethAmount, uint256 ethPrice, uint256 tokenPrice, uint256 timestamp);
-    event TokensBoughtWithUsdt(address indexed buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 timestamp);
-    event TokensBoughtWithUsdc(address indexed buyer, uint256 usdcAmount, uint256 tokenPrice, uint256 timestamp);
-    event TokensBoughtWithDai(address indexed buyer, uint256 daiAmount, uint256 tokenPrice, uint256 timestamp);
+    //-----------------------EVENTS-------------------
+    event TokensBoughtWithEth(address buyer, uint256 ethAmount, uint256 ethPrice, uint256 tokenPrice, uint256 timestamp);
+    event TokensBoughtWithToken(address buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 timestamp);
+    event UpdatePaymentWallet(address newPaymentWallet);
+    event ContractApproved(address contractAddress, bool approved);
+    event ChangePrice(uint256 currentPrice);   
     event PriceUpdated(uint256 newPrice);
 
-    constructor(address _paymentWallet,address _USDTInterface,address _USDCInterface,address _DAIInterface,address _weth,address _routerAddress){
-        paymentWallet = _paymentWallet;
-        USDTInterface = IERC20(_USDTInterface);
-        USDCInterface = IERC20(_USDCInterface);
-        DAIInterface = IERC20(_DAIInterface);
-        WETH = IERC20(_weth);
-        router = IUniswapV2Router02(_routerAddress);
+    /**
+     * @dev Constructor to initialize the contract with required addresses and settings.
+     * @param _payment The address of the payment wallet.
+     */
+    constructor(address _payment){
+        paymentWallet = _payment;
+        WETH = IERC20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);  //BSC Mainnet  
+        USDT = IERC20(0x55d398326f99059fF775485246999027B3197955);
+        USDC = IERC20(0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d); 
+        DAI = IERC20(0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3);  
+        _uniSwapRouter = IRouter01(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         lastPriceUpdateTime = block.timestamp;
+        
+        approvedContracts[address(USDT)] = true;
+        approvedContracts[address(USDC)] = true;
+        approvedContracts[address(DAI)] = true;
     }
 
-    function buyWithUSDT(uint256 usdtAmount) external  returns (bool) {
-        uint256 ourAllowance = USDTInterface.allowance(_msgSender(), address(this));
-        require(usdtAmount <= ourAllowance, "Make sure to add enough allowance");
-        (bool success, ) = address(USDTInterface).call(
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", _msgSender(), paymentWallet, usdtAmount)
-        );
-        require(success, "Token payment failed");
-        emit TokensBoughtWithUsdt(_msgSender(), usdtAmount, updateTokenPrice(), block.timestamp);
-        return true;
+    /**
+     * @dev Admin function to approve a contract for buying tokens.
+     * @param contractAddress Address of the contract to approve.
+     * @param approved Boolean indicating whether to approve or revoke approval.
+     */
+    function approveContract(address contractAddress, bool approved) external onlyOwner {
+        approvedContracts[contractAddress] = approved;
+        emit ContractApproved(contractAddress, approved);
     }
 
-    function buyWithUSDC(uint256 usdcAmount) external  returns (bool) {
-        uint256 ourAllowance = USDCInterface.allowance(_msgSender(), address(this));
-        require(usdcAmount <= ourAllowance, "Make sure to add enough allowance");
-        (bool success, ) = address(USDCInterface).call(
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", _msgSender(), paymentWallet, usdcAmount)
-        );
-        require(success, "Token payment failed");
-        emit TokensBoughtWithUsdc(_msgSender(), usdcAmount, updateTokenPrice(), block.timestamp);
-        return true;
-    }
+    /**
+     * @notice Allows users to buy tokens using any ERC20 token.
+     * @dev Transfers the specified amount of tokens from the caller to the payment wallet using SafeERC20.
+     * @param amount The amount of tokens to transfer.
+     * @param token The address of the ERC20 token contract.
+     * @return A boolean indicating whether the transaction was successful.
+     */
+    function buyWithToken(uint256 amount, address token) external returns (bool) {
+       require(approvedContracts[token], "Contract not approved for buying tokens"); 
+       require(token != address(0), "Address cannot be zero");
+       IERC20 tokenContract = IERC20(token);
 
-    function buyWithDAI(uint256 daiAmount) external  returns (bool) {
-        uint256 ourAllowance = DAIInterface.allowance(_msgSender(), address(this));
-        require(daiAmount <= ourAllowance, "Make sure to add enough allowance");
-        (bool success, ) = address(DAIInterface).call(
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", _msgSender(), paymentWallet, daiAmount)
-        );
-        require(success, "Token payment failed");
-        emit TokensBoughtWithDai(_msgSender(), daiAmount, updateTokenPrice(), block.timestamp);
-        return true;
-    }
+       SafeERC20.safeTransferFrom(tokenContract, msg.sender,paymentWallet, amount);
 
+       emit TokensBoughtWithToken(_msgSender(), amount, updateTokenPrice(), block.timestamp);
+       return true;
+    }
+ 
+    /**
+     * @notice Allows users to buy tokens using Ether.
+     * @dev Requires that Ether is sent along with the transaction. Transfers the received Ether to the payment wallet.
+     * @return A boolean indicating whether the transaction was successful.
+     */
     function buyWithEth() external payable  returns (bool) {
         require(msg.value > 0, "No ETH sent");
         sendValue(payable(paymentWallet), msg.value);
@@ -688,44 +587,85 @@ contract PresaleRegistry is Ownable {
         return true;
     }
 
+    /**
+     * @dev Utility function to safely transfer Ether.
+     * @param recipient Address to receive the Ether.
+     * @param amount Amount of Ether to transfer.
+     */
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Low balance");
         (bool success, ) = recipient.call{value: amount}("");
         require(success, "ETH Payment failed");
     }
 
-    function updateTokenPrice() public returns(uint256){
-        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 1 minutes;
+    /**
+     * @dev Updates the token price based on the time passed since the last update.
+     * @return The updated token price.
+     */
+    function updateTokenPrice() internal  returns(uint256){
+        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 1 days;
         if (daysPassed >= 1) {
-            uint256 newPrice = currentPrice + (daysPassed * priceIncrement);
+            uint256 newPrice = currentPrice + (daysPassed * PRICEINCREMENT);
             currentPrice = newPrice;
             lastPriceUpdateTime = block.timestamp;
         }
-            emit PriceUpdated(currentPrice);
-            return currentPrice;
+        emit PriceUpdated(currentPrice);
+        return currentPrice;
+    }
+
+    /**
+     * @notice Allows the contract owner to change the current token price.
+     * @dev Can only be called by the owner of the contract.
+     * @param _currentPrice The new token price to set.
+     */
+    function changePrice(uint256 _currentPrice) external onlyOwner {
+        currentPrice = _currentPrice;
+        emit ChangePrice(currentPrice);
+    }
+
+    /**
+     * @notice Allows the contract owner to change the payment wallet address.
+     * @dev Can only be called by the owner of the contract.
+     * @param _newPaymentWallet The new payment wallet address to set.
+     */
+    function changePaymentWallet(address _newPaymentWallet) external onlyOwner {
+        require(_newPaymentWallet != address(0),"Address can not be zero");
+        paymentWallet = _newPaymentWallet;
+        emit UpdatePaymentWallet(paymentWallet);
     }
     
+    /**
+     * @notice Gets the latest price of Ether in terms of USDT.
+     * @param ethAmt The amount of Ether for which to get the price.
+     * @return The latest price of Ether in USDT.
+     */
+    function getLatestEthPrice(uint ethAmt) internal view returns (uint){
+        address[] memory path = new address[](2);
+        path[0] = address(WETH);
+        path[1] = address(DAI);
+     
+        uint[] memory amounts = _uniSwapRouter.getAmountsOut(ethAmt, path);
+         
+        return amounts[1]; // Return the price at index
+    }
+
+    /**
+     * @dev Withdraws a specified amount of tokens from a token contract to the owner's address.
+     * @param tokenContractAddress The address of the token contract.
+     * @param amount The amount of tokens to withdraw.
+     */
     function withdrawToken(address tokenContractAddress, uint256 amount) external onlyOwner {
         IERC20 tokenContract = IERC20(tokenContractAddress);
         SafeERC20.safeTransfer(tokenContract, msg.sender, amount);
     }
 
-    function changePrice(uint256 _currentPrice) external onlyOwner {
-        currentPrice = _currentPrice;
+    /**
+     * @dev Withdraws a specified amount of native tokens (ETH or BNB) to the owner's address.
+     * @param amount The amount of native tokens to withdraw.
+     */
+    function withdrawNative(uint256 amount) external onlyOwner {
+        payable(msg.sender).transfer(amount);
     }
-
-    function changePaymentWallet(address _newPaymentWallet) external onlyOwner {
-        paymentWallet = _newPaymentWallet;
-    }
-
-    function getLatestEthPrice(uint ethAmt) public view returns (uint){
-        address[] memory path = new address[](2);
-        path[0] = address(WETH);
-        path[1] = address(USDTInterface);
-        uint[] memory amounts = router.getAmountsOut(ethAmt, path);
-         
-        return amounts[1]; // Return the price at inde
-    }
-
+    
     receive() external payable {}
 }
