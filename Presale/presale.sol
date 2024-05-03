@@ -507,10 +507,10 @@ interface IRouter01 {
 
 contract Presale is Ownable {
 
-    IERC20 public immutable WETH;
-    IERC20 public immutable USDT;
-    IERC20 public immutable USDC;
-    IERC20 public immutable DAI;
+    address public immutable WETH;
+    address public immutable USDT;
+    address public immutable USDC;
+    address public immutable DAI;
     IRouter01 private immutable _uniSwapRouter;
 
     address public paymentWallet;
@@ -523,7 +523,7 @@ contract Presale is Ownable {
 
     //-----------------------EVENTS-------------------
     event TokensBoughtWithEth(address buyer, uint256 ethAmount, uint256 ethPrice, uint256 tokenPrice, uint256 timestamp);
-    event TokensBoughtWithToken(address buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 timestamp);
+    event BoughtWithTokens(address buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 timestamp);
     event UpdatePaymentWallet(address newPaymentWallet);
     event ContractApproved(address contractAddress, bool approved);
     event ChangePrice(uint256 currentPrice);   
@@ -535,10 +535,10 @@ contract Presale is Ownable {
      */
     constructor(address _payment){
         paymentWallet = _payment;
-        WETH = IERC20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);  //BSC Mainnet  
-        USDT = IERC20(0x55d398326f99059fF775485246999027B3197955);
-        USDC = IERC20(0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d); 
-        DAI = IERC20(0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3);  
+        WETH = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; 
+        USDT = 0x55d398326f99059fF775485246999027B3197955;
+        USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d; 
+        DAI = 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3;  
         _uniSwapRouter = IRouter01(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         lastPriceUpdateTime = block.timestamp;
         
@@ -553,6 +553,7 @@ contract Presale is Ownable {
      * @param approved Boolean indicating whether to approve or revoke approval.
      */
     function approveContract(address contractAddress, bool approved) external onlyOwner {
+        require(!approvedContracts[contractAddress],"This contract address already exist");
         approvedContracts[contractAddress] = approved;
         emit ContractApproved(contractAddress, approved);
     }
@@ -566,12 +567,13 @@ contract Presale is Ownable {
      */
     function buyWithToken(uint256 amount, address token) external returns (bool) {
        require(approvedContracts[token], "Contract not approved for buying tokens"); 
+       require(amount > 0,"Amount can not be zero");
        require(token != address(0), "Address cannot be zero");
        IERC20 tokenContract = IERC20(token);
 
        SafeERC20.safeTransferFrom(tokenContract, msg.sender,paymentWallet, amount);
 
-       emit TokensBoughtWithToken(_msgSender(), amount, updateTokenPrice(), block.timestamp);
+       emit BoughtWithTokens(_msgSender(), amount, updateTokenPrice(), block.timestamp);
        return true;
     }
  
@@ -582,20 +584,9 @@ contract Presale is Ownable {
      */
     function buyWithEth() external payable  returns (bool) {
         require(msg.value > 0, "No ETH sent");
-        sendValue(payable(paymentWallet), msg.value);
+        payable(paymentWallet).transfer(msg.value);
         emit TokensBoughtWithEth(_msgSender(), msg.value, getLatestEthPrice(msg.value), updateTokenPrice(), block.timestamp);
         return true;
-    }
-
-    /**
-     * @dev Utility function to safely transfer Ether.
-     * @param recipient Address to receive the Ether.
-     * @param amount Amount of Ether to transfer.
-     */
-    function sendValue(address payable recipient, uint256 amount) internal {
-        require(address(this).balance >= amount, "Low balance");
-        (bool success, ) = recipient.call{value: amount}("");
-        require(success, "ETH Payment failed");
     }
 
     /**
@@ -640,9 +631,10 @@ contract Presale is Ownable {
      * @return The latest price of Ether in USDT.
      */
     function getLatestEthPrice(uint ethAmt) internal view returns (uint){
+
         address[] memory path = new address[](2);
-        path[0] = address(WETH);
-        path[1] = address(DAI);
+        path[0] = WETH;
+        path[1] = USDT;
      
         uint[] memory amounts = _uniSwapRouter.getAmountsOut(ethAmt, path);
          
@@ -664,6 +656,7 @@ contract Presale is Ownable {
      * @param amount The amount of native tokens to withdraw.
      */
     function withdrawNative(uint256 amount) external onlyOwner {
+        require(address(this).balance > 0,"Not sufficient balance");
         payable(msg.sender).transfer(amount);
     }
     
