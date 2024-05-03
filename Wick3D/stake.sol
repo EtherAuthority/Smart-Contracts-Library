@@ -30,7 +30,7 @@ contract InsightXStake is ERC20, Ownable {
         uint256 _extraReward;
         bool _eligibleForExtraReward;
         uint256 _depositNo;
-        uint256 _canWithdrawOndepositNo;
+        uint256 _claimedDepositNo;        
         uint256 _poolBalance;
         bool _claimed;
     }
@@ -52,21 +52,13 @@ contract InsightXStake is ERC20, Ownable {
     uint256 public totalNumberOfDeposits = 0;
     mapping(uint256 => _deposit) public deposit;
     uint256 public fourLakhsStakers;
-    uint256 public oneMillionStakers;
+    uint256 public oneMillionStakers;    
     uint256 public totalNoOfStakers;
     uint256 public existingPoolBalance;
 
-    /**
-     * @notice Constructor function for initializing the InsightX Staking contract.
-     * @dev This constructor initializes the InsightX Staking contract with the provided token contract address
-     * and sets the initial owner of the contract. It also initializes the ERC20 token with the name "InsightX Staking"
-     * and symbol "stINX". The token contract address must be provided to interact with the staking contract.
-     * @param _tokenContract The address of the ERC20 token contract to be used for staking.
-     * @param initialOwner The address of the initial owner of the staking contract.
-     */
+    
     constructor(
-        address _tokenContract,
-        address initialOwner
+        address _tokenContract, address initialOwner
     ) ERC20("InsightX Staking", "stINX") Ownable(initialOwner) {
         tokenAddress = ERC20(_tokenContract);
     }
@@ -99,7 +91,6 @@ contract InsightXStake is ERC20, Ownable {
         uint256 normalreward;
         uint256 extraFourPercentReward;
         uint256 extraTenPercentReward;
-
         (
             normalreward,
             extraFourPercentReward,
@@ -117,7 +108,7 @@ contract InsightXStake is ERC20, Ownable {
             existingPoolBalance,
             tokenAddress.balanceOf(address(this))
         );
-        existingPoolBalance += msg.value;
+        existingPoolBalance += msg.value;        
         emit Deposited(msg.sender, msg.value, totalNumberOfDeposits);
     }
 
@@ -139,42 +130,15 @@ contract InsightXStake is ERC20, Ownable {
             tokenAddress.balanceOf(msg.sender) >= _stakeamount,
             "Insufficient tokens"
         );
-        require(_stakeamount > 0, "Amount should be greater then 0");
-        uint256 totalStakeAmount = staking[msg.sender]._stakeAmount +
-            _stakeamount;
-        bool eligibleForExtraReward;
-        uint256 totalNormalReward;
-        uint256 totalExtraReward;
-        uint256 normalreward;
-        uint256 extraFourPercentReward;
-        uint256 extraTenPercentReward;
-        if (
-            staking[msg.sender]._stakeAmount > 0 &&
-            totalNumberOfDeposits >= staking[msg.sender]._depositNo
-        ) {
-            uint256 i = staking[msg.sender]._depositNo + 1;
-
-            for (i; i <= totalNumberOfDeposits; i++) {
-                normalreward += deposit[i]._normalReward;
-                extraFourPercentReward += deposit[i]._extraFourPercentReward;
-                extraTenPercentReward += deposit[i]._extraTenPercentReward;
-            }
-            totalNormalReward = (normalreward *
-                (staking[msg.sender]._stakeAmount / 10 ** 18));
-            if (
-                staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
-                staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18
-            ) {
-                totalExtraReward = extraFourPercentReward;
-            } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
-                totalExtraReward = extraTenPercentReward;
-            }
-        }
+        require(_stakeamount > 0, "Amount should be greater then 0");       
+        require(staking[msg.sender]._stakeAmount==0, "You cannot stake again until unstake previous staked amount!");
+       
+        bool eligibleForExtraReward; 
 
         // new stakeing in extra reward 4 Percentage.
         if (
-            totalStakeAmount >= 400000 * 10 ** 18 &&
-            totalStakeAmount < 1000000 * 10 ** 18 &&
+            _stakeamount >= 400000 * 10 ** 18 &&
+            _stakeamount < 1000000 * 10 ** 18 &&
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
             eligibleForExtraReward = true;
@@ -183,71 +147,29 @@ contract InsightXStake is ERC20, Ownable {
         }
         // new stakeing in extra reward 10 Percentage.
         else if (
-            totalStakeAmount >= 1000000 * 10 ** 18 &&
+            _stakeamount >= 1000000 * 10 ** 18 &&
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
             eligibleForExtraReward = true;
             oneMillionStakers++; // to know how many stakers stake up to 1M
-            if (staking[msg.sender]._stakeAmount == 0) totalNoOfStakers++;
-        }
-        //stake user already stake with extra reward but new stakeing changed extra reward 4 Percentage to 10 Percentage.
-        else if (
-            staking[msg.sender]._eligibleForExtraReward == true &&
-            staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
-            staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18 &&
-            totalStakeAmount >= 1000000 * 10 ** 18
-        ) {
-            eligibleForExtraReward = true;
-            fourLakhsStakers--;
-            oneMillionStakers++;
-        }
-        //stake user already stake with above 400k token
-        else if (
-            staking[msg.sender]._eligibleForExtraReward == true &&
-            totalStakeAmount >= 400000 * 10 ** 18 &&
-            totalStakeAmount < 1000000 * 10 ** 18
-        ) {
-            eligibleForExtraReward = true;
-        }
-        //stake user already stake with above 1M token
-        else if (
-            staking[msg.sender]._eligibleForExtraReward == true &&
-            totalStakeAmount >= 1000000 * 10 ** 18
-        ) {
-            eligibleForExtraReward = true;
-        }
+            if (staking[msg.sender]._stakeAmount == 0){
+                totalNoOfStakers++;
+            }    
+        }       
         //for new stake user and normal reward
-        else if (
-            staking[msg.sender]._stakeAmount == 0 &&
-            totalStakeAmount < 400000 * 10 ** 18 &&
+        else if (           
+            _stakeamount < 400000 * 10 ** 18 &&
             staking[msg.sender]._eligibleForExtraReward == false
         ) {
             totalNoOfStakers++;
-        }
+        }        
 
         require(
             tokenAddress.transferFrom(msg.sender, address(this), _stakeamount),
             "INX transfer failed"
         );
-
-        _mint(msg.sender, _stakeamount);
-
-        if (staking[msg.sender]._stakeAmount > 0) {
-            staking[msg.sender] = _staking(
-                staking[msg.sender]._stakingCount + 1,
-                block.timestamp,
-                0,
-                totalStakeAmount,
-                totalNormalReward,
-                totalExtraReward,
-                eligibleForExtraReward,
-                totalNumberOfDeposits,
-                staking[msg.sender]._canWithdrawOndepositNo + 1,
-                address(this).balance,
-                false
-            );
-        } else {
-            staking[msg.sender] = _staking(
+        _mint(msg.sender, _stakeamount);     
+        staking[msg.sender] = _staking(
                 staking[msg.sender]._stakingCount + 1,
                 block.timestamp,
                 0,
@@ -255,13 +177,12 @@ contract InsightXStake is ERC20, Ownable {
                 0,
                 0,
                 eligibleForExtraReward,
-                totalNumberOfDeposits,
+                totalNumberOfDeposits,                
                 (totalNumberOfDeposits + 2),
                 address(this).balance,
                 false
-            );
-        }
-
+        );
+        
         emit stakeEvent(msg.sender, _stakeamount);
         return true;
     }
@@ -283,14 +204,16 @@ contract InsightXStake is ERC20, Ownable {
         uint256 normalreward;
         uint256 extraFourPercentReward;
         uint256 extraTenPercentReward;
+        uint256 depositno;
+
         require(staking[msg.sender]._stakeAmount > 0, "You are not a staker");
 
         require(
-            totalNumberOfDeposits >=
-                staking[msg.sender]._canWithdrawOndepositNo,
-            "Cannot unstake, you need to wait 2 weeks from your latest stake"
+            totalNumberOfDeposits >= staking[msg.sender]._claimedDepositNo,"Cannot unstake, you need to wait 2 deposit from your latest stake"
         );
-        require(address(this).balance > 0, "No rewards in pool");
+        
+
+        if(address(this).balance > 0){
         uint256 totalNormalReward;
         uint256 totalExtraFourPercentReward;
         uint256 totalExtraTenPercentReward;
@@ -301,22 +224,22 @@ contract InsightXStake is ERC20, Ownable {
             extraTenPercentReward
         ) = calculateRewards();
 
-        uint256 i = staking[msg.sender]._depositNo + 1;
+         if(staking[msg.sender]._claimed == true){
+            depositno = staking[msg.sender]._claimedDepositNo+1;
+        }else{
+            depositno = staking[msg.sender]._depositNo + 1;
+        }
+
+        uint256 i = depositno;
         for (i; i <= totalNumberOfDeposits; i++) {
             totalNormalReward += deposit[i]._normalReward;
             totalExtraFourPercentReward += deposit[i]._extraFourPercentReward;
             totalExtraTenPercentReward += deposit[i]._extraTenPercentReward;
         }
 
-        totalNormalReward += normalreward;
-
-        totalNormalReward = (totalNormalReward *
-            (staking[msg.sender]._stakeAmount / 10 ** 18));
-
-        totalNormalReward += staking[msg.sender]._reward;
-
-        totalExtraFourPercentReward += staking[msg.sender]._extraReward;
-        totalExtraTenPercentReward += staking[msg.sender]._extraReward;
+        totalNormalReward = (totalNormalReward * (staking[msg.sender]._stakeAmount / 10 ** 18)); // ETH per Token 
+        totalNormalReward += staking[msg.sender]._reward;        
+       
         if (
             staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
             staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18
@@ -324,21 +247,26 @@ contract InsightXStake is ERC20, Ownable {
             totalExtraFourPercentReward += extraFourPercentReward;
             totalExtraTenPercentReward = 0;
             totalNoOfStakers--;
-            fourLakhsStakers--;
+            fourLakhsStakers--;          
         } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
             totalExtraTenPercentReward += extraTenPercentReward;
             totalExtraFourPercentReward = 0;
             totalNoOfStakers--;
-            oneMillionStakers--;
+            oneMillionStakers--;            
         } else {
             totalExtraFourPercentReward = 0;
             totalExtraTenPercentReward = 0;
-            totalNoOfStakers--;
+            totalNoOfStakers--;           
         }
-
+      
         totalReward = (totalNormalReward +
             totalExtraFourPercentReward +
             totalExtraTenPercentReward);
+
+            (bool sent, ) = msg.sender.call{value: totalReward}("");
+            require(sent, "Failed to send Rewards");
+        }
+      
 
         totalAmt = staking[msg.sender]._stakeAmount;
 
@@ -347,9 +275,9 @@ contract InsightXStake is ERC20, Ownable {
         staking[msg.sender]._reward = 0;
         staking[msg.sender]._extraReward = 0;
         staking[msg.sender]._eligibleForExtraReward = false;
-        staking[msg.sender]._claimed = true;
+        staking[msg.sender]._claimed = false;
         staking[msg.sender]._depositNo = 0;
-        staking[msg.sender]._canWithdrawOndepositNo = 0;
+        staking[msg.sender]._claimedDepositNo=0;        
         staking[msg.sender]._poolBalance = 0;
         existingPoolBalance -= totalReward;
 
@@ -357,10 +285,7 @@ contract InsightXStake is ERC20, Ownable {
         require(
             tokenAddress.transfer(msg.sender, totalAmt),
             "INX transfer failed"
-        );
-
-        (bool sent, ) = msg.sender.call{value: totalReward}("");
-        require(sent, "Failed to send Rewards");
+        );      
 
         emit unStakeEvent(msg.sender, totalAmt, totalReward);
         return true;
@@ -376,24 +301,68 @@ contract InsightXStake is ERC20, Ownable {
      * the existing pool balance. The claimed rewards are transferred to the staker's address.
      * @return A boolean indicating the success of the reward claim operation.
      */
-    function claimRewards() public returns (bool) {
+    function claimRewards() public payable returns (bool) {
         require(staking[msg.sender]._stakeAmount > 0, "You are not a staker");
-        require(staking[msg.sender]._reward > 0, "No rewards claim");
+       
         require(
             address(this).balance > staking[msg.sender]._reward,
             "No rewards in pool"
         );
         uint256 totalReward;
-        totalReward = (staking[msg.sender]._reward +
-            staking[msg.sender]._extraReward);
+        uint256 normalreward;
+        uint256 extraFourPercentReward;
+        uint256 extraTenPercentReward;
+        uint256 totalNormalReward;
+        uint256 totalExtraFourPercentReward;
+        uint256 totalExtraTenPercentReward;
+        uint256 depositno;
 
-        staking[msg.sender]._reward = 0;
-        staking[msg.sender]._extraReward = 0;
-        existingPoolBalance -= totalReward;
+        if(staking[msg.sender]._claimed == true){
+            require(totalNumberOfDeposits > staking[msg.sender]._claimedDepositNo, "Cannot claim rewards, you need to wait for next deposit");       
+            depositno = staking[msg.sender]._claimedDepositNo+1;
+        }else{
+            require(totalNumberOfDeposits >= staking[msg.sender]._claimedDepositNo, "Cannot claim rewards, you need to wait for next deposit");       
+            depositno = staking[msg.sender]._depositNo + 1;
+        }
+
+        uint256 i = depositno;
+        for (i; i <= totalNumberOfDeposits; i++) {
+            totalNormalReward += deposit[i]._normalReward;
+            totalExtraFourPercentReward += deposit[i]._extraFourPercentReward;
+            totalExtraTenPercentReward += deposit[i]._extraTenPercentReward;
+        }
+
+         totalNormalReward = (totalNormalReward * (staking[msg.sender]._stakeAmount / 10 ** 18));
+
+         if (
+            staking[msg.sender]._stakeAmount >= 400000 * 10 ** 18 &&
+            staking[msg.sender]._stakeAmount < 1000000 * 10 ** 18
+        ) {
+            totalExtraFourPercentReward += extraFourPercentReward;
+            totalExtraTenPercentReward = 0;           
+        } else if (staking[msg.sender]._stakeAmount >= 1000000 * 10 ** 18) {
+            totalExtraTenPercentReward += extraTenPercentReward;
+            totalExtraFourPercentReward = 0;           
+        } else {
+            totalExtraFourPercentReward = 0;
+            totalExtraTenPercentReward = 0;           
+        }       
+
+        totalReward = (totalNormalReward +
+            totalExtraFourPercentReward +
+            totalExtraTenPercentReward);
+
+        require(totalReward > 0, "No rewards claim");
 
         (bool sent, ) = msg.sender.call{value: totalReward}("");
         require(sent, "Failed to send Rewards");
-
+        staking[msg.sender]._reward = 0;
+        staking[msg.sender]._extraReward = 0;               
+        staking[msg.sender]._claimedDepositNo=totalNumberOfDeposits;
+        staking[msg.sender]._poolBalance=existingPoolBalance;
+        staking[msg.sender]._claimed = true;
+        existingPoolBalance -= totalReward; 
+       
         emit claimedRewards(msg.sender, totalReward);
 
         return true;
@@ -422,30 +391,26 @@ contract InsightXStake is ERC20, Ownable {
             stakebalance = tokenAddress.balanceOf(address(this));
 
             uint256 diffrenceInPoolBalance = address(this).balance -
-                existingPoolBalance;
+                existingPoolBalance;          
 
             if (fourLakhsStakers > 0) {
                 extraFourPercentReward =
-                    (diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
-                    4;
-
-                extraFourPercentReward = (extraFourPercentReward /
-                    fourLakhsStakers);
+                    ((diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
+                    4);              
             }
             if (oneMillionStakers > 0) {
                 extraTenPercentReward =
-                    (diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
-                    10;
+                   ((diffrenceInPoolBalance / (stakebalance / 10 ** 18)) *
+                    10);                
+            }           
 
-                extraTenPercentReward =
-                    extraTenPercentReward /
-                    oneMillionStakers;
-            }
-            normalReward =
-                diffrenceInPoolBalance -
-                ((extraFourPercentReward) + (extraTenPercentReward));
-
+            normalReward = diffrenceInPoolBalance - ((extraFourPercentReward) + (extraTenPercentReward));
             normalReward = (normalReward / (stakebalance / 10 ** 18));
+
+            if (fourLakhsStakers > 0)
+                extraFourPercentReward = (extraFourPercentReward /fourLakhsStakers); 
+            if(oneMillionStakers > 0)    
+                extraTenPercentReward = extraTenPercentReward / oneMillionStakers;
         }
         return (
             (normalReward),
@@ -464,7 +429,7 @@ contract InsightXStake is ERC20, Ownable {
     function transfer(
         address to,
         uint256 value
-    ) public override returns (bool) {
+    ) public  override returns (bool) {
         revert UnauthorizedTransfer();
     }
 
