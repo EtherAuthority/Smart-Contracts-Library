@@ -765,11 +765,6 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
 
-interface IUniswapV2Pair{
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-}
 contract TestCoin is ERC20,Ownable {    
  
     address public  trasuryWallet;
@@ -788,8 +783,7 @@ contract TestCoin is ERC20,Ownable {
          _mint(msg.sender, totalSupply);
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet 
+             0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet 
         );
 
         uniswapV2Router = _uniswapV2Router;
@@ -803,7 +797,6 @@ contract TestCoin is ERC20,Ownable {
  
         emit Transfer(address(0), msg.sender, totalSupply);
     }
-
 
     /**
      * @dev Internal function for transferring tokens from one address to another.

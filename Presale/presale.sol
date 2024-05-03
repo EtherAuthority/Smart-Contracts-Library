@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.24;
 
 /**
@@ -522,8 +523,8 @@ contract Presale is Ownable {
     mapping(address => bool) public approvedContracts; // Mapping to track approved contract addresses
 
     //-----------------------EVENTS-------------------
-    event TokensBoughtWithEth(address buyer, uint256 ethAmount, uint256 ethPrice, uint256 tokenPrice, uint256 timestamp);
-    event BoughtWithTokens(address buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 timestamp);
+    event TokensBoughtWithEth(address buyer, uint256 ethAmount, uint256 ethPrice, uint256 tokenPrice, uint256 numOfTokens, uint256 timestamp);
+    event BoughtWithTokens(address buyer, uint256 usdtAmount, uint256 tokenPrice, uint256 numOfTokens, uint256 timestamp);
     event UpdatePaymentWallet(address newPaymentWallet);
     event ContractApproved(address contractAddress, bool approved);
     event ChangePrice(uint256 currentPrice);   
@@ -535,16 +536,16 @@ contract Presale is Ownable {
      */
     constructor(address _payment){
         paymentWallet = _payment;
-        WETH = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; 
-        USDT = 0x55d398326f99059fF775485246999027B3197955;
+        WETH = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; //0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
+        USDT = 0xdB4fD86A305278C6645c7616330b8fa2b3Eb7D2E;
         USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d; 
         DAI = 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3;  
-        _uniSwapRouter = IRouter01(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        _uniSwapRouter = IRouter01(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);// 0x10ED43C718714eb63d5aA57B78B54704E256024E
         lastPriceUpdateTime = block.timestamp;
         
-        approvedContracts[address(USDT)] = true;
-        approvedContracts[address(USDC)] = true;
-        approvedContracts[address(DAI)] = true;
+        approvedContracts[USDT] = true;
+        approvedContracts[USDC] = true;
+        approvedContracts[DAI] = true;
     }
 
     /**
@@ -553,7 +554,7 @@ contract Presale is Ownable {
      * @param approved Boolean indicating whether to approve or revoke approval.
      */
     function approveContract(address contractAddress, bool approved) external onlyOwner {
-        require(!approvedContracts[contractAddress],"This contract address already exist");
+        require(contractAddress != address(0), "Address cannot be zero");
         approvedContracts[contractAddress] = approved;
         emit ContractApproved(contractAddress, approved);
     }
@@ -567,13 +568,13 @@ contract Presale is Ownable {
      */
     function buyWithToken(uint256 amount, address token) external returns (bool) {
        require(approvedContracts[token], "Contract not approved for buying tokens"); 
-       require(amount > 0,"Amount can not be zero");
        require(token != address(0), "Address cannot be zero");
        IERC20 tokenContract = IERC20(token);
-
+       uint256 currentTokenPrice = updateTokenPrice();
+       uint256 numOfToken = amount / currentTokenPrice;
        SafeERC20.safeTransferFrom(tokenContract, msg.sender,paymentWallet, amount);
 
-       emit BoughtWithTokens(_msgSender(), amount, updateTokenPrice(), block.timestamp);
+       emit BoughtWithTokens(_msgSender(), amount,currentTokenPrice,numOfToken,block.timestamp);
        return true;
     }
  
@@ -584,8 +585,11 @@ contract Presale is Ownable {
      */
     function buyWithEth() external payable  returns (bool) {
         require(msg.value > 0, "No ETH sent");
+        uint256 latestETHPrice = getLatestEthPrice(msg.value);
+        uint256 currentTokenPrice = updateTokenPrice();
+        uint256 numOfToken =  latestETHPrice / updateTokenPrice();
         payable(paymentWallet).transfer(msg.value);
-        emit TokensBoughtWithEth(_msgSender(), msg.value, getLatestEthPrice(msg.value), updateTokenPrice(), block.timestamp);
+        emit TokensBoughtWithEth(_msgSender(), msg.value, latestETHPrice ,currentTokenPrice, numOfToken,  block.timestamp);
         return true;
     }
 
@@ -594,7 +598,7 @@ contract Presale is Ownable {
      * @return The updated token price.
      */
     function updateTokenPrice() internal  returns(uint256){
-        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 1 days;
+        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 30 minutes;
         if (daysPassed >= 1) {
             uint256 newPrice = currentPrice + (daysPassed * PRICEINCREMENT);
             currentPrice = newPrice;
