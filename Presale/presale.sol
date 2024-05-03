@@ -536,11 +536,11 @@ contract Presale is Ownable {
      */
     constructor(address _payment){
         paymentWallet = _payment;
-        WETH = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; //0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
-        USDT = 0xdB4fD86A305278C6645c7616330b8fa2b3Eb7D2E;
+        WETH = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; 
+        USDT = 0x55d398326f99059fF775485246999027B3197955;
         USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d; 
         DAI = 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3;  
-        _uniSwapRouter = IRouter01(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);// 0x10ED43C718714eb63d5aA57B78B54704E256024E
+        _uniSwapRouter = IRouter01(0x10ED43C718714eb63d5aA57B78B54704E256024E); 
         lastPriceUpdateTime = block.timestamp;
         
         approvedContracts[USDT] = true;
@@ -598,7 +598,7 @@ contract Presale is Ownable {
      * @return The updated token price.
      */
     function updateTokenPrice() internal  returns(uint256){
-        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 30 minutes;
+        uint256 daysPassed = (block.timestamp - lastPriceUpdateTime) / 1 days;
         if (daysPassed >= 1) {
             uint256 newPrice = currentPrice + (daysPassed * PRICEINCREMENT);
             currentPrice = newPrice;
