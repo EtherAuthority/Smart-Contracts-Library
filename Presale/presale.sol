@@ -303,6 +303,12 @@ library SafeERC20 {
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
 interface IERC20 {
+
+    /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
+
     /**
      * @dev Returns the amount of tokens in existence.
      */
@@ -515,7 +521,8 @@ contract Presale is Ownable {
     IRouter01 private immutable _uniSwapRouter;
 
     address public paymentWallet;
-
+    
+    
     uint256 public currentPrice=300;// $0.0003 * 10**6
     uint256 public lastPriceUpdateTime;
     uint256 private constant PRICEINCREMENT = 1; // $0.000001 * 10**6
@@ -536,7 +543,7 @@ contract Presale is Ownable {
      */
     constructor(address _payment){
         paymentWallet = _payment;
-        WETH = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; 
+        WETH = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c; // Bsc Mainnet
         USDT = 0x55d398326f99059fF775485246999027B3197955;
         USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d; 
         DAI = 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3;  
@@ -570,10 +577,12 @@ contract Presale is Ownable {
        require(approvedContracts[token], "Contract not approved for buying tokens"); 
        require(token != address(0), "Address cannot be zero");
        IERC20 tokenContract = IERC20(token);
+       uint256 numOfToken;
+       uint256 decimalPoint;
+       decimalPoint = tokenContract.decimals();
        uint256 currentTokenPrice = updateTokenPrice();
-       uint256 numOfToken = amount / currentTokenPrice;
+       numOfToken = (amount *10**6 )  / ( currentTokenPrice *10**decimalPoint);
        SafeERC20.safeTransferFrom(tokenContract, msg.sender,paymentWallet, amount);
-
        emit BoughtWithTokens(_msgSender(), amount,currentTokenPrice,numOfToken,block.timestamp);
        return true;
     }
