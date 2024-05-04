@@ -97,7 +97,7 @@ pragma solidity 0.4.24;
 			 
             balanceOf[this] = tokensForCrowdsale;          // 10 Billion will remain in contract for crowdsale
             balanceOf[teamWallet] = tokensForTeam;         // 4 Billion will be allocated to Team
-            balanceOf[msg.sender] = tokensForOwner;        // 1 Billon will be sent to contract owner
+            balanceOf[msg.sender] = tokensForOwner;        // 1 Billion will be sent to contract owner
 
         }
     
