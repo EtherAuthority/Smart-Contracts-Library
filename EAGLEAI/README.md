@@ -45,7 +45,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - transfer : This function allows to transfer token from one address to another address.
 - transferFrom : This function used by the spender to transfer token from the owner address to another address.
 
-## Note (Bot Protection) : If any Bot try to buy token in 4 hours then 50% token will deduct and send to contract.  
+### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.  
 
 ## How to depoly contract on mainnet
 
