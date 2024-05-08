@@ -438,7 +438,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         _isExcludedFromFee[address(this)] = true;
 
         //set starting 1hr time
-        startingHr = block.timestamp +  5 minutes;
+        startingHr = block.timestamp +  4 hours;
         
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
