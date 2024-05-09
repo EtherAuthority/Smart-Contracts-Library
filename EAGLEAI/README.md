@@ -84,9 +84,42 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - If the deployment fails, check for error messages in Remix or MetaMask for more details.
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
 
-BSC Testnet Transaction
+### Base Testnet Transaction
+- Contract address:[Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
+  
+1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
 
-Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
+2. Buy token under bot restricted time : (50% Tax will deduct and transfer to contract) [Transaction](https://sepolia.basescan.org/tx/0x1ae8a7d4605a26a319daa0d1470d3976933944646da9daa0f211990db2fb1b02)
+
+3. Regular buy token : (reflection 1%, operation 1% liquidity 1%) [Transaction](https://sepolia.basescan.org/tx/0xe280ec2631d88d4535aeddabcfb9291c5f7f2e0858c8200936da8ec360b1e655)
+
+4. Sell token  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token
+[Transaction](https://sepolia.basescan.org/tx/0x97510245cd418a178793f3f762ba60811d4516a6312a7a3d0503a59a4cb143d7)
+
+5. Update reflection (buy 10% and sell 5% Tax) :[Transaction](https://sepolia.basescan.org/tx/0xf482f1fc777900ddc19a24f5ffd3ee632fe7bce2aa4d88d0df82c4a7497ac557)
+
+6. Buy with 12% tax(reflection 10%, operation 1% liquidity 1%): [Transaction](https://sepolia.basescan.org/tx/0x0e8e329039ae34ab052e4a4fb3488814197fa96d819c7c2b4e486f09b3186bed)
+
+7. Sell 10 token with 9% tax (reflection 5%, coinOpertion 1% liquidity 2%, burn 1%) :[Transaction](https://sepolia.basescan.org/tx/0x0a7f6132f7dca179aa0ba53855e681473b03e8da7879a87f022fb171d482c2f6)
+
+8. AddBlacklist :[Transaction](https://sepolia.basescan.org/tx/0xf28d6f07866a414cc8d335b9505cdc2c4c41a5d73c8c8a94f62d2cb59491be97)
+
+9. Transfer token fail because sender is blacklisted : [Transaction](https://sepolia.basescan.org/tx/0xc4535ab7b1d43602a43cf74cd70b087c705df2648ce9023bba2da68ea1a41640)
+
+10. Remove from balcklist : [Transaction](https://sepolia.basescan.org/tx/0xf88555ae9aff646a883140065e049fa7f31ffdf727f7685e5e727d76336f8b9b)
+
+11. Exclude from fee : [Transaction](https://sepolia.basescan.org/tx/0x50d13f4d31089b9304baeba3fbc05a671c41f809092b7adf89945695aebf7e01)
+- Tax not deduct :[Transaction](https://sepolia.basescan.org/tx/0xd0367270aa3dc1a009c2c00d4104d3718beb231f4c12fb3ca417a05c1e7ce37b)
+
+12. Include in fee : [Transaction](https://sepolia.basescan.org/tx/0x19a2b3e214162c899846b795d1bad81af7e26728c905620a06d90831eada9361)
+- Tax deduct : [Transaction](https://sepolia.basescan.org/tx/0xe98f4a4db45a915d8dd81ff182e811632b18dc6d076ca57e4abf471401fdd032)
+
+13. Transfer Ownership : [Transaction](https://sepolia.basescan.org/tx/0x179708b70a9ff96a4d487864559496e44177b5a5c516f240e40464d5b48aa659)
+ 
+
+### BSC Testnet Transaction
+
+- Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
 1. addLiquidity : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
