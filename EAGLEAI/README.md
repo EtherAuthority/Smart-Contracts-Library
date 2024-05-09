@@ -88,41 +88,32 @@ BSC Testnet Transaction
 
 Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
-1. addLiquidity : [Transaction] (https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
+1. addLiquidity : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
 2. startTrading : [Transaction](https://testnet.bscscan.com/tx/0xfa7e41a3d8bc2a8b946c47d93f883ed77e10495f9dd5a5534e8c460fd1fcc8a0)
 
 3. Buy Token : (CoinOperationTax: 1%  LiquidtyTax: 1% ReflectionTax: 1% burnTax:0)
  [Transaction](https://testnet.bscscan.com/tx/0xe303ff4955b531c6200fc905876057b9277b7b2b3cb20f35e049789aa250e693)
 
-4. Sell Token :  CoinOperationTax:2%  LiquidtyTax:1% ReflectionTax:2% burnTax:1%
-(https://testnet.bscscan.com/tx/0x2ff0bdd74ec97b535642523aa1907e69f47831d0987f0d778c640f9517d63108)
+4. Sell Token : (CoinOperationTax:2%  LiquidtyTax:1% ReflectionTax:2% burnTax:1%) [Transaction](https://testnet.bscscan.com/tx/0x2ff0bdd74ec97b535642523aa1907e69f47831d0987f0d778c640f9517d63108)
 
-5. addBlacklist (onlyOwner):
-(https://testnet.bscscan.com/tx/0xe80427622a8a6d89831efaffa8b391ea59d29f342a6ce4c0bd05b7ec871681fb)
+5. addBlacklist (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xe80427622a8a6d89831efaffa8b391ea59d29f342a6ce4c0bd05b7ec871681fb)
 
-6. removeBlacklist (onlyOwner): 
-(https://testnet.bscscan.com/tx/0x4cd0bd5614827797a31c4fbb2e1099d29bed135ca22bca8c17ac1479dab27c70)
+6. removeBlacklist (onlyOwner): [Transaction](https://testnet.bscscan.com/tx/0x4cd0bd5614827797a31c4fbb2e1099d29bed135ca22bca8c17ac1479dab27c70)
 
 7. excludeFromFee (onlyOwner): 
-(https://testnet.bscscan.com/tx/0x7b3fd5bffd1dcee3c08b0355ad2b782872c3873c2f7341c8ac08d376e7ac8e97)
-- After Token buy/sell fee will not deduct: 
-(https://testnet.bscscan.com/tx/0xe01b8846ed5ba9fd2c3c2de49d5dbb9918deb7c1180ffdbad7c98c64ce141725)
+[Transaction](https://testnet.bscscan.com/tx/0x7b3fd5bffd1dcee3c08b0355ad2b782872c3873c2f7341c8ac08d376e7ac8e97)
+- After Token buy/sell fee will not deduct: [Transaction](https://testnet.bscscan.com/tx/0xe01b8846ed5ba9fd2c3c2de49d5dbb9918deb7c1180ffdbad7c98c64ce141725)
 
-8. includeInFeee (onlyOwner):
-(https://testnet.bscscan.com/tx/0x5a024c7e97c9a6eb08b372a968ed6908fedca57cbb92db757e46769822acb76a)
+8. includeInFeee (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0x5a024c7e97c9a6eb08b372a968ed6908fedca57cbb92db757e46769822acb76a)
 
-9. excludeFromReward (onlyOwner): 
-(https://testnet.bscscan.com/tx/0x63a634ab72bd91055a93f066e070cc472cbb73a8075fdc3df30f58cfb699d84f)    
+9. excludeFromReward (onlyOwner): [Transaction](https://testnet.bscscan.com/tx/0x63a634ab72bd91055a93f066e070cc472cbb73a8075fdc3df30f58cfb699d84f)    
 
-10. includeFromReward (onlyOwner):
-(https://testnet.bscscan.com/tx/0xd697a45465c48a7ef1b5ac11bbfb54e19c0e0ddaaa75f1386deb703f9091583a)
+10. includeFromReward (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xd697a45465c48a7ef1b5ac11bbfb54e19c0e0ddaaa75f1386deb703f9091583a)
 
-11. updateReflectionTaxPer(onlyOwner):
-(https://testnet.bscscan.com/tx/0xa6cc5459c88ebd3d94672e096468be50bcbee64c94d267ff4ae9aa44299f27f3)
+11. updateReflectionTaxPer(onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xa6cc5459c88ebd3d94672e096468be50bcbee64c94d267ff4ae9aa44299f27f3)
 
-12. updateThreshold(onlyOwner):
-(https://testnet.bscscan.com/tx/0xb7f7d7389481846b8d70e6c789b8b69993db468cedd437d4514745b2b5c9260d)
+12. updateThreshold(onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xb7f7d7389481846b8d70e6c789b8b69993db468cedd437d4514745b2b5c9260d)
 
 
 
