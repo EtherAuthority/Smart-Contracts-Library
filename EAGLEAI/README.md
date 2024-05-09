@@ -1,4 +1,4 @@
-# EAGLEAI Smart Contract Documentation
+# EAGLE AI Smart Contract Documentation
 
 This README provides an overview of the functionalities and usage of the EAGLEAI smart contract.
 
