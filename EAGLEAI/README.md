@@ -85,7 +85,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
 
 ### Base Testnet Transaction
-- Contract address:[Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
+- Contract address : [Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
   
 1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
 
@@ -96,20 +96,20 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 4. Sell token  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token
 [Transaction](https://sepolia.basescan.org/tx/0x97510245cd418a178793f3f762ba60811d4516a6312a7a3d0503a59a4cb143d7)
 
-5. Update reflection (buy 10% and sell 5% Tax) :[Transaction](https://sepolia.basescan.org/tx/0xf482f1fc777900ddc19a24f5ffd3ee632fe7bce2aa4d88d0df82c4a7497ac557)
+5. Update reflection (buy 10% and sell 5% Tax) : [Transaction](https://sepolia.basescan.org/tx/0xf482f1fc777900ddc19a24f5ffd3ee632fe7bce2aa4d88d0df82c4a7497ac557)
 
-6. Buy with 12% tax(reflection 10%, operation 1% liquidity 1%): [Transaction](https://sepolia.basescan.org/tx/0x0e8e329039ae34ab052e4a4fb3488814197fa96d819c7c2b4e486f09b3186bed)
+6. Buy with 12% tax(reflection 10%, operation 1% liquidity 1%) : [Transaction](https://sepolia.basescan.org/tx/0x0e8e329039ae34ab052e4a4fb3488814197fa96d819c7c2b4e486f09b3186bed)
 
-7. Sell 10 token with 9% tax (reflection 5%, coinOpertion 1% liquidity 2%, burn 1%) :[Transaction](https://sepolia.basescan.org/tx/0x0a7f6132f7dca179aa0ba53855e681473b03e8da7879a87f022fb171d482c2f6)
+7. Sell 10 token with 9% tax (reflection 5%, coinOpertion 1% liquidity 2%, burn 1%) : [Transaction](https://sepolia.basescan.org/tx/0x0a7f6132f7dca179aa0ba53855e681473b03e8da7879a87f022fb171d482c2f6)
 
-8. AddBlacklist :[Transaction](https://sepolia.basescan.org/tx/0xf28d6f07866a414cc8d335b9505cdc2c4c41a5d73c8c8a94f62d2cb59491be97)
+8. AddBlacklist : [Transaction](https://sepolia.basescan.org/tx/0xf28d6f07866a414cc8d335b9505cdc2c4c41a5d73c8c8a94f62d2cb59491be97)
 
 9. Transfer token fail because sender is blacklisted : [Transaction](https://sepolia.basescan.org/tx/0xc4535ab7b1d43602a43cf74cd70b087c705df2648ce9023bba2da68ea1a41640)
 
 10. Remove from balcklist : [Transaction](https://sepolia.basescan.org/tx/0xf88555ae9aff646a883140065e049fa7f31ffdf727f7685e5e727d76336f8b9b)
 
 11. Exclude from fee : [Transaction](https://sepolia.basescan.org/tx/0x50d13f4d31089b9304baeba3fbc05a671c41f809092b7adf89945695aebf7e01)
-- Tax not deduct :[Transaction](https://sepolia.basescan.org/tx/0xd0367270aa3dc1a009c2c00d4104d3718beb231f4c12fb3ca417a05c1e7ce37b)
+- Tax not deduct : [Transaction](https://sepolia.basescan.org/tx/0xd0367270aa3dc1a009c2c00d4104d3718beb231f4c12fb3ca417a05c1e7ce37b)
 
 12. Include in fee : [Transaction](https://sepolia.basescan.org/tx/0x19a2b3e214162c899846b795d1bad81af7e26728c905620a06d90831eada9361)
 - Tax deduct : [Transaction](https://sepolia.basescan.org/tx/0xe98f4a4db45a915d8dd81ff182e811632b18dc6d076ca57e4abf471401fdd032)
@@ -125,28 +125,23 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 
 2. startTrading : [Transaction](https://testnet.bscscan.com/tx/0xfa7e41a3d8bc2a8b946c47d93f883ed77e10495f9dd5a5534e8c460fd1fcc8a0)
 
-3. Buy Token : (CoinOperationTax: 1%  LiquidtyTax: 1% ReflectionTax: 1% burnTax:0)
- [Transaction](https://testnet.bscscan.com/tx/0xe303ff4955b531c6200fc905876057b9277b7b2b3cb20f35e049789aa250e693)
+3. Buy Token : (CoinOperationTax: 1%  LiquidtyTax: 1% ReflectionTax: 1% burnTax:0) : [Transaction](https://testnet.bscscan.com/tx/0xe303ff4955b531c6200fc905876057b9277b7b2b3cb20f35e049789aa250e693)
 
-4. Sell Token : (CoinOperationTax:2%  LiquidtyTax:1% ReflectionTax:2% burnTax:1%) [Transaction](https://testnet.bscscan.com/tx/0x2ff0bdd74ec97b535642523aa1907e69f47831d0987f0d778c640f9517d63108)
+4. Sell Token : (CoinOperationTax:2%  LiquidtyTax:1% ReflectionTax:2% burnTax:1%) : [Transaction](https://testnet.bscscan.com/tx/0x2ff0bdd74ec97b535642523aa1907e69f47831d0987f0d778c640f9517d63108)
 
-5. addBlacklist (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xe80427622a8a6d89831efaffa8b391ea59d29f342a6ce4c0bd05b7ec871681fb)
+5. addBlacklist (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0xe80427622a8a6d89831efaffa8b391ea59d29f342a6ce4c0bd05b7ec871681fb)
 
-6. removeBlacklist (onlyOwner): [Transaction](https://testnet.bscscan.com/tx/0x4cd0bd5614827797a31c4fbb2e1099d29bed135ca22bca8c17ac1479dab27c70)
+6. removeBlacklist (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x4cd0bd5614827797a31c4fbb2e1099d29bed135ca22bca8c17ac1479dab27c70)
 
-7. excludeFromFee (onlyOwner): 
-[Transaction](https://testnet.bscscan.com/tx/0x7b3fd5bffd1dcee3c08b0355ad2b782872c3873c2f7341c8ac08d376e7ac8e97)
+7. excludeFromFee (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x7b3fd5bffd1dcee3c08b0355ad2b782872c3873c2f7341c8ac08d376e7ac8e97)
 - After Token buy/sell fee will not deduct: [Transaction](https://testnet.bscscan.com/tx/0xe01b8846ed5ba9fd2c3c2de49d5dbb9918deb7c1180ffdbad7c98c64ce141725)
 
-8. includeInFeee (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0x5a024c7e97c9a6eb08b372a968ed6908fedca57cbb92db757e46769822acb76a)
+8. includeInFeee (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x5a024c7e97c9a6eb08b372a968ed6908fedca57cbb92db757e46769822acb76a)
 
-9. excludeFromReward (onlyOwner): [Transaction](https://testnet.bscscan.com/tx/0x63a634ab72bd91055a93f066e070cc472cbb73a8075fdc3df30f58cfb699d84f)    
+9. excludeFromReward (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x63a634ab72bd91055a93f066e070cc472cbb73a8075fdc3df30f58cfb699d84f)    
 
-10. includeFromReward (onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xd697a45465c48a7ef1b5ac11bbfb54e19c0e0ddaaa75f1386deb703f9091583a)
+10. includeFromReward (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0xd697a45465c48a7ef1b5ac11bbfb54e19c0e0ddaaa75f1386deb703f9091583a)
 
-11. updateReflectionTaxPer(onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xa6cc5459c88ebd3d94672e096468be50bcbee64c94d267ff4ae9aa44299f27f3)
+11. updateReflectionTaxPer(onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0xa6cc5459c88ebd3d94672e096468be50bcbee64c94d267ff4ae9aa44299f27f3)
 
-12. updateThreshold(onlyOwner):[Transaction](https://testnet.bscscan.com/tx/0xb7f7d7389481846b8d70e6c789b8b69993db468cedd437d4514745b2b5c9260d)
-
-
-
+12. updateThreshold(onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0xb7f7d7389481846b8d70e6c789b8b69993db468cedd437d4514745b2b5c9260d)
