@@ -88,14 +88,12 @@ BSC Testnet Transaction
 
 Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
-1. addLiquidity :
-(https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
+1. addLiquidity : [Transaction] (https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
-2. startTrading : 
-(https://testnet.bscscan.com/tx/0xfa7e41a3d8bc2a8b946c47d93f883ed77e10495f9dd5a5534e8c460fd1fcc8a0)
+2. startTrading : [Transaction](https://testnet.bscscan.com/tx/0xfa7e41a3d8bc2a8b946c47d93f883ed77e10495f9dd5a5534e8c460fd1fcc8a0)
 
 3. Buy Token : (CoinOperationTax: 1%  LiquidtyTax: 1% ReflectionTax: 1% burnTax:0)
-(https://testnet.bscscan.com/tx/0xe303ff4955b531c6200fc905876057b9277b7b2b3cb20f35e049789aa250e693)
+ [Transaction](https://testnet.bscscan.com/tx/0xe303ff4955b531c6200fc905876057b9277b7b2b3cb20f35e049789aa250e693)
 
 4. Sell Token :  CoinOperationTax:2%  LiquidtyTax:1% ReflectionTax:2% burnTax:1%
 (https://testnet.bscscan.com/tx/0x2ff0bdd74ec97b535642523aa1907e69f47831d0987f0d778c640f9517d63108)
