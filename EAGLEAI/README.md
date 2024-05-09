@@ -91,7 +91,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 
 2. Buy token under bot restricted time : (50% Tax will deduct and transfer to contract) [Transaction](https://sepolia.basescan.org/tx/0x1ae8a7d4605a26a319daa0d1470d3976933944646da9daa0f211990db2fb1b02)
 
-3. Regular buy token : (reflection 1%, operation 1% liquidity 1%) [Transaction](https://sepolia.basescan.org/tx/0xe280ec2631d88d4535aeddabcfb9291c5f7f2e0858c8200936da8ec360b1e655)
+3. Regular buy token : (reflection 1%, operation 1% liquidity 1%) : [Transaction](https://sepolia.basescan.org/tx/0xe280ec2631d88d4535aeddabcfb9291c5f7f2e0858c8200936da8ec360b1e655)
 
 4. Sell token  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token
 [Transaction](https://sepolia.basescan.org/tx/0x97510245cd418a178793f3f762ba60811d4516a6312a7a3d0503a59a4cb143d7)
