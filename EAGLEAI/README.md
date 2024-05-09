@@ -89,12 +89,11 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
   
 1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
 
-2. Buy token under bot restricted time : (50% Tax will deduct and transfer to contract) [Transaction](https://sepolia.basescan.org/tx/0x1ae8a7d4605a26a319daa0d1470d3976933944646da9daa0f211990db2fb1b02)
+2. Buy token under bot restricted time : (50% Tax will deduct and transfer to contract) : [Transaction](https://sepolia.basescan.org/tx/0x1ae8a7d4605a26a319daa0d1470d3976933944646da9daa0f211990db2fb1b02)
 
 3. Regular buy token : (reflection 1%, operation 1% liquidity 1%) : [Transaction](https://sepolia.basescan.org/tx/0xe280ec2631d88d4535aeddabcfb9291c5f7f2e0858c8200936da8ec360b1e655)
 
-4. Sell token  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token
-[Transaction](https://sepolia.basescan.org/tx/0x97510245cd418a178793f3f762ba60811d4516a6312a7a3d0503a59a4cb143d7)
+4. Sell token  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token : [Transaction](https://sepolia.basescan.org/tx/0x97510245cd418a178793f3f762ba60811d4516a6312a7a3d0503a59a4cb143d7)
 
 5. Update reflection (buy 10% and sell 5% Tax) : [Transaction](https://sepolia.basescan.org/tx/0xf482f1fc777900ddc19a24f5ffd3ee632fe7bce2aa4d88d0df82c4a7497ac557)
 
@@ -134,7 +133,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 6. removeBlacklist (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x4cd0bd5614827797a31c4fbb2e1099d29bed135ca22bca8c17ac1479dab27c70)
 
 7. excludeFromFee (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x7b3fd5bffd1dcee3c08b0355ad2b782872c3873c2f7341c8ac08d376e7ac8e97)
-- After Token buy/sell fee will not deduct: [Transaction](https://testnet.bscscan.com/tx/0xe01b8846ed5ba9fd2c3c2de49d5dbb9918deb7c1180ffdbad7c98c64ce141725)
+- After Token buy/sell fee will not deduct : [Transaction](https://testnet.bscscan.com/tx/0xe01b8846ed5ba9fd2c3c2de49d5dbb9918deb7c1180ffdbad7c98c64ce141725)
 
 8. includeInFeee (onlyOwner) : [Transaction](https://testnet.bscscan.com/tx/0x5a024c7e97c9a6eb08b372a968ed6908fedca57cbb92db757e46769822acb76a)
 
