@@ -44,8 +44,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 ### Transfer
 - transfer : This function allows to transfer token from one address to another address.
 - transferFrom : This function used by the spender to transfer token from the owner address to another address.
-
-### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.  
+  
 
 ## How to depoly contract on mainnet
 
@@ -85,6 +84,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
 
 ### Base Testnet Transaction (With initial boat restriction) 
+### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.
 - Contract address : [Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
   
 1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
@@ -117,6 +117,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
  
 
 ### BSC Testnet Transaction (With initial boat restriction)
+### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.
 
 - Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
