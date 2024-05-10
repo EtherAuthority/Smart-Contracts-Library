@@ -84,7 +84,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - If the deployment fails, check for error messages in Remix or MetaMask for more details.
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
 
-### Base Testnet Transaction
+### Base Testnet Transaction (With initial boat restriction) 
 - Contract address : [Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
   
 1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
@@ -116,7 +116,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 13. Transfer Ownership : [Transaction](https://sepolia.basescan.org/tx/0x179708b70a9ff96a4d487864559496e44177b5a5c516f240e40464d5b48aa659)
  
 
-### BSC Testnet Transaction
+### BSC Testnet Transaction (With initial boat restriction)
 
 - Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
