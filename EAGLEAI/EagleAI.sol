@@ -25,7 +25,7 @@ Twitter: https://twitter.com/Eagleaibot
 TikTok: https://www.tiktok.com/@eagle.ai.bot
 Instagram: https://www.instagram.com/eagleaibot"
 
-SPDX-License-Identifier: Unlicensed
+SPDX-License-Identifier: MIT
 */
 pragma solidity 0.8.24;
 
@@ -436,9 +436,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
-
-        //set starting 1hr time
-        startingHr = block.timestamp +  4 hours;
         
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
@@ -1164,29 +1161,9 @@ contract EAGLEAI is Context, IERC20, Ownable {
             takeFee = false;
         }
         
-        //if takeFee is true then set set or buy tax share percentage
+        //if takeFee is true then set sell or buy tax percentage
         if(takeFee)
-       {
-            //if user want to buy token under 1 hour from contract deployment
-            if(startingHr >= block.timestamp){
-                bool isBuy = from == uniswapV2Pair;
-                bool isSell = to == uniswapV2Pair;
-
-                if(isBuy){
-                    uint256 taxAmount = amount / 2;
-                    amount -=taxAmount;
-                    _tokenTransfer(from,address(this),taxAmount,false);
-                }
-                else if(isSell){
-                    _sellBuyTax(from,to);
-                }
-            }else{
-                  _sellBuyTax(from,to);
-            }  
-       }
-        //transfer amount, it will take tax, burn, liquidity fee
-        
-
+        _sellBuyTax(from,to); 
       _tokenTransfer(from,to,amount,takeFee);
     }
 

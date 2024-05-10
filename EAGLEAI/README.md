@@ -83,6 +83,39 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - If the deployment fails, check for error messages in Remix or MetaMask for more details.
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
 
+### BSC Testnet Transaction (Without initial boat restriction) 
+
+- Contract address : [Transaction](https://testnet.bscscan.com/address/0xA0Ed11B74f93288989aB933d169ebd9CaC23218A#code)
+  
+1. addLiquidity : [Transaction](https://testnet.bscscan.com/tx/0xec89434e5f508a44b1bc7de215303dd1d5d89c4ff6ec3899bce8fb3ee8b197ca)  
+
+2. Buy token:100 tokens (reflection 1%, operation 1% liquidity 1%) : [Transaction](https://testnet.bscscan.com/tx/0x0d5963c04e85650dccb5167ba4c1aad9db82fd16808cabd300bdf066637f17d6)
+
+
+4. Sell token 100 tokens  : (reflection 2%,coinOperation 1%, liquidity 2%, burn 1%) 10 token : [Transaction](https://testnet.bscscan.com/tx/0x4f247bcd0e64661dd5952691f68098ff9d98196ff9d65977c860ae041447fe00)
+
+5. Update reflection (buy 10% and sell 5% Tax) : [Transaction](https://testnet.bscscan.com/tx/0x23b04d78ea787236183865b0d844b89785e1c8fc85f800d4df64e7fbcb9c7cd5)
+
+6. Buy 500 tokens with 12% tax(reflection 10%, operation 1% liquidity 1%) : [Transaction](https://testnet.bscscan.com/tx/0x010dfb12009c145b1ea7da65c25d8354f512063fc681d4fe14d2af5b2b8fe208)
+
+7. Sell 500 token with 9% tax (reflection 5%, coinOpertion 1% liquidity 2%, burn 1%) : [Transaction](https://testnet.bscscan.com/tx/0x9b38dabcf396eaeb39380846a3719d4ddb6ab6482aa417625e73fd0ca9a80df0)
+
+8. AddBlacklist : [Transaction](https://testnet.bscscan.com/tx/0x75c96adff31cb35a827179e174907ffca64233e5f68f59857eab65bdd4e980aa)
+
+9. Transfer token fail because receiver is blacklisted : [Transaction](https://testnet.bscscan.com/tx/0xf1044d2c661ad5d1532efc1d284401c683fbb6e4858a69d54d6c3ea6a55e968d)
+
+10. Remove from balcklist : [Transaction](https://testnet.bscscan.com/tx/0x687ac3806f9be25cd361144389ced9993962b17ad078ab1a390e5b25ebcc2177)
+
+11. Exclude from fee : [Transaction](https://testnet.bscscan.com/tx/0xd3e43f6005c34b9e5121d86225f664e2b504fb544b1d84f78fc8311f2e927f02)
+- Tax not deduct : [Transaction](https://testnet.bscscan.com/tx/0xfd349bdb5ab7cfbc969e7f55b676df206bc56a31897c1fdfed2b5d276043bfd1)
+- Sell Tax not deduct : [Transaction](https://testnet.bscscan.com/tx/0xba3e7c630404ff02e2b87d0ded5d9e99446287a8a44c5aede323c6600fc5295a)
+
+12. Include in fee : [Transaction](https://testnet.bscscan.com/tx/0xfeb3ddf084d91413134e146a4a10bd9bd5abc65cf173939075bd0aba391520d2)
+- Buy Tax deduct : [Transaction](https://testnet.bscscan.com/tx/0x6605f3b6ed8249dd949bd0f46b4c338367b5c30470b28a1949332469a6b6fb3f)
+- Sell Tax deduct : [Transaction](https://testnet.bscscan.com/tx/0xa3e23cae278680f28320c0bafaa857be3a2db5e8d065da6f7f9d65552693a779)
+
+13. Transfer Ownership : [Transaction](https://testnet.bscscan.com/tx/0x0f25ccc48151e9fe4ddad1fce7979eeefbc3ddac88e0fa513fc2306fc2b7d2bc)
+
 ### Base Testnet Transaction (With initial boat restriction) 
 #### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.
 - Contract address : [Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
