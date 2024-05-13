@@ -82,10 +82,14 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 
 - If the deployment fails, check for error messages in Remix or MetaMask for more details.
 - Ensure your MetaMask account has enough ETH/AVAX to cover gas fees for the transaction.
+  
 
+### New contract with all tax changable:
+- Contract address: [Contract](https://testnet.bscscan.com/address/0xe740b729627DFd9152A9729eD7AB4ae0Fc49eAEA#code)
+  
 ### BSC Testnet Transaction (Without initial boat restriction) 
 
-- Contract address : [Transaction](https://testnet.bscscan.com/address/0xA0Ed11B74f93288989aB933d169ebd9CaC23218A#code)
+- Contract address : [Contract](https://testnet.bscscan.com/address/0xA0Ed11B74f93288989aB933d169ebd9CaC23218A#code)
   
 1. addLiquidity : [Transaction](https://testnet.bscscan.com/tx/0xec89434e5f508a44b1bc7de215303dd1d5d89c4ff6ec3899bce8fb3ee8b197ca)  
 
@@ -118,7 +122,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 
 ### Base Testnet Transaction (With initial boat restriction) 
 #### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.
-- Contract address : [Transaction](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
+- Contract address : [Contract](https://sepolia.basescan.org/address/0x8Aa033a493dd7FCB9694B88b0Bd60cAAF2dB77Aa#code)
   
 1. addLiquidity : [Transaction](https://sepolia.basescan.org/tx/0x95b422ba459b345a7313b19eecc69bda6bbe7ae2a4ba9cf207e1a66502a7495d)  
 
@@ -152,7 +156,7 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 ### BSC Testnet Transaction (With initial boat restriction)
 #### Note (Bot Protection) : If any Bot try to buy token in 4 hours of contract depolyment then 50% token will deduct and send to contract.
 
-- Contract Addresses : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
+- Contract Addresses : [Contract](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
 1. addLiquidity : [Transaction](https://testnet.bscscan.com/address/0xd4A563D97851EB65c600F45c6c3b6EFDd394cFe6#code)
 
