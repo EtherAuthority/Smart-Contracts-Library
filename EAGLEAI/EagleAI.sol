@@ -382,10 +382,16 @@ contract EAGLEAI is Context, IERC20, Ownable {
     uint256 liquidty;
     uint256 burn;
 
-    //Reflection tax
-    uint256 buyReflectionTax=1;
-    uint256 sellReflectionTax=2;
-
+    //Buy tax percentage
+    uint256 public buyReflectionTax=1;
+    uint256 public buyCoinWalletTaxPer=1;
+    uint256 public buyLiquidityTaxPer=1;
+    uint256 public buyBurnTaxPer= 0;
+    //sell tax percentage
+    uint256 public sellReflectionTax=2;
+    uint256 public SellCoinWalletTaxPer=1;
+    uint256 public sellLiquidityTaxPer=2;
+    uint256 public sellBurnTaxPer= 1;
     //coin operation wallet
     address public fundWallet;
     
@@ -403,7 +409,8 @@ contract EAGLEAI is Context, IERC20, Ownable {
     event TradeEnabled(bool enabled);
     event AddedInBlacklist(address account);
     event RemovedFromBlacklist(address account);
-    event ReflectioFeeUpdated(uint256 buyReflectionTaxPer,uint256 sellReflectionTaxPer);
+    event BuyTaxUpdated(uint256 buyReflectionTax,uint256 buyCoinWalletTaxPer,uint256 buyLiquidityTaxPer,uint256 buyBurnTaxPer);
+    event SellTaxUpdated(uint256 sellReflectionTax,uint256 SellCoinWalletTaxPer,uint256 sellLiquidityTaxPer,uint256 sellBurnTaxPer);
     
     
     modifier lockTheSwap {
@@ -1087,16 +1094,44 @@ contract EAGLEAI is Context, IERC20, Ownable {
         emit RemovedFromBlacklist(account);
     }  
 
-    /**
-     * @notice Update the reflection tax for buying and selling.
-     * @dev Only callable by the owner of the contract.
-     * @param buyReflectionPercent The percentage of reflection tax for buying.
-     * @param sellReflectionPercent The percentage of reflection tax for selling.
-     */
-    function updateReflectionTaxPer(uint256 buyReflectionPercent,uint256 sellReflectionPercent) external onlyOwner {
-        buyReflectionTax = buyReflectionPercent;
-        sellReflectionTax = sellReflectionPercent;
-        emit ReflectioFeeUpdated(buyReflectionTax,sellReflectionTax);
+     /**
+      * @notice Updates the buy taxes percentages.
+      * @dev This function can only be called by the contract owner.
+      * @param reflectionPercent Percentage of reflection tax on buy transactions.
+      * @param coinOperartionPer Percentage of tax allocated to coin operation on buy transactions.
+      * @param liquidityTaxPer Percentage of tax allocated to liquidity on buy transactions.
+      * @param burnTaxPer Percentage of tax allocated to burning on buy transactions.
+      * @dev The sum of all tax percentages cannot exceed 100%.
+      * Note: Only whole numbers are accepted for each tax percentage, not fractions.
+      */
+    function updateBuyTaxPer(uint256 reflectionPercent,uint256 coinOperartionPer,uint256 liquidityTaxPer,uint256 burnTaxPer) external onlyOwner {
+        uint256 totalTax = reflectionPercent + coinOperartionPer + liquidityTaxPer + burnTaxPer;
+        require(totalTax <= 100,"You can not set buy tax more then 100%");        
+        buyReflectionTax = reflectionPercent;
+        buyCoinWalletTaxPer = coinOperartionPer;
+        buyLiquidityTaxPer = liquidityTaxPer;
+        buyBurnTaxPer = burnTaxPer;
+        emit BuyTaxUpdated(buyReflectionTax,buyCoinWalletTaxPer,buyLiquidityTaxPer,buyBurnTaxPer);
+    }
+
+     /**
+      * @notice Updates the sell taxes percentages.
+      * @dev This function can only be called by the contract owner.
+      * @param reflectionPercent Percentage of reflection tax on sell transactions.
+      * @param coinOperartionPer Percentage of tax allocated to coin operation on sell transactions.
+      * @param liquidityTaxPer Percentage of tax allocated to liquidity on sell transactions.
+      * @param burnTaxPer Percentage of tax allocated to burning on sell transactions.
+      * @dev The sum of all tax percentages cannot exceed 100%.
+      * Note: Only whole numbers are accepted for each tax percentage, not fractions.
+      */
+    function updateSellTaxPer(uint256 reflectionPercent,uint256 coinOperartionPer,uint256 liquidityTaxPer,uint256 burnTaxPer) external onlyOwner {
+        uint256 totalTax = reflectionPercent + coinOperartionPer + liquidityTaxPer + burnTaxPer;
+        require(totalTax <= 100,"You can not set sell tax more then 100%");
+        sellReflectionTax = reflectionPercent;
+        SellCoinWalletTaxPer = coinOperartionPer;
+        sellLiquidityTaxPer = liquidityTaxPer;
+        sellBurnTaxPer = burnTaxPer;
+        emit SellTaxUpdated(sellReflectionTax,SellCoinWalletTaxPer,sellLiquidityTaxPer,sellBurnTaxPer);
     }
 
     /**
@@ -1104,12 +1139,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
     * @param from The address from which the tokens are transferred.
     * @param to The address to which the tokens are transferred.
     * @param amount The amount of tokens to be transferred.
-    * 
-    * Requirements:
-    * - `from` cannot be the zero address.
-    * - `to` cannot be the zero address.
-    * - `amount` must be greater than zero.
-    * - If neither `from` nor `to` is the owner, the transfer amount must not exceed the max transaction amount.
     * 
     * @param from The sender's address.
     * @param to The recipient's address.
@@ -1196,29 +1225,19 @@ contract EAGLEAI is Context, IERC20, Ownable {
            //sell and buy logic
         bool isBuy = from == uniswapV2Pair;
         bool isSell = to == uniswapV2Pair;
-        
-        //buy tax share
-        uint256 buyCoinOperation=1;
-        uint256 buyLiquidity=1;
-        uint256 buyBurn=0;
-
-        //sell tax share
-        uint256 sellCoin=1;
-        uint256 sellLiq =2;
-        uint256 sellBurn =1;
 
             if (isBuy) {    
             refAmt =   buyReflectionTax; //1 %
-            coinOperation = buyCoinOperation; //1 %
-            liquidty = buyLiquidity; //1 %
-            burn = buyBurn; //0%
+            coinOperation = buyCoinWalletTaxPer; //1 %
+            liquidty = buyLiquidityTaxPer; //1 %
+            burn = buyBurnTaxPer; //0%
  
             } 
             else if (isSell) {
-            refAmt =   sellReflectionTax; //2%
-            coinOperation = sellCoin; //1%
-            liquidty = sellLiq; //2%
-            burn = sellBurn;   //1%
+            refAmt = sellReflectionTax; //2%
+            coinOperation = SellCoinWalletTaxPer; //1%
+            liquidty = sellLiquidityTaxPer; //2%
+            burn = sellBurnTaxPer;   //1%
                
             }
             else {
