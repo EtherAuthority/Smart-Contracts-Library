@@ -5,9 +5,9 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 ## Functions
 
 ### Blacklist
-- addBlacklist : This function allows the contract owner to add an address to a blacklist, preventing the blacklisted address from certain actions or functionalities within the contract.
+- **addBlacklist** : This function allows the contract owner to add an address to a blacklist, preventing the blacklisted address from certain actions or functionalities within the contract.
  It checks if the address is not already blacklisted, adds it to the blacklist if not.
-- removeBlacklist : This function lets the contract owner remove an address from the blacklist, restoring its access to contract functionalities. It verifies if the address is blacklisted, removes it if true, and emits an event for the removal action.
+- **removeBlacklist** : This function lets the contract owner remove an address from the blacklist, restoring its access to contract functionalities. It verifies if the address is blacklisted, removes it if true, and emits an event for the removal action.
 
 ### airdrop
 - This function enables the contract owner to distribute tokens to multiple addresses simultaneously, ensuring the owner has enough tokens before proceeding with the airdrop.
@@ -16,8 +16,8 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - This function allows an address [spender] to spend token on behalf of another address [owner]
 
 ### Allowance
-- increaseAllowance : This function allows the caller to increase the allowance granted to a spender for spending the caller's tokens. It updates the allowance by adding the specified value to the current allowance
-- decreaseAllowance : This function enables the caller to decrease the allowance granted to a spender for spending the caller's tokens. It updates the allowance by subtracting the specified value from the current allowance.
+- **increaseAllowance** : This function allows the caller to increase the allowance granted to a spender for spending the caller's tokens. It updates the allowance by adding the specified value to the current allowance
+- **decreaseAllowance** : This function enables the caller to decrease the allowance granted to a spender for spending the caller's tokens. It updates the allowance by subtracting the specified value from the current allowance.
 
 ### excludeFromFee
 - This function allows the contract owner to exclude an address from fee calculations. It checks if the address is not already excluded and then sets it as excluded from fees.
@@ -32,17 +32,17 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 - This function allows the contract owner to include an address in earning rewards, reversing the exclusion status previously set for that address. It checks if the address is currently excluded, removes it from the list of excluded addresses, and sets its token balance to zero to indicate inclusion in rewards.
 
 ### Ownership Management
-- transferOwnership: Transfer ownership of the contract to a new address.
-- renounceOwnership: Renounce ownership, removing the contract owner and leaving the contract without an owner.
+- **transferOwnership**: Transfer ownership of the contract to a new address.
+- **renounceOwnership**: Renounce ownership, removing the contract owner and leaving the contract without an owner.
 
 ### Contract Settings 
-- setFundWallet : This function allows the contract owner to set the fund wallet address, ensuring it's not set to zero. It updates the fund wallet address and emits an event to signal the change.
-- updateThreshold :This function allows the owner to set limitation for call autoliquidity.
-- startTrading: This function enables the contract owner to start trading by setting the tradeEnabled variable to true. It emits an event to indicate that trading has been enabled.
+- **setFundWallet** : This function allows the contract owner to set the fund wallet address, ensuring it's not set to zero. It updates the fund wallet address and emits an event to signal the change.
+- **updateThreshold** :This function allows the owner to set limitation for call autoliquidity.
+- **startTrading**: This function enables the contract owner to start trading by setting the tradeEnabled variable to true. It emits an event to indicate that trading has been enabled.
 
 ### Transfer
-- transfer : This function allows to transfer token from one address to another address.
-- transferFrom : This function used by the spender to transfer token from the owner address to another address.
+- **transfer** : This function allows to transfer token from one address to another address.
+- **transferFrom** : This function used by the spender to transfer token from the owner address to another address.
 
 ### Tax Management
 
