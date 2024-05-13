@@ -37,13 +37,18 @@ This README provides an overview of the functionalities and usage of the EAGLEAI
 
 ### Contract Settings 
 - setFundWallet : This function allows the contract owner to set the fund wallet address, ensuring it's not set to zero. It updates the fund wallet address and emits an event to signal the change.
-- updateReflectionTaxPer : This function enables the contract owner to update the reflection tax percentages for buying and selling. It sets the new values for the buy and sell reflection taxes, then emits an event to announce the update.
 - updateThreshold :This function allows the owner to set limitation for call autoliquidity.
 - startTrading: This function enables the contract owner to start trading by setting the tradeEnabled variable to true. It emits an event to indicate that trading has been enabled.
 
 ### Transfer
 - transfer : This function allows to transfer token from one address to another address.
 - transferFrom : This function used by the spender to transfer token from the owner address to another address.
+
+### Tax Management
+
+- **updateBuyTaxPer**: This function updates the buy taxes percentages. It can only be called by the contract owner. It accepts parameters for reflection, coin operation, liquidity, and burn taxes on buy transactions. The sum of all tax percentages cannot exceed 100%. Only whole numbers are accepted for each tax percentage, not fractions.
+
+- **updateSellTaxPer**: This function updates the sell taxes percentages. It can only be called by the contract owner. It accepts parameters for reflection, coin operation, liquidity, and burn taxes on sell transactions. The sum of all tax percentages cannot exceed 100%. Only whole numbers are accepted for each tax percentage, not fractions.
   
 
 ## How to depoly contract on mainnet
