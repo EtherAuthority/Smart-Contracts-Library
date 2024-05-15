@@ -11,13 +11,14 @@ contract Presale {
     uint256 public price;    
     mapping(address => uint256) public purchaseAmount;
     mapping(address => uint256) public claimedAmount;
-    mapping(address => bool) public claimed;
+    mapping(address => bool) public tgclaimed;
+    mapping(address => uint256) public tgeAmount;
    // uint256 public constant vestingDuration = 4 * 30 days; // 4 months
     uint256 public startTime;
     uint256 public endTime;
     uint256 public totalTokens;
     uint256 public vestingDuration = 4 * 4 minutes; // 4 months
-     mapping(address => uint256) public vestedAmount;
+    mapping(address => uint256) public vestedAmount;
     uint256 public  tgePercentage = 20; // TGE percentage
     
 
@@ -33,6 +34,11 @@ contract Presale {
         uint256 cost = _amount * price;
         require(token.transferFrom(msg.sender, address(this), cost), "Token transfer failed");
         purchaseAmount[msg.sender] += _amount;
+        // Calculate TGE release       
+        tgeAmount[msg.sender] = (purchaseAmount[msg.sender] * tgePercentage) / 100;
+        tgclaimed[msg.sender] = true;
+        require(token.transfer(msg.sender, tgeAmount[msg.sender]), "Token transfer failed");
+        
     }
 
     function adjustPrice(uint256 _newPrice) external {
@@ -41,34 +47,30 @@ contract Presale {
     }
 
     function claimTokens() external {
-        require(block.timestamp > endTime, "Presale not ended yet");
-        require(!claimed[msg.sender], "Tokens already claimed");
         uint256 vestedAmounts = calculateVestedAmount(msg.sender);
         require(vestedAmounts > 0, "No tokens to claim");
-        claimedAmount[msg.sender] = vestedAmounts;
-        claimed[msg.sender] = true;
+        claimedAmount[msg.sender] += vestedAmounts;        
         require(token.transfer(msg.sender, vestedAmounts), "Token transfer failed");
     }
 
-    function calculateVestedAmount(address _user) internal returns (uint256) {
-        uint256 totalVested = 0;
-        uint256 userPurchaseAmount = purchaseAmount[_user];
-
-        // Calculate TGE release       
-        uint256 tgeAmount = (userPurchaseAmount * tgePercentage) / 100;
-        totalVested += tgeAmount;
-        
-
+    function calculateVestedAmount(address _user) internal returns (uint256) {        
+        uint256 uservestingamt=purchaseAmount[_user] - tgeAmount[msg.sender];
         // Calculate linear vesting
-        require(block.timestamp >= startTime, "Vesting has not started yet");
-        require(block.timestamp <= endTime, "Vesting has ended");
+        require(uservestingamt>=vestedAmount[msg.sender],"Nothing to claim");      
         uint256 elapsedTime = block.timestamp - startTime;
         uint256 vestingPeriods = elapsedTime / (vestingDuration / 4); // Divide the vesting period into 4 parts
-        uint256 vested = ((userPurchaseAmount - tgeAmount) * vestingPeriods) / 4;
+        uint256 vested = (uservestingamt * vestingPeriods) / 4;
         require(vested > vestedAmount[msg.sender], "Nothing to claim");
-        totalVested = vested - vestedAmount[msg.sender];
+        uint256 claimable = vested - vestedAmount[msg.sender];
+        require(uservestingamt>=claimable,"Nothing to claim");
         vestedAmount[msg.sender] = vested;  
         
-        return totalVested;
+        return  claimable;
+    }
+
+    function completedVestingMonths(address _user) external view returns (uint256) {
+        uint256 elapsedMonths = (block.timestamp - (block.timestamp - vestingDuration)) / (4 minutes);
+        uint256 completedMonths = (elapsedMonths * (purchaseAmount[_user]-tgeAmount[msg.sender])) / vestingDuration;
+        return completedMonths;
     }
 }
