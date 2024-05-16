@@ -364,9 +364,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
     string  private  constant SYMBOL = "EAI";
     uint8  private constant DECIMALS = 18;
 
-    //Starting 1st hr 
-    uint256 private startingHr;
-
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
     
