@@ -1068,6 +1068,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
      * @dev Only callable by the owner of the contract.
     */
     function startTrading() external onlyOwner(){
+        require(!tradeEnabled,"Trading already started");
         tradeEnabled = true;
         emit TradeEnabled(tradeEnabled);
     }
@@ -1166,7 +1167,8 @@ contract EAGLEAI is Context, IERC20, Ownable {
             return;
         }
 
-        require(tradeEnabled);
+        require(tradeEnabled,"Trading not started yet");
+
         
         uint256 contractTokenBalance = balanceOf(address(this));
         
