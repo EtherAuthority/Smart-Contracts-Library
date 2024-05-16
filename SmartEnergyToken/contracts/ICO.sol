@@ -100,6 +100,8 @@ contract ICO is Ownable{
     event TokensPurchased(address buyer, uint256 amount, uint256 totalCost);
     // Event recover token
     event RecoveredToken(uint256 recoverToken);
+    // Event change price
+    event PriceChanged(uint256 newPrice);
 
     constructor(address _tokenAddress, uint256 _tokenPriceInWei) Ownable(msg.sender) {
         token = IERC20(_tokenAddress);
@@ -136,6 +138,13 @@ contract ICO is Ownable{
         require(tokenBalance > 0,"Not sufficient token balance");
         token.transfer((owner()), tokenBalance);
         emit RecoveredToken(tokenBalance);
+    }
+   
+    // change price function
+    function changeTokenPrice(uint256 price) external onlyOwner {
+        tokenPrice = price;
+        emit PriceChanged(tokenPrice);
+
     }
     /**
     * @notice Retrieves the number of tokens available in the ICO contract.
