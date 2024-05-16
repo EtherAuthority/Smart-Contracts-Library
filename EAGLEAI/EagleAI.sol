@@ -386,7 +386,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
     uint256 public buyBurnTaxPer= 0;
     //sell tax percentage
     uint256 public sellReflectionTax=2;
-    uint256 public SellCoinWalletTaxPer=1;
+    uint256 public sellCoinWalletTaxPer=1;
     uint256 public sellLiquidityTaxPer=2;
     uint256 public sellBurnTaxPer= 1;
     //coin operation wallet
@@ -407,7 +407,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
     event AddedInBlacklist(address account);
     event RemovedFromBlacklist(address account);
     event BuyTaxUpdated(uint256 buyReflectionTax,uint256 buyCoinWalletTaxPer,uint256 buyLiquidityTaxPer,uint256 buyBurnTaxPer);
-    event SellTaxUpdated(uint256 sellReflectionTax,uint256 SellCoinWalletTaxPer,uint256 sellLiquidityTaxPer,uint256 sellBurnTaxPer);
+    event SellTaxUpdated(uint256 sellReflectionTax,uint256 sellCoinWalletTaxPer,uint256 sellLiquidityTaxPer,uint256 sellBurnTaxPer);
     
     
     modifier lockTheSwap {
@@ -419,13 +419,13 @@ contract EAGLEAI is Context, IERC20, Ownable {
     /**
     * @notice Contract constructor to initialize the token.
     * @dev This constructor sets initial values and configures the contract.
-    * @param _fundWallet The address where funds will be sent.
+    * @param wallet The address where funds will be sent.
     */
     
-       constructor (address _fundWallet)  {
-        require(_fundWallet != address(0),"Fund wallet can not be zero");
+       constructor (address wallet)  {
+        require(wallet != address(0),"Fund wallet can not be zero");
         _rOwned[_msgSender()] = _rTotal;
-        fundWallet = _fundWallet;
+        fundWallet = wallet;
         // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24); //Uniswap V2 on Base network
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); //bsc testnet
 
@@ -760,11 +760,11 @@ contract EAGLEAI is Context, IERC20, Ownable {
     * @notice Allows the owner to enable or disable the swap and liquify feature.
     * @dev The swap and liquify feature is a mechanism often used in decentralized finance (DeFi)
     * projects to automatically swap a portion of tokens for liquidity and add them to a liquidity pool.
-    * @param _enabled A boolean indicating whether to enable (true) or disable (false) the feature.
+    * @param enabled A boolean indicating whether to enable (true) or disable (false) the feature.
     */
-    function setSwapAndLiquifyEnabled(bool _enabled) external onlyOwner {
-        swapAndLiquifyEnabled = _enabled;
-        emit SwapAndLiquifyEnabledUpdated(_enabled);
+    function setSwapAndLiquifyEnabled(bool enabled) external onlyOwner {
+        swapAndLiquifyEnabled = enabled;
+        emit SwapAndLiquifyEnabledUpdated(enabled);
     }
 
     /**
@@ -1126,10 +1126,10 @@ contract EAGLEAI is Context, IERC20, Ownable {
         uint256 totalTax = reflectionPercent + coinOperartionPer + liquidityTaxPer + burnTaxPer;
         require(totalTax <= 100,"You can not set sell tax more then 100%");
         sellReflectionTax = reflectionPercent;
-        SellCoinWalletTaxPer = coinOperartionPer;
+        sellCoinWalletTaxPer = coinOperartionPer;
         sellLiquidityTaxPer = liquidityTaxPer;
         sellBurnTaxPer = burnTaxPer;
-        emit SellTaxUpdated(sellReflectionTax,SellCoinWalletTaxPer,sellLiquidityTaxPer,sellBurnTaxPer);
+        emit SellTaxUpdated(sellReflectionTax,sellCoinWalletTaxPer,sellLiquidityTaxPer,sellBurnTaxPer);
     }
 
     /**
@@ -1234,7 +1234,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
             } 
             else if (isSell) {
             refAmt = sellReflectionTax; //2%
-            coinOperation = SellCoinWalletTaxPer; //1%
+            coinOperation = sellCoinWalletTaxPer; //1%
             liquidty = sellLiquidityTaxPer; //2%
             burn = sellBurnTaxPer;   //1%
                
