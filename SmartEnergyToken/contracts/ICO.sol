@@ -97,7 +97,7 @@ contract ICO is Ownable{
     uint256 public tokenPrice; // Price of each token in Wei
 
     // Event token purchase
-    event TokensPurchased(address buyer, uint256 amount, uint256 totalCost);
+    event TokensPurchased(address buyer, uint256 amount, uint256 ethAmount);
     // Event recover token
     event RecoveredToken(uint256 recoverToken);
     // Event change price
@@ -110,21 +110,26 @@ contract ICO is Ownable{
 
     /* 
      * @notice Allows users to buy tokens by sending ETH to the contract.
-     * @dev Users must send enough ETH to cover the total cost of tokens.
+     * @dev Users must send more then zero ETH
      *      The contract calculates the total cost based on the number of tokens requested
      *      and the current token price.
-     *      If the amount of ETH sent is insufficient, the transaction reverts.
-     * @param numberOfTokens The number of tokens to buy.
+     *      If the amount of ETH sent is 0, the transaction reverts.
      * @return No return value. Emits a TokensPurchased event upon successful token purchase.
     */
-    function buyTokens(uint256 numberOfTokens) external payable {
-        uint256 totalCost = (numberOfTokens * tokenPrice) / 10**18;
-        require(msg.value >= totalCost, "Insufficient ETH sent");
-        token.transfer(msg.sender, numberOfTokens);
+    function buyTokens() external payable {
+        require(msg.value > 0, "Your are send zero ETH of amount");
+        uint256 tokenAmount = calculateTokenAmount(msg.value);
+        token.transfer(msg.sender,tokenAmount );
         payable(owner()).transfer(msg.value);
-        emit TokensPurchased(msg.sender, numberOfTokens, msg.value);
+        emit TokensPurchased(msg.sender, tokenAmount, msg.value);
     }
     
+
+    //function to calculate how many tokne you get
+    //always enter amount in Wei
+    function calculateTokenAmount(uint256 amount) public  view returns(uint256){
+        return  (amount * 10**18) / tokenPrice;
+    }
     /* 
      * @notice Allows the contract owner to recover any excess tokens left in the contract.
      * @dev Only the contract owner can call this function.
@@ -141,6 +146,7 @@ contract ICO is Ownable{
     }
    
     // change price function
+    //enter price always in wei value
     function changeTokenPrice(uint256 price) external onlyOwner {
         tokenPrice = price;
         emit PriceChanged(tokenPrice);
