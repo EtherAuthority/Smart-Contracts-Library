@@ -394,7 +394,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
     event SwapAndLiquifyEnabledUpdated(bool enabled);
     event FundWalletChange(address wallet);
     event ThresholdUpdated(uint256 amount);
-    event CoinFund(uint256 totalCoinFund);
     event AddedLiquidity(uint256 totalLiquidity);
     event ReflectedFee(uint256 totalReflectFee);
     event SwapAndLiquify(
@@ -717,7 +716,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;        
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
-        _takeCoinFund(tCoinOperation);
+        _takeCoinFund(tCoinOperation,sender);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -832,13 +831,13 @@ contract EAGLEAI is Context, IERC20, Ownable {
     * 
     * @notice Internal use only.
     */
-       function _takeCoinFund(uint256 tCoinOperation) private {
+       function _takeCoinFund(uint256 tCoinOperation,address sender) private {
            uint256 currentRate =  _getRate();
         uint256 rCoinOperation = tCoinOperation * currentRate;
         _rOwned[fundWallet] = _rOwned[fundWallet] + rCoinOperation;
         if(_isExcluded[fundWallet])
             _tOwned[fundWallet] = _tOwned[fundWallet] + tCoinOperation;
-        emit CoinFund(tCoinOperation);
+        emit Transfer(sender, fundWallet, tCoinOperation);
     }
 
     /**
@@ -1393,7 +1392,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
-        _takeCoinFund(tCoinOperation);
+        _takeCoinFund(tCoinOperation,sender);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1417,7 +1416,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;           
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
-        _takeCoinFund(tCoinOperation);
+        _takeCoinFund(tCoinOperation,sender);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1442,7 +1441,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;   
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee, tBurn);
-        _takeCoinFund(tCoinOperation);
+        _takeCoinFund(tCoinOperation,sender);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 }
