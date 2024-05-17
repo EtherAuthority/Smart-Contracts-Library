@@ -408,7 +408,10 @@ contract EAGLEAI is Context, IERC20, Ownable {
     event RemovedFromBlacklist(address account);
     event BuyTaxUpdated(uint256 buyReflectionTax,uint256 buyCoinWalletTaxPer,uint256 buyLiquidityTaxPer,uint256 buyBurnTaxPer);
     event SellTaxUpdated(uint256 sellReflectionTax,uint256 sellCoinWalletTaxPer,uint256 sellLiquidityTaxPer,uint256 sellBurnTaxPer);
-    
+    event IncludedInFee(address account);
+    event ExcludedFromFee(address account);
+    event IncludedInReward(address account);
+    event ExcludedFromReward(address account);
     
     modifier lockTheSwap {
         inSwapAndLiquify = true;
@@ -661,6 +664,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         }
         _isExcluded[account] = true;
         _excluded.push(account);
+        emit ExcludedFromReward(account);
     }
 
     /**
@@ -686,6 +690,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
                 break;
             }
         }
+        emit IncludedInReward(account);
     }
 
     /**
@@ -726,6 +731,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
      function excludeFromFee(address account) external onlyOwner {
         require(!_isExcludedFromFee[account],"Alreay excluded from fee");
         _isExcludedFromFee[account] = true;
+        emit ExcludedFromFee(account);
     }
 
      /**
@@ -738,6 +744,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
     function includeInFee(address account) external onlyOwner {
         require(_isExcludedFromFee[account],"Alreay included in fee");
         _isExcludedFromFee[account] = false;
+        emit IncludedInFee(account);
     }
 
     /**
