@@ -1105,12 +1105,14 @@ contract EAGLEAI is Context, IERC20, Ownable {
       * @param coinOperartionPer Percentage of tax allocated to coin operation on buy transactions.
       * @param liquidityTaxPer Percentage of tax allocated to liquidity on buy transactions.
       * @param burnTaxPer Percentage of tax allocated to burning on buy transactions.
-      * @dev The sum of all tax percentages cannot exceed 100%.
+      * @dev The individual of all tax percentages cannot exceed 6%.
       * Note: Only whole numbers are accepted for each tax percentage, not fractions.
       */
     function updateBuyTaxPer(uint256 reflectionPercent,uint256 coinOperartionPer,uint256 liquidityTaxPer,uint256 burnTaxPer) external onlyOwner {
-        uint256 totalTax = reflectionPercent + coinOperartionPer + liquidityTaxPer + burnTaxPer;
-        require(totalTax <= 100,"You can not set buy tax more then 100%");        
+        require(reflectionPercent <= 6,"You can not set reflection tax more then 6%");
+        require(coinOperartionPer <= 6,"You can not set coin operation  tax more then 6%");
+        require(liquidityTaxPer <= 6,"You can not set liquidity tax more then 6%");
+        require(burnTaxPer <= 6,"You can not set burn  tax more then 6%");       
         buyReflectionTax = reflectionPercent;
         buyCoinWalletTaxPer = coinOperartionPer;
         buyLiquidityTaxPer = liquidityTaxPer;
@@ -1125,12 +1127,14 @@ contract EAGLEAI is Context, IERC20, Ownable {
       * @param coinOperartionPer Percentage of tax allocated to coin operation on sell transactions.
       * @param liquidityTaxPer Percentage of tax allocated to liquidity on sell transactions.
       * @param burnTaxPer Percentage of tax allocated to burning on sell transactions.
-      * @dev The sum of all tax percentages cannot exceed 100%.
+      * @dev The individual of all tax percentages cannot exceed 6%.
       * Note: Only whole numbers are accepted for each tax percentage, not fractions.
       */
     function updateSellTaxPer(uint256 reflectionPercent,uint256 coinOperartionPer,uint256 liquidityTaxPer,uint256 burnTaxPer) external onlyOwner {
-        uint256 totalTax = reflectionPercent + coinOperartionPer + liquidityTaxPer + burnTaxPer;
-        require(totalTax <= 100,"You can not set sell tax more then 100%");
+        require(reflectionPercent <= 6,"You can not set reflection tax more then 6%");
+        require(coinOperartionPer <= 6,"You can not set coin operation  tax more then 6%");
+        require(liquidityTaxPer <= 6,"You can not set liquidity tax more then 6%");
+        require(burnTaxPer <= 6,"You can not set burn  tax more then 6%");
         sellReflectionTax = reflectionPercent;
         sellCoinWalletTaxPer = coinOperartionPer;
         sellLiquidityTaxPer = liquidityTaxPer;
