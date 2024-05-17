@@ -199,11 +199,11 @@
 	},
 	"sources": {
 		"EAGLEAI/EagleAI.sol": {
-			"keccak256": "0x653f8e9ad768f6c26fe64c03c46eca3771b8f41bde7597fe5a447b7c7c48adca",
+			"keccak256": "0x92c532ceb7da259fbe218a0a337446a6395cb20880b1bd197582595c9beadeed",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://9f39ee3ce5715cc66d05933bddc36b6ff6fad6adb36c4df062665637657fbb68",
-				"dweb:/ipfs/QmVaFCUM7SRcb7H7hLcSWwVEzp8WFF7HUash2xR4AGQRJ3"
+				"bzz-raw://5846c5e74fc209335ed0141357a20a1daf30421250c4b6f6fa393c3237f5d0f4",
+				"dweb:/ipfs/QmfGNEzmPhHnnMVoUrSpuSH5T4dZ22pXQ4e4WxAVDiFGgx"
 			]
 		}
 	},
