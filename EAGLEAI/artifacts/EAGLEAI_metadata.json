@@ -1,0 +1,1423 @@
+{
+	"compiler": {
+		"version": "0.8.24+commit.e11b9ed9"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "wallet",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "AddedInBlacklist",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalLiquidity",
+						"type": "uint256"
+					}
+				],
+				"name": "AddedLiquidity",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "Approval",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "buyReflectionTax",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "buyCoinWalletTaxPer",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "buyLiquidityTaxPer",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "buyBurnTaxPer",
+						"type": "uint256"
+					}
+				],
+				"name": "BuyTaxUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalCoinFund",
+						"type": "uint256"
+					}
+				],
+				"name": "CoinFund",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "wallet",
+						"type": "address"
+					}
+				],
+				"name": "FundWalletChange",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "lockTime",
+						"type": "uint256"
+					}
+				],
+				"name": "Locked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalReflectFee",
+						"type": "uint256"
+					}
+				],
+				"name": "ReflectedFee",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "RemovedFromBlacklist",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "sellReflectionTax",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "sellCoinWalletTaxPer",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "sellLiquidityTaxPer",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "sellBurnTaxPer",
+						"type": "uint256"
+					}
+				],
+				"name": "SellTaxUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "tokensSwapped",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "ethReceived",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "tokensIntoLiqudity",
+						"type": "uint256"
+					}
+				],
+				"name": "SwapAndLiquify",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"name": "SwapAndLiquifyEnabledUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "ThresholdUpdated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"name": "TradeEnabled",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "Transfer",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "addBlacklist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "addresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "tokens",
+						"type": "uint256[]"
+					}
+				],
+				"name": "airdrop",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					}
+				],
+				"name": "allowance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "approve",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "balanceOf",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "blacklisted",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "buyBurnTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "buyCoinWalletTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "buyLiquidityTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "buyReflectionTax",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "decimals",
+				"outputs": [
+					{
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "subtractedValue",
+						"type": "uint256"
+					}
+				],
+				"name": "decreaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "tAmount",
+						"type": "uint256"
+					}
+				],
+				"name": "deliver",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "excludeFromFee",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "excludeFromReward",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "fundWallet",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "includeInFee",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "includeInReward",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "addedValue",
+						"type": "uint256"
+					}
+				],
+				"name": "increaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "isExcludedFromFee",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "isExcludedFromReward",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "name",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "tAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "deductTransferFee",
+						"type": "bool"
+					}
+				],
+				"name": "reflectionFromToken",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "removeBlacklist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "renounceOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sellBurnTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sellCoinWalletTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sellLiquidityTaxPer",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sellReflectionTax",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_fundWallet",
+						"type": "address"
+					}
+				],
+				"name": "setFundWallet",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bool",
+						"name": "enabled",
+						"type": "bool"
+					}
+				],
+				"name": "setSwapAndLiquifyEnabled",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "startTrading",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "swapAndLiquifyEnabled",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "symbol",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "rAmount",
+						"type": "uint256"
+					}
+				],
+				"name": "tokenFromReflection",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalFees",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "tradeEnabled",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "transfer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "transferFrom",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "uniswapV2Pair",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "uniswapV2Router",
+				"outputs": [
+					{
+						"internalType": "contract IUniswapV2Router02",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "reflectionPercent",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "coinOperartionPer",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "liquidityTaxPer",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "burnTaxPer",
+						"type": "uint256"
+					}
+				],
+				"name": "updateBuyTaxPer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "reflectionPercent",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "coinOperartionPer",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "liquidityTaxPer",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "burnTaxPer",
+						"type": "uint256"
+					}
+				],
+				"name": "updateSellTaxPer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "updateThreshold",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "receive"
+			}
+		],
+		"devdoc": {
+			"events": {
+				"Approval(address,address,uint256)": {
+					"details": "Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance."
+				},
+				"Transfer(address,address,uint256)": {
+					"details": "Emitted when `value` tokens are moved from one account (`from`) to another (`to`). Note that `value` may be zero."
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"addBlacklist(address)": {
+					"details": "Only callable by the owner of the contract.",
+					"params": {
+						"account": "The address to be blacklisted."
+					}
+				},
+				"allowance(address,address)": {
+					"details": "This function returns the current allowance set for the specified spender to spend tokens from the specified owner's account.",
+					"params": {
+						"owner": "The address of the owner whose allowance is being queried.",
+						"spender": "The address of the spender for whom the allowance is queried."
+					},
+					"returns": {
+						"_0": "The remaining allowance for the specified spender to spend tokens on behalf of the owner."
+					}
+				},
+				"approve(address,uint256)": {
+					"details": "This function sets or updates the allowance for a spender to spend tokens from the owner's account. If successful, it returns true.",
+					"params": {
+						"amount": "The amount of tokens to approve for spending.",
+						"spender": "The address of the spender to be approved."
+					},
+					"returns": {
+						"_0": "A boolean indicating the success of the approval operation."
+					}
+				},
+				"balanceOf(address)": {
+					"details": "This function returns the token balance of the specified account. If the account is excluded, it directly returns the token balance. If the account is not excluded, it converts the reflection balance to token balance using the current rate.",
+					"params": {
+						"account": "The address of the account whose token balance is being queried."
+					},
+					"returns": {
+						"_0": "The token balance of the specified account."
+					}
+				},
+				"constructor": {
+					"details": "This constructor sets initial values and configures the contract.",
+					"params": {
+						"wallet": "The address where funds will be sent."
+					}
+				},
+				"decimals()": {
+					"details": "This function returns the number of decimal places used to represent the token balances. It is commonly used to interpret the token amounts correctly in user interfaces.",
+					"returns": {
+						"_0": "The number of decimal places used in the token representation."
+					}
+				},
+				"decreaseAllowance(address,uint256)": {
+					"details": "This function decreases the allowance for the specified spender by the given value. It ensures that the allowance does not go below zero. If successful, it returns true.",
+					"params": {
+						"spender": "The address of the spender whose allowance is being reduced.",
+						"subtractedValue": "The amount by which to reduce the allowance."
+					},
+					"returns": {
+						"_0": "A boolean indicating the success of the operation."
+					}
+				},
+				"deliver(uint256)": {
+					"details": "This function is typically used to convert a portion of tokens into reflections and add them to a reward pool. Excluded addresses cannot call this function.",
+					"params": {
+						"tAmount": "The amount of tokens to be converted and added to reflections."
+					}
+				},
+				"excludeFromFee(address)": {
+					"details": "Transaction fees are often applied in decentralized finance (DeFi) projects to support various mechanisms like liquidity provision, rewards, or token burns.",
+					"params": {
+						"account": "The address to exclude from transaction fees."
+					}
+				},
+				"excludeFromReward(address)": {
+					"details": "Reflections are often used in tokenomics to distribute rewards to holders. This function excludes the specified address from receiving reflections.",
+					"params": {
+						"account": "The address to be excluded from earning reflections."
+					}
+				},
+				"includeInFee(address)": {
+					"details": "Transaction fees are often applied in decentralized finance (DeFi) projects to support various mechanisms like liquidity provision, rewards, or token burns.",
+					"params": {
+						"account": "The address to include in transaction fees."
+					}
+				},
+				"includeInReward(address)": {
+					"details": "External function for including an account in the reward distribution.",
+					"params": {
+						"account": "The address to be included in the reward distribution.  The function can only be called by the owner of the contract. Requires that the specified account is currently excluded. Iterates through the list of excluded accounts, finds the specified account, and removes it from the exclusion list. Resets the token balance of the specified account to 0 and updates the exclusion status. "
+					}
+				},
+				"increaseAllowance(address,uint256)": {
+					"details": "This function increases the allowance for the specified spender by the given value. It ensures that the updated allowance is correctly set. If successful, it returns true.",
+					"params": {
+						"addedValue": "The amount by which to increase the allowance.",
+						"spender": "The address of the spender whose allowance is being increased."
+					},
+					"returns": {
+						"_0": "A boolean indicating the success of the operation."
+					}
+				},
+				"isExcludedFromReward(address)": {
+					"details": "Excluded addresses do not receive reflections in certain tokenomics designs. This function returns true if the address is excluded, and false otherwise.",
+					"params": {
+						"account": "The address to check for exclusion from reflections."
+					},
+					"returns": {
+						"_0": "A boolean indicating whether the address is excluded from earning reflections."
+					}
+				},
+				"name()": {
+					"details": "This function returns the name of the token, which is often used for identification. It is commonly displayed in user interfaces and provides a human-readable name for the token.",
+					"returns": {
+						"_0": "The name of the token."
+					}
+				},
+				"owner()": {
+					"details": "Returns the address of the current owner."
+				},
+				"reflectionFromToken(uint256,bool)": {
+					"details": "Reflections are often used in tokenomics to calculate rewards or balances. This function converts a token amount to its corresponding reflection amount based on the current rate. Optionally, it deducts the transfer fee from the calculation.",
+					"params": {
+						"deductTransferFee": "A boolean indicating whether to deduct the transfer fee from the calculation.",
+						"tAmount": "The token amount to be converted to reflections."
+					},
+					"returns": {
+						"_0": "The equivalent reflection amount corresponding to the given token amount."
+					}
+				},
+				"removeBlacklist(address)": {
+					"details": "Only callable by the owner of the contract.",
+					"params": {
+						"account": "The address to be removed from the blacklist."
+					}
+				},
+				"renounceOwnership()": {
+					"details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+				},
+				"setFundWallet(address)": {
+					"details": "Sets the address of the fund wallet.",
+					"params": {
+						"_fundWallet": "The new address to be set as the fund wallet. Requirements: - Only the contract owner can call this function. Emits a {FundWalletChange} event with the updated fund wallet address on successful execution."
+					}
+				},
+				"setSwapAndLiquifyEnabled(bool)": {
+					"details": "The swap and liquify feature is a mechanism often used in decentralized finance (DeFi) projects to automatically swap a portion of tokens for liquidity and add them to a liquidity pool.",
+					"params": {
+						"enabled": "A boolean indicating whether to enable (true) or disable (false) the feature."
+					}
+				},
+				"startTrading()": {
+					"details": "Only callable by the owner of the contract."
+				},
+				"symbol()": {
+					"details": "This function returns the symbol or ticker that represents the token. It is commonly used for identifying the token in user interfaces and exchanges.",
+					"returns": {
+						"_0": "The symbol or ticker of the token."
+					}
+				},
+				"tokenFromReflection(uint256)": {
+					"details": "Reflections are often used in tokenomics to calculate rewards or balances. This function converts a reflection amount to its corresponding token amount based on the current rate.",
+					"params": {
+						"rAmount": "The reflection amount to be converted to tokens."
+					},
+					"returns": {
+						"_0": "The equivalent token amount corresponding to the given reflection amount."
+					}
+				},
+				"totalFees()": {
+					"details": "This function returns the cumulative sum of fees collected during transactions. The fees are often used for various purposes like liquidity provision, rewards, or burns.",
+					"returns": {
+						"_0": "The total amount of fees collected in tokens."
+					}
+				},
+				"totalSupply()": {
+					"details": "This function returns the total supply of tokens in circulation.",
+					"returns": {
+						"_0": "The total supply of tokens."
+					}
+				},
+				"transfer(address,uint256)": {
+					"details": "This function transfers tokens from the sender's account to the specified recipient. If successful, it returns true.",
+					"params": {
+						"amount": "The amount of tokens to be transferred.",
+						"recipient": "The address of the recipient to whom tokens are being transferred."
+					},
+					"returns": {
+						"_0": "A boolean indicating the success of the transfer operation."
+					}
+				},
+				"transferFrom(address,address,uint256)": {
+					"details": "This function allows a designated spender to transfer tokens from the sender's account to the recipient's account. It also ensures that the allowance is updated correctly. If successful, it returns true.",
+					"params": {
+						"amount": "The amount of tokens to be transferred.",
+						"recipient": "The address to which tokens are being transferred.",
+						"sender": "The address from which tokens are being transferred."
+					},
+					"returns": {
+						"_0": "A boolean indicating the success of the transfer operation."
+					}
+				},
+				"transferOwnership(address)": {
+					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+				},
+				"updateBuyTaxPer(uint256,uint256,uint256,uint256)": {
+					"details": "This function can only be called by the contract owner.The sum of all tax percentages cannot exceed 100%. Note: Only whole numbers are accepted for each tax percentage, not fractions.",
+					"params": {
+						"burnTaxPer": "Percentage of tax allocated to burning on buy transactions.",
+						"coinOperartionPer": "Percentage of tax allocated to coin operation on buy transactions.",
+						"liquidityTaxPer": "Percentage of tax allocated to liquidity on buy transactions.",
+						"reflectionPercent": "Percentage of reflection tax on buy transactions."
+					}
+				},
+				"updateSellTaxPer(uint256,uint256,uint256,uint256)": {
+					"details": "This function can only be called by the contract owner.The sum of all tax percentages cannot exceed 100%. Note: Only whole numbers are accepted for each tax percentage, not fractions.",
+					"params": {
+						"burnTaxPer": "Percentage of tax allocated to burning on sell transactions.",
+						"coinOperartionPer": "Percentage of tax allocated to coin operation on sell transactions.",
+						"liquidityTaxPer": "Percentage of tax allocated to liquidity on sell transactions.",
+						"reflectionPercent": "Percentage of reflection tax on sell transactions."
+					}
+				},
+				"updateThreshold(uint256)": {
+					"details": "External function for updating the threshold amount required for triggering liquidity addition.",
+					"params": {
+						"_amount": "The new threshold amount.  The function can only be called by the owner of the contract. Requires that the provided threshold amount (_amount) is greater than 0. Updates the numTokensSellToAddToLiquidity with the new threshold amount."
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"addBlacklist(address)": {
+					"notice": "Adds an address to the blacklist."
+				},
+				"allowance(address,address)": {
+					"notice": "Retrieves the remaining allowance for a spender to spend tokens on behalf of an owner."
+				},
+				"approve(address,uint256)": {
+					"notice": "Approves a spender to spend a specified amount of tokens on behalf of the owner."
+				},
+				"balanceOf(address)": {
+					"notice": "Retrieves the token balance of a specified account."
+				},
+				"constructor": {
+					"notice": "Contract constructor to initialize the token."
+				},
+				"decimals()": {
+					"notice": "Retrieves the number of decimal places used in the token representation."
+				},
+				"decreaseAllowance(address,uint256)": {
+					"notice": "Reduces the allowance granted to a spender by a specified amount."
+				},
+				"deliver(uint256)": {
+					"notice": "Distributes the specified amount of tokens as reflections to the reward pool."
+				},
+				"excludeFromFee(address)": {
+					"notice": "Grants the owner the ability to exclude an address from transaction fees."
+				},
+				"excludeFromReward(address)": {
+					"notice": "Grants the owner the ability to exclude an address from earning reflections."
+				},
+				"includeInFee(address)": {
+					"notice": "Grants the owner the ability to include an address in transaction fees."
+				},
+				"includeInReward(address)": {
+					"notice": "Only the owner of the contract can call this function.Requires that the specified account is currently excluded."
+				},
+				"increaseAllowance(address,uint256)": {
+					"notice": "Increases the allowance granted to a spender by a specified amount."
+				},
+				"isExcludedFromReward(address)": {
+					"notice": "Checks if the specified address is excluded from earning reflections."
+				},
+				"name()": {
+					"notice": "Retrieves the name of the token."
+				},
+				"reflectionFromToken(uint256,bool)": {
+					"notice": "Converts the given token amount to its equivalent reflection amount."
+				},
+				"removeBlacklist(address)": {
+					"notice": "Removes an address from the blacklist."
+				},
+				"setSwapAndLiquifyEnabled(bool)": {
+					"notice": "Allows the owner to enable or disable the swap and liquify feature."
+				},
+				"startTrading()": {
+					"notice": "Enables trading functionality."
+				},
+				"symbol()": {
+					"notice": "Retrieves the symbol or ticker of the token."
+				},
+				"tokenFromReflection(uint256)": {
+					"notice": "Converts the given reflection amount to its equivalent token amount."
+				},
+				"totalFees()": {
+					"notice": "Retrieves the total amount of fees collected in tokens."
+				},
+				"totalSupply()": {
+					"notice": "Retrieves the total supply of tokens."
+				},
+				"transfer(address,uint256)": {
+					"notice": "Transfers a specified amount of tokens to a recipient."
+				},
+				"transferFrom(address,address,uint256)": {
+					"notice": "Transfers tokens from one address to another on behalf of a third-party."
+				},
+				"updateBuyTaxPer(uint256,uint256,uint256,uint256)": {
+					"notice": "Updates the buy taxes percentages."
+				},
+				"updateSellTaxPer(uint256,uint256,uint256,uint256)": {
+					"notice": "Updates the sell taxes percentages."
+				},
+				"updateThreshold(uint256)": {
+					"notice": "Only the owner of the contract can call this function.Requires a positive _amount for successful execution."
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"EAGLEAI/EagleAI.sol": "EAGLEAI"
+		},
+		"evmVersion": "shanghai",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"EAGLEAI/EagleAI.sol": {
+			"keccak256": "0x653f8e9ad768f6c26fe64c03c46eca3771b8f41bde7597fe5a447b7c7c48adca",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9f39ee3ce5715cc66d05933bddc36b6ff6fad6adb36c4df062665637657fbb68",
+				"dweb:/ipfs/QmVaFCUM7SRcb7H7hLcSWwVEzp8WFF7HUash2xR4AGQRJ3"
+			]
+		}
+	},
+	"version": 1
+}

@@ -787,7 +787,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
      //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
-
     /**
     * @dev Private function for reflecting fees in the total supply and fee tracking variables.
     * @param rFee The reflection equivalent of the fee amount.
