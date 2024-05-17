@@ -345,7 +345,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 contract EAGLEAI is Context, IERC20, Ownable {
-
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
