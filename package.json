@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "remixd": "node node_modules/@remix-project/remixd/src/bin/remixd.js"
+  },
+  "dependencies": {
+    "@remix-project/remixd": "^0.6.31"
+  },
+  "name": "smart-contracts-library",
+  "version": "1.0.0",
+  "description": "**Development updates and library\r **",
+  "main": "index.js",
+  "devDependencies": {},
+  "author": "",
+  "license": "ISC"
+}
