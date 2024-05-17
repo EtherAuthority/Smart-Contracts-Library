@@ -742,7 +742,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
 
     /**
     * @dev Sets the address of the fund wallet.
-    * @param _fundWallet The new address to be set as the fund wallet.
+    * @param wallet The new address to be set as the fund wallet.
     *
     * Requirements:
     * - Only the contract owner can call this function.
@@ -750,10 +750,10 @@ contract EAGLEAI is Context, IERC20, Ownable {
     * Emits a {FundWalletChange} event with the updated fund wallet address on successful execution.
     */
     
-    function setFundWallet(address _fundWallet) external onlyOwner{
-     require(_fundWallet != address(0),"Fund wallet can not be zero");
-     fundWallet = _fundWallet;
-     emit FundWalletChange(_fundWallet);
+    function setFundWallet(address wallet) external onlyOwner{
+     require(wallet != address(0),"Fund wallet can not be zero");
+     fundWallet = wallet;
+     emit FundWalletChange(wallet);
     }                                                                                                                  
 
     /**
@@ -769,19 +769,19 @@ contract EAGLEAI is Context, IERC20, Ownable {
 
     /**
     * @dev External function for updating the threshold amount required for triggering liquidity addition.
-    * @param _amount The new threshold amount.
+    * @param amount The new threshold amount.
     * 
     * The function can only be called by the owner of the contract.
-    * Requires that the provided threshold amount (_amount) is greater than 0.
+    * Requires that the provided threshold amount (amount) is greater than 0.
     * Updates the numTokensSellToAddToLiquidity with the new threshold amount.
     * @notice Only the owner of the contract can call this function.
-    * @notice Requires a positive _amount for successful execution.
+    * @notice Requires a positive amount for successful execution.
     */
     //set numTokensSellToAddToLiquidity value
-    function updateThreshold(uint256 _amount) external onlyOwner {
-        require(_amount > 0 && _amount <= 5 * 10**5 * 10**18,"Amount should be more than zero and less than 500k tokens");
-        numTokensSellToAddToLiquidity = _amount;
-        emit ThresholdUpdated(_amount);
+    function updateThreshold(uint256 amount) external onlyOwner {
+        require(amount > 0 && amount <= 5 * 10**5 * 10**18,"Amount should be more than zero and less than 500k tokens");
+        numTokensSellToAddToLiquidity = amount;
+        emit ThresholdUpdated(amount);
     }
     
      //to recieve ETH from uniswapV2Router when swaping
@@ -971,50 +971,50 @@ contract EAGLEAI is Context, IERC20, Ownable {
 
     /**
     * @dev Calculates the tax fee for reflection based on a specified amount.
-    * @param _amount Amount for tax fee calculation.
+    * @param amount Amount for tax fee calculation.
     * @return Calculated tax fee amount.
     * 
     * @notice Internal use only.
     */
     
-    function calculateTaxFee(uint256 _amount) private view returns (uint256) {
-        return _amount * refAmt / 10**2;
+    function calculateTaxFee(uint256 amount) private view returns (uint256) {
+        return amount * refAmt / 10**2;
     }
 
     /**
     * @dev Calculates the liquidity fee based on a specified amount.
-    * @param _amount Amount for liquidity fee calculation.
+    * @param amount Amount for liquidity fee calculation.
     * @return Calculated liquidity fee amount.
     * 
     * @notice Internal use only.
     */
-    function calculateLiquidityFee(uint256 _amount) private view returns (uint256) {
-        return _amount * liquidty / 10**2;
+    function calculateLiquidityFee(uint256 amount) private view returns (uint256) {
+        return amount * liquidty / 10**2;
     }
 
     /**
     * @dev Calculates the coin operation tax based on a specified amount.
-    * @param _amount Amount for coin operation tax calculation.
+    * @param amount Amount for coin operation tax calculation.
     * @return Calculated coin operation tax amount.
     * 
     * @notice Internal use only.
     */
 
-        function calculateCoinOperartionTax(uint256 _amount) private view returns (uint256) {
-        return _amount * coinOperation / 10**2;
+        function calculateCoinOperartionTax(uint256 amount) private view returns (uint256) {
+        return amount * coinOperation / 10**2;
     }
 
     /*
     * @dev Calculates the burn tax based on a specified amount.
-    * @param _amount Amount for burn tax calculation.
+    * @param amount Amount for burn tax calculation.
     * @return Calculated burn tax amount.
     * 
     * Multiplies the amount by the burn percentage and divides by 100.
     * 
     * @notice Internal use only.
     */
-    function calculateBurnTax(uint256 _amount) private view returns (uint256) {
-        return _amount * burn / 10**2;
+    function calculateBurnTax(uint256 amount) private view returns (uint256) {
+        return amount * burn / 10**2;
     }
     
     /**
