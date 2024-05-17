@@ -348,7 +348,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
-    mapping(address => bool) public blacklisted;
 
     mapping (address => bool) private _isExcludedFromFee;
     mapping (address => bool) private _isExcluded;
@@ -402,8 +401,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
         uint256 tokensIntoLiqudity
     );
     event TradeEnabled(bool enabled);
-    event AddedInBlacklist(address account);
-    event RemovedFromBlacklist(address account);
     event BuyTaxUpdated(uint256 buyReflectionTax,uint256 buyCoinWalletTaxPer,uint256 buyLiquidityTaxPer,uint256 buyBurnTaxPer);
     event SellTaxUpdated(uint256 sellReflectionTax,uint256 sellCoinWalletTaxPer,uint256 sellLiquidityTaxPer,uint256 sellBurnTaxPer);
     event IncludedInFee(address account);
@@ -1072,29 +1069,7 @@ contract EAGLEAI is Context, IERC20, Ownable {
         require(!tradeEnabled,"Trading already started");
         tradeEnabled = true;
         emit TradeEnabled(tradeEnabled);
-    }
-
-    /**
-     * @notice Adds an address to the blacklist.
-     * @dev Only callable by the owner of the contract.
-     * @param account The address to be blacklisted.
-     */
-    function addBlacklist(address account) external  onlyOwner {
-        require(!blacklisted[account],"Account already blacklisted");
-        blacklisted[account] = true;
-        emit AddedInBlacklist(account);
-    }
-
-    /**
-     * @notice Removes an address from the blacklist.
-     * @dev Only callable by the owner of the contract.
-     * @param account The address to be removed from the blacklist.
-     */
-    function removeBlacklist(address account) external  onlyOwner {
-        require(blacklisted[account],"Account not blacklisted");
-        blacklisted[account] = false;
-        emit RemovedFromBlacklist(account);
-    }  
+    } 
 
      /**
       * @notice Updates the buy taxes percentages.
@@ -1164,8 +1139,6 @@ contract EAGLEAI is Context, IERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        require(!blacklisted[from], "Sender is blacklisted");
-        require(!blacklisted[to], "Recipient is blacklisted");
 
         if (from == owner() || to == owner()){
             _tokenTransfer(from,to,amount,false);
