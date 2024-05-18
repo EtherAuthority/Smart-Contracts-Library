@@ -92,13 +92,13 @@ contract Presale {
 
     function getTotalCompletedMonths(address _user, uint256 _purchaseid) public  returns (uint256) {
         uint256 elapsedTimeMonth = block.timestamp - purchase[_user][_purchaseid].purchaseStartTime;
-        completedMonths = ((elapsedTimeMonth / vestingDuration) * 4) *1000; // Assuming each month is divided into 4 parts
+        completedMonths = ((elapsedTimeMonth * 1000 / vestingDuration) ) * 4; // Assuming each month is divided into 4 parts
         uint256 Months = 0; 
         if(completedMonths < 2000 && completedMonths >= 1000)
             Months=1;
         else if(completedMonths < 3000 && completedMonths >= 2000)
             Months=2;
-        else if(completedMonths<4000 && completedMonths >= 3000)
+        else if(completedMonths < 4000 && completedMonths >= 3000)
             Months=3;
         else if(completedMonths >= 4000)
             Months=4;
