@@ -9,7 +9,7 @@ contract Presale {
     address public owner;
     IERC20 public token;
     uint256 public price; 
-    uint256 public elapsedTimeMonth;
+    uint256 public completedMonths;
     struct _purchaseDetails{
         uint256 purchaseid;
         uint256 purchaseAmt;
@@ -25,7 +25,7 @@ contract Presale {
    // uint256 public constant vestingDuration = 4 * 30 days; // 4 months
     mapping(address => uint256) public noOfpurchase;   
     uint256 public totalTokens;
-    uint256 public vestingDuration = 4 * 4 minutes; // 4 months                                                                                 
+    uint256 public vestingDuration = 4 * 1 minutes; // 4 months                                                                                 
    
     uint256 public  tgePercentage = 20; // TGE percentage
     
@@ -76,11 +76,12 @@ contract Presale {
         uint256 claimable;
         if(block.timestamp>=purchase[_user][_purchaseid].purchaseEndTime){ 
              claimable = uservestingamt - purchase[_user][_purchaseid].vestedAmount;
-             purchase[_user][_purchaseid].vestedAmount = claimable; 
+             purchase[_user][_purchaseid].vestedAmount = uservestingamt; 
         } else { 
         uint256 elapsedTime = block.timestamp -  purchase[_user][_purchaseid].purchaseStartTime;
         uint256 vestingPeriods = elapsedTime / (vestingDuration / 4); // Divide the vesting period into 4 parts
-        uint256 vested = (uservestingamt * vestingPeriods) / 4;        
+        uint256 vested = (uservestingamt * vestingPeriods) / 4; 
+        require(vested > purchase[_user][_purchaseid].vestedAmount, "Nothing to claim");       
         claimable = vested - purchase[_user][_purchaseid].vestedAmount;        
         require(uservestingamt>=claimable,"Nothing to claim");
         purchase[_user][_purchaseid].vestedAmount = vested;  
@@ -89,15 +90,15 @@ contract Presale {
         return  claimable;
     }
 
-    function getTotalCompletedMonths(address _user, uint256 _purchaseid) public returns (uint256) {
-        elapsedTimeMonth = block.timestamp - purchase[_user][_purchaseid].purchaseStartTime;
-        uint256 completedMonths = ((elapsedTimeMonth / vestingDuration) * 4) *1000; // Assuming each month is divided into 4 parts
+    function getTotalCompletedMonths(address _user, uint256 _purchaseid) public  returns (uint256) {
+        uint256 elapsedTimeMonth = block.timestamp - purchase[_user][_purchaseid].purchaseStartTime;
+        completedMonths = ((elapsedTimeMonth / vestingDuration) * 4) *1000; // Assuming each month is divided into 4 parts
         uint256 Months = 0; 
-        if(completedMonths <= 2000 && completedMonths >= 1000)
+        if(completedMonths < 2000 && completedMonths >= 1000)
             Months=1;
-        else if(completedMonths <= 3000 && completedMonths >= 2000)
+        else if(completedMonths < 3000 && completedMonths >= 2000)
             Months=2;
-        else if(completedMonths<=4000 && completedMonths >= 3000)
+        else if(completedMonths<4000 && completedMonths >= 3000)
             Months=3;
         else if(completedMonths >= 4000)
             Months=4;
