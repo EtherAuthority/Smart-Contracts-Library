@@ -9,10 +9,12 @@ contract Presale {
     address public owner;
     IERC20 public token;
     uint256 public price; 
+    uint256 public elapsedTimeMonth;
     struct _purchaseDetails{
         uint256 purchaseid;
         uint256 purchaseAmt;
         uint256 purchaseStartTime;
+        uint256 purchaseEndTime;
         bool tgclaimed;
         uint256 tgeAmount;
         uint256 vestedAmount;
@@ -44,6 +46,7 @@ contract Presale {
             noOfpurchase[msg.sender],
             _amount,
             block.timestamp,
+            block.timestamp+vestingDuration,
             true,
             (_amount * tgePercentage) / 100,
             0
@@ -67,22 +70,38 @@ contract Presale {
 
     function calculateVestedAmount(address _user, uint256 _purchaseid) internal returns (uint256) {        
         uint256 uservestingamt=purchase[_user][_purchaseid].purchaseAmt - purchase[_user][_purchaseid].tgeAmount;
+
         // Calculate linear vesting
-        require(uservestingamt>=purchase[_user][_purchaseid].vestedAmount,"Nothing to claim");      
+        require(uservestingamt>=purchase[_user][_purchaseid].vestedAmount,"Nothing to claim"); 
+        uint256 claimable;
+        if(block.timestamp>=purchase[_user][_purchaseid].purchaseEndTime){ 
+             claimable = uservestingamt - purchase[_user][_purchaseid].vestedAmount;
+             purchase[_user][_purchaseid].vestedAmount = claimable; 
+        } else { 
         uint256 elapsedTime = block.timestamp -  purchase[_user][_purchaseid].purchaseStartTime;
         uint256 vestingPeriods = elapsedTime / (vestingDuration / 4); // Divide the vesting period into 4 parts
-        uint256 vested = (uservestingamt * vestingPeriods) / 4;
-        require(vested > purchase[_user][_purchaseid].vestedAmount, "Nothing to claim");
-        uint256 claimable = vested - purchase[_user][_purchaseid].vestedAmount;
+        uint256 vested = (uservestingamt * vestingPeriods) / 4;        
+        claimable = vested - purchase[_user][_purchaseid].vestedAmount;        
         require(uservestingamt>=claimable,"Nothing to claim");
         purchase[_user][_purchaseid].vestedAmount = vested;  
+        }
         
         return  claimable;
     }
 
-    function getTotalCompletedMonths(address _user, uint256 _purchaseid) public view returns (uint256) {
-        uint256 elapsedTime = block.timestamp - purchase[_user][_purchaseid].purchaseStartTime;
-        uint256 completedMonths = (elapsedTime / vestingDuration) * 4; // Assuming each month is divided into 4 parts
-        return completedMonths;
+    function getTotalCompletedMonths(address _user, uint256 _purchaseid) public returns (uint256) {
+        elapsedTimeMonth = block.timestamp - purchase[_user][_purchaseid].purchaseStartTime;
+        uint256 completedMonths = ((elapsedTimeMonth / vestingDuration) * 4) *1000; // Assuming each month is divided into 4 parts
+        uint256 Months = 0; 
+        if(completedMonths <= 2000 && completedMonths >= 1000)
+            Months=1;
+        else if(completedMonths <= 3000 && completedMonths >= 2000)
+            Months=2;
+        else if(completedMonths<=4000 && completedMonths >= 3000)
+            Months=3;
+        else if(completedMonths >= 4000)
+            Months=4;
+            
+        return Months;
     }
 }
