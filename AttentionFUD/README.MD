@@ -1,6 +1,6 @@
-# AttationFUD  smart Contract Documentation
+# AttentionFUD  smart Contract Documentation
 
-This README provides an overview of the functionalities and usage of the AttationFUD smart contract.
+This README provides an overview of the functionalities and usage of the AttentionFUD smart contract.
 
 ### New Added Function :
 
@@ -72,7 +72,7 @@ This README provides an overview of the functionalities and usage of the Attatio
 
 ## Contract Addresses
 
-- **AttationFUD Contract**: [Contract](https://testnet.bscscan.com/address/0x522bdf72f8ebc5cb3853facdeaa9f0d743fb4330#code)
+- **AttentionFUD Contract**: [Contract](https://testnet.bscscan.com/address/0x522bdf72f8ebc5cb3853facdeaa9f0d743fb4330#code)
 - **ERC1155 Contract**: [Contract](https://testnet.bscscan.com/tx/0x55a681c2158ab958cd2d3bd65b98eb21aac3ea4b244d2104ffb5508b8498eb5c)
 
 1. **SetFUDContract transaction**: [Transaction](https://testnet.bscscan.com/tx/0xf8c7dce988c05c5afc4d085f1af47cf3b89a182c18893d328ca773bee64e739c)
