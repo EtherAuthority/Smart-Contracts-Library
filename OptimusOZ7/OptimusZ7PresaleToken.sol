@@ -38,8 +38,7 @@ abstract contract Context {
     }
 }
 
-// File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol
-// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
+
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
@@ -119,7 +118,10 @@ interface IERC20 {
 }
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol
+
+
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
+
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -144,7 +146,11 @@ interface IERC20Metadata is IERC20 {
 }
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
+
+
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
+
+
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -529,9 +535,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 // BEP20 token implementation
 
-contract TestToken is ERC20 {
+contract OptimusZ7PresaleToken is ERC20 {
 
-    constructor() ERC20("OptimusZ7 presale", "OZ7P"){
+    constructor() ERC20("OptimusZ7 Presale", "OZ7P"){
         
         uint256 totalSupply = 500_000_000;
         
