@@ -85,7 +85,7 @@ contract Presale {
     address public owner; // Address of the owner
     IERC20 public token; // ERC20 token being sold
     uint256 public price; // Price per token
-    uint256 public vestingDuration = 4 * 30 days; // Vesting duration (4 months)
+    uint256 public vestingDuration = 4 * 2 minutes; // Vesting duration (4 months)
     uint256 public tgePercentage = 20; // TGE (Token Generation Event) percentage
 
     // Struct to store purchase details
@@ -139,7 +139,8 @@ contract Presale {
             (_amount * tgePercentage) / 100,
             0
         );
-        require(token.transfer(msg.sender, purchase[msg.sender][noOfpurchase[msg.sender]].tgeAmount), "Token transfer failed");
+        
+        require(token.transfer(msg.sender, purchase[msg.sender][noOfpurchase[msg.sender]].tgeAmount*price), "Token transfer failed");
     }
 
     /**
@@ -169,7 +170,7 @@ contract Presale {
     function claimTokens(uint256 _purchaseid) external {
         uint256 vestedAmounts = calculateVestedAmount(msg.sender, _purchaseid);
         require(vestedAmounts > 0, "No tokens to claim");
-        require(token.transfer(msg.sender, vestedAmounts), "Token transfer failed");
+        require(token.transfer(msg.sender, vestedAmounts*price), "Token transfer failed");
        
     }
 
