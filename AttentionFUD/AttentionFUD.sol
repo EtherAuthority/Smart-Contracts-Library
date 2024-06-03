@@ -1615,8 +1615,6 @@ pragma solidity ^0.8.9 <0.9.0;
 
 /**
  * @title AttentionFUD contract
- * 
- * 
  */
 
 contract AttentionFUD is AdminControl, ERC1155Receiver{
@@ -1625,7 +1623,7 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
     address public contractAddressFUD;
     
     struct DepositInfo {
-        mapping (address => uint256)  amount;       // current staked FUD
+        mapping (address => uint256) amount;       // current staked FUD
         address[] wallet;       // Wallet that did stake
         bool inUse;             // to find if mapping exists
         uint index;             // index of project in the array
@@ -1636,7 +1634,7 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
         uint tokens;     
     }
   
-     //Getting information about token staked by address
+    // Getting information about token staked by address
     struct StakeDetail {
        string project;
        uint256 amount;
@@ -1646,11 +1644,14 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
     // A record of the stakes
     mapping (string => DepositInfo) private stakesByProject;
     mapping (address => string) private stakesByAddress;
-    ProjectInfo[] private projects ;
+    ProjectInfo[] private projects;
     
     event DepositToken(address indexed to, uint amount, string project);
     event WithdrawDeposit(address indexed to, uint amount, string project);
     event BurnDeposit(uint tokenAmount, uint256 totalProject);
+    event FlipStakeState(bool flipState);
+    event FUDContractSet(address FUDContractAddress);
+    event MinimumStake(uint256 minimumStake);
     
     bool public stakeIsActive;
     address private constant WALLETFUD = 0x000000000000000000000000000000000000dEaD;
@@ -1662,19 +1663,24 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
     */
     function flipStakeState() external onlyOwner {
         stakeIsActive = !stakeIsActive;
+        emit FlipStakeState(stakeIsActive);
     }
     
     /**    
     * Set FUD Token contract address
     */
     function setFUDContract(address payable newAddress) public onlyOwner {
-         contractAddressFUD = newAddress;
+        contractAddressFUD = newAddress;
+        emit FUDContractSet(contractAddressFUD); 
     }
+
     /**    
     * Set a new minimum stake.
     */
     function setMinimumStake(uint amount) public onlyOwner{
+        require(amount > 0,"AttentionFUD : You can not set minimum Stake zero!");
         minStake=amount;
+        emit MinimumStake(minStake); 
     }
     
     /**
@@ -1715,7 +1721,7 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
         projects[stakesByProject[project].index].tokens -= stakesByProject[project].amount[msg.sender];
         stakesByProject[project].amount[msg.sender]=uint256(0);
 
-        if(projects[stakesByProject[project].index].tokens==0){ 
+        if(projects[stakesByProject[project].index].tokens==0){ // project is empty, lets remove it.
             delete stakesByProject[project].wallet;
             if(getTotalTokensStakedOnProject(project) == 0 )
             stakesByProject[project].inUse = false;
@@ -1903,7 +1909,6 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
         return totalTokensStaked;
     }
 
-    
     /**
      * Methods needed to be an ERC1155 Reciever
      */
