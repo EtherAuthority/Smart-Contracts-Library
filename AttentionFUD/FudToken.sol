@@ -21,14 +21,13 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
     uint256 private _mintedTokens;
     uint256 constant TOKEN_ID = 7123;
     
-    address private constant DEV = 0x0000000000000000000000000000000000000000;
-    address private constant LAB = 0x0000000000000000000000000000000000000000;
+    address private constant DEV =  0x0000000000000000000000000000000000000000;
+    address private constant LAB =  0x0000000000000000000000000000000000000000;
     address public attentionFudContract;
-    IERC20 public  paymentToken;
+    IERC20 public  immutable paymentToken;
 
     event PriceChange(uint256 price);
     event PaymentReleased(address to, uint256 amount);
-    event PaymentTokenAddressSet(IERC20 tokenAddress);
     event FlipSaleState(bool flipState);
     event SaleActive(bool saleActive);
     event AttentionContract(address attentionContractAddress);
@@ -113,17 +112,6 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
         _setURI(newuri);
     }
 
-    /**
-     * @dev Sets the address of the payment token.
-     * Can only be called by the owner.
-     * Emits a PaymentTokenAddressSet event.
-     * @param tokenAddress The address of the new payment token.
-     */
-    function setPaymentTokenAddress(address  tokenAddress) external onlyOwner{
-        paymentToken = IERC20(tokenAddress);
-        emit  PaymentTokenAddressSet(paymentToken);
-    }
-    
     /**     
     * Set price to new value
     * Price set with decimal.
