@@ -18,20 +18,24 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
         
     bool public saleIsActive;
     uint256 public tokenPrice = 1; // this price in decimal.(it means 0.000000000000000001)
-    uint256 private mintedTokens;
-    uint constant TOKEN_ID = 7123;
+    uint256 private _mintedTokens;
+    uint256 constant TOKEN_ID = 7123;
     
     address private constant DEV = 0x0000000000000000000000000000000000000000;
     address private constant LAB = 0x0000000000000000000000000000000000000000;
     address public attentionFudContract;
-    IERC20 public paymentToken;
+    IERC20 public  paymentToken;
 
-    event priceChange(address _by, uint256 price);
+    event PriceChange(uint256 price);
     event PaymentReleased(address to, uint256 amount);
+    event PaymentTokenAddressSet(IERC20 tokenAddress);
+    event FlipSaleState(bool flipState);
+    event SaleActive(bool saleActive);
+    event AttentionContract(address attentionContractAddress);
 
     constructor(address _paymentToken) ERC1155("ipfs://QmbqE73ZCmMW7eVfrkp8qEgHj6xZRG67Vhm3dsgqVM9cGd") { 
         _mint(msg.sender, TOKEN_ID, 1, "");
-        mintedTokens = 1;
+        _mintedTokens = 1;
         paymentToken = IERC20(_paymentToken);
     }
     
@@ -40,17 +44,18 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
         if (saleIsActive) {
             saleIsActive = false;
         }
+        emit SaleActive(saleIsActive);
     }
 
     function unpause() external onlyOwner {
         _unpause();
     }
     
-    function name() public pure returns (string memory) {
+    function name() external pure returns (string memory) {
         return "Fud Token";
     }
 
-    function symbol() public pure returns (string memory) {
+    function symbol() external pure returns (string memory) {
         return "FUD";
     }
     
@@ -101,33 +106,46 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
     
     function flipSaleState() external onlyOwner {
         saleIsActive = !saleIsActive;
+        emit FlipSaleState(saleIsActive);
     }
     
     function setURI(string memory newuri) external onlyOwner {
         _setURI(newuri);
+    }
+
+    /**
+     * @dev Sets the address of the payment token.
+     * Can only be called by the owner.
+     * Emits a PaymentTokenAddressSet event.
+     * @param tokenAddress The address of the new payment token.
+     */
+    function setPaymentTokenAddress(address  tokenAddress) external onlyOwner{
+        paymentToken = IERC20(tokenAddress);
+        emit  PaymentTokenAddressSet(paymentToken);
     }
     
     /**     
     * Set price to new value
     * Price set with decimal.
     */
-    function setPrice(uint256 price) public onlyOwner {
+    function setPrice(uint256 price) external  onlyOwner {
         tokenPrice = price;  
-        emit priceChange(msg.sender, tokenPrice);
+        emit PriceChange(tokenPrice);
     }
     
     /**
      * Join the Fud attention contract.
      */
-    function joinFUD() public {
+    function joinFUD() external  {
         setApprovalForAll(attentionFudContract, true);
     }
     
     /**
      * Allow to change the Attention contract in case of updates.
      */
-    function setAttentionContract(address contractAddress) public onlyOwner {
+    function setAttentionContract(address contractAddress) external  onlyOwner {
         attentionFudContract = contractAddress;
+        emit AttentionContract(attentionFudContract);
     }
 
     /**
@@ -139,8 +157,8 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
         require(!paused(), "FUD: Minting is paused");
         require(numberOfTokens <= 20, "FUD: You can only mint 20 tokens at a time");
         uint256 totalPrice = tokenPrice.mul(numberOfTokens);
-        require(paymentToken.transferFrom(msg.sender, address(this), totalPrice), "FUD: Token transfer failed");
-        mintedTokens += numberOfTokens;
+        require(paymentToken.transferFrom(msg.sender, address(this), totalPrice), "FUD: Insufficient allowance!");
+        _mintedTokens += numberOfTokens;
         _mint(msg.sender, TOKEN_ID, numberOfTokens, "");
     }
     
