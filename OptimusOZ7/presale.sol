@@ -83,10 +83,11 @@ interface IERC20 {
 contract Presale {
     // State variables
     address public owner; // Address of the owner
-    IERC20 public token; // ERC20 token being sold
+    IERC20 public USDTtoken; // ERC20 token being sold
+    IERC20 public OZ7Ptoken; // ERC20 token being sold
     uint256 public price; // Price per token
     uint256 public vestingDuration = 4 * 30 days; // Vesting duration (4 months)
-    uint256 public tgePercentage = 20; // TGE (Token Generation Event) percentage
+    uint256 public tgePercentage = 25; // TGE (Token Generation Event) percentage
 
     // Struct to store purchase details
     struct _purchaseDetails {
@@ -108,7 +109,7 @@ contract Presale {
     // Constructor
     constructor(address _token, uint256 _price) {
         owner = msg.sender;
-        token = IERC20(_token);
+        USDTtoken = IERC20(_token);
         price = _price;
     }
 
@@ -128,7 +129,7 @@ contract Presale {
      */
     function buyTokens(uint256 _amount) external {
         uint256 cost = _amount * price;
-        require(token.transferFrom(msg.sender, address(this), cost), "Token transfer failed");
+        require(USDTtoken.transferFrom(msg.sender, address(this), cost), "Token transfer failed");
         noOfpurchase[msg.sender] += 1;
         purchase[msg.sender][noOfpurchase[msg.sender]] = _purchaseDetails(
             noOfpurchase[msg.sender],
@@ -140,7 +141,7 @@ contract Presale {
             0
         );
         
-        require(token.transfer(msg.sender, purchase[msg.sender][noOfpurchase[msg.sender]].tgeAmount*price), "Token transfer failed");
+        require(OZ7Ptoken.transfer(msg.sender, purchase[msg.sender][noOfpurchase[msg.sender]].tgeAmount*price), "Token transfer failed");
     }
 
     /**
@@ -170,7 +171,7 @@ contract Presale {
     function claimTokens(uint256 _purchaseid) external {
         uint256 vestedAmounts = calculateVestedAmount(msg.sender, _purchaseid);
         require(vestedAmounts > 0, "No tokens to claim");
-        require(token.transfer(msg.sender, vestedAmounts*price), "Token transfer failed");
+        require(OZ7Ptoken.transfer(msg.sender, vestedAmounts*price), "Token transfer failed");
        
     }
 
