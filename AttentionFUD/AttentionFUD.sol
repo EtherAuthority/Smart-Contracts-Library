@@ -1651,25 +1651,12 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
     event DepositToken(address indexed to, uint amount, string project);
     event WithdrawDeposit(address indexed to, uint amount, string project);
     event BurnDeposit(uint tokenAmount, uint256 totalProject);
-    event EmergencyTransfer(uint256 token,address deadAddress);
     
     bool public stakeIsActive;
-    bool public emergencyLock=false;
     address private constant WALLETFUD = 0x000000000000000000000000000000000000dEaD;
     
     uint public minStake = 1;
 
-    constructor(){
-    }
-    
-    /**    
-    * Set FUD block emergency escape.
-    * WARNING: you can't turn it back on!
-    */
-    function LockEmergencyHatch() external onlyOwner {
-        emergencyLock=true;
-    }
-    
     /**    
     * Set FUD Attention contract on/off
     */
@@ -1728,7 +1715,7 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
         projects[stakesByProject[project].index].tokens -= stakesByProject[project].amount[msg.sender];
         stakesByProject[project].amount[msg.sender]=uint256(0);
 
-        if(projects[stakesByProject[project].index].tokens==0){ // project is empty, lets remove it.
+        if(projects[stakesByProject[project].index].tokens==0){ 
             delete stakesByProject[project].wallet;
             if(getTotalTokensStakedOnProject(project) == 0 )
             stakesByProject[project].inUse = false;
@@ -1820,22 +1807,7 @@ contract AttentionFUD is AdminControl, ERC1155Receiver{
         burnedInfo[1] = totalTokensBurned;
         return burnedInfo;
     }
-    
-    /**
-     * Send all the staked tokens out of the contract so we can migrate them to the next version.
-     * Calling this will turn off staking on the contract.
-     * 
-     */
-    function emergencyTransfer() external onlyOwner{
-        require(!emergencyLock,"AttentionFUD : Lock activated, can no longer be called.");
-        stakeIsActive=false;
-        uint256[] memory totalToken=deleteAllProjectsAndDeposits();
-        uint256 total=totalToken[1];
-        IERC1155(contractAddressFUD).safeTransferFrom(address(this),WALLETFUD, 7123, total,"" );
-        emit EmergencyTransfer(total,WALLETFUD);
-        
-    }
-
+   
     /**
      * @notice Retrieves the names of all projects and the amount of tokens staked by a given wallet in each project.
      * @param wallet The address of the wallet whose stakes are to be retrieved.
