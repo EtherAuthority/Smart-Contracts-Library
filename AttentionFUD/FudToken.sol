@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9 <0.9.0;
+pragma solidity 0.8.24;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.2.0/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.2.0/contracts/token/ERC1155/ERC1155.sol";
@@ -146,6 +146,13 @@ contract FudToken is ERC1155Supply, Ownable, ERC1155Pausable, ERC1155Burnable {
     function setAttentionContract(address contractAddress) external  onlyOwner {
         attentionFudContract = contractAddress;
         emit AttentionContract(attentionFudContract);
+    }
+
+    /** 
+     * Balance Of payment token in this contract.
+     */
+    function  balanceOfPaymentToken() external view returns(uint256){
+        return paymentToken.balanceOf(address(this));
     }
 
     /**
