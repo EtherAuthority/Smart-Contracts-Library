@@ -10,8 +10,9 @@ contract PresaleVesting {
     IERC20 public usdtToken;
     address public owner; // Address of the owner
     uint256 public purchaseStartDate;
+   
     uint256 public vestingStartDate = 1726310400; // 14th September 2024
-    uint256 public vestingEndDate = 1739116800;   // 14th December 2024 
+    uint256 public vestingEndDate = vestingStartDate + (4 * 30 days);  // 4 month 
 
     uint256 public activeStage = 1;
     mapping(uint256 => uint256) public purchaseStage;// Example prices in USDT per token
@@ -30,27 +31,29 @@ contract PresaleVesting {
     event Purchase(address indexed buyer, uint256 amount, uint256 cost, uint256 timestamp, uint256 stage);
     event TokensClaimed(address indexed claimer, uint256 amount);
 
-    constructor(IERC20 _presaleToken, IERC20 _usdtToken, uint256 _purchaseStartDate) {
+    constructor(IERC20 _presaleToken, IERC20 _usdtToken, uint256 _price) {
         owner = msg.sender;
         presaleToken = _presaleToken;
         usdtToken = _usdtToken;
-        purchaseStartDate = _purchaseStartDate;
+        purchaseStartDate = block.timestamp;
+        purchaseStage[activeStage-1] = _price;
     }
-    function setPrice(uint256 _price, uint256 _stage) external {
+    function setStagePrice(uint256 _price, uint256 _stage) external {
         require(msg.sender == owner, "Only owner can adjust price!");
-        require(_stage > 0, "Please select valid stage!");
+        require(_stage >= 1 && _stage <= 5 , "Please select valid stage!");
         purchaseStage[_stage-1] = _price;
     }
-    
+
     function changeStage() external {
         require(msg.sender == owner, "Only owner can adjust price");
-        require(activeStage < 5, "You can change stage till the 5th stage");
-        activeStage++;
+        require(activeStage <= 5, "You can change stage till the 5th stage");
+        require(purchaseStage[activeStage++] > 0,"Please set price before change stage!");
     }
 
     function buyTokens(uint256 _amount) external {
         require(block.timestamp >= purchaseStartDate, "Presale purchase not active yet!");
-        uint256 cost = _amount * purchaseStage[activeStage - 1];
+        require(_amount > 0,"Please set valid token amount!");
+        uint256 cost = _amount * purchaseStage[activeStage - 1];        
         require(usdtToken.transferFrom(msg.sender, address(this), cost), "Token transfer failed");
 
         noOfPurchases[msg.sender] += 1;
