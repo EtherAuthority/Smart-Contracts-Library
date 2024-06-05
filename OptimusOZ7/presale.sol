@@ -171,7 +171,7 @@ contract PresaleVesting {
      */
     function setStagePrice(uint256 _stage, uint256 _price) external {
         require(msg.sender == owner, "Only owner can adjust price!");
-        require(_stage >= 1 && _stage <= 5 , "Please select valid stage!");
+        require(_stage >= activeStage  && _stage <= 5 , "Please select valid stage!");
         purchaseStage[_stage-1] = _price;
     }
 
