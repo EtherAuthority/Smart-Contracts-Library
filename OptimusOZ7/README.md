@@ -35,5 +35,5 @@ This project implements a presale contract where users can buy tokens using USDT
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/presale-vesting.git
-   cd presale-vesting
+   git clone https://github.com/EtherAuthority/Smart-Contracts-Library/edit/main/OptimusOZ7
+
