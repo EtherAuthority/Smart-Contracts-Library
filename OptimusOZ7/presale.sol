@@ -15,7 +15,11 @@ interface IERC20 {
     /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     /**
      * @dev Returns the total supply of tokens in existence.
@@ -41,14 +45,17 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
 
     /**
      * @dev Sets a `value` amount of tokens as the allowance of `spender` over the caller's tokens.
      *
      * Returns a boolean value indicating whether the operation succeeded.
      *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. 
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering.
      * One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
      * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
      *
@@ -63,7 +70,11 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) external returns (bool);
 }
 
 contract PresaleVesting {
@@ -141,7 +152,13 @@ contract PresaleVesting {
      * @param timestamp Time of purchase.
      * @param stage Stage of the presale.
      */
-    event Purchase(address indexed buyer, uint256 amount, uint256 cost, uint256 timestamp, uint256 stage);
+    event Purchase(
+        address indexed buyer,
+        uint256 amount,
+        uint256 cost,
+        uint256 timestamp,
+        uint256 stage
+    );
 
     /**
      * @dev Emitted when tokens are claimed.
@@ -161,7 +178,7 @@ contract PresaleVesting {
         presaleToken = _presaleToken;
         usdtToken = _usdtToken;
         purchaseStartDate = block.timestamp;
-        purchaseStage[activeStage-1] = _price;
+        purchaseStage[activeStage - 1] = _price;
     }
 
     /**
@@ -171,8 +188,11 @@ contract PresaleVesting {
      */
     function setStagePrice(uint256 _stage, uint256 _price) external {
         require(msg.sender == owner, "Only owner can adjust price!");
-        require(_stage >= activeStage  && _stage <= 5 , "Please select valid stage!");
-        purchaseStage[_stage-1] = _price;
+        require(
+            _stage >= activeStage && _stage <= 5,
+            "Please select valid stage!"
+        );
+        purchaseStage[_stage - 1] = _price;
     }
 
     /**
@@ -181,7 +201,10 @@ contract PresaleVesting {
     function changeStage() external {
         require(msg.sender == owner, "Only owner can adjust price");
         require(activeStage <= 5, "You can change stage till the 5th stage");
-        require(purchaseStage[activeStage++] > 0, "Please set price before change stage!");
+        require(
+            purchaseStage[activeStage++] > 0,
+            "Please set price before change stage!"
+        );
     }
 
     /**
@@ -189,10 +212,16 @@ contract PresaleVesting {
      * @param _amount Number of tokens to purchase.
      */
     function buyTokens(uint256 _amount) external {
-        require(block.timestamp >= purchaseStartDate, "Presale purchase not active yet!");
+        require(
+            block.timestamp >= purchaseStartDate,
+            "Presale purchase not active yet!"
+        );
         require(_amount > 0, "Please set valid token amount!");
-        uint256 cost = _amount * purchaseStage[activeStage - 1];        
-        require(usdtToken.transferFrom(msg.sender, address(this), cost), "Token transfer failed");
+        uint256 cost = _amount * purchaseStage[activeStage - 1];
+        require(
+            usdtToken.transferFrom(msg.sender, address(this), cost),
+            "Token transfer failed"
+        );
 
         noOfPurchases[msg.sender] += 1;
         purchases[msg.sender][noOfPurchases[msg.sender]] = PurchaseDetails(
@@ -210,7 +239,10 @@ contract PresaleVesting {
      * @dev Allows users to claim their vested tokens.
      */
     function claimTokens() external {
-        require(block.timestamp >= vestingStartDate, "Vesting period has not started yet");
+        require(
+            block.timestamp >= vestingStartDate,
+            "Vesting period has not started yet"
+        );
 
         uint256 claimableAmount;
         for (uint256 i = 1; i <= noOfPurchases[msg.sender]; i++) {
@@ -224,7 +256,9 @@ contract PresaleVesting {
         }
 
         require(claimableAmount > 0, "No tokens available for claiming");
-        presaleToken.transfer(msg.sender, claimableAmount);
+        require(presaleToken.transfer(msg.sender, claimableAmount),
+            "Token transfer failed"
+        );
         emit TokensClaimed(msg.sender, claimableAmount);
     }
 
@@ -233,7 +267,9 @@ contract PresaleVesting {
      * @param totalAmount Total number of tokens purchased.
      * @return Vested amount of tokens.
      */
-    function calculateVestedAmount(uint256 totalAmount) public view returns (uint256) {
+    function calculateVestedAmount(
+        uint256 totalAmount
+    ) public view returns (uint256) {
         if (block.timestamp < vestingStartDate) {
             return 0;
         } else if (block.timestamp >= vestingEndDate) {
