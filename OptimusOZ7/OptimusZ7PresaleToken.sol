@@ -537,12 +537,8 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
 contract OptimusZ7PresaleToken is ERC20 {
 
-    constructor() ERC20("OptimusZ7 Presale", "OZ7P"){
-        
-        uint256 totalSupply = 500_000_000;
-        
-        _mint(msg.sender, totalSupply * (10**decimals()));
-
+    constructor() ERC20("OptimusZ7 Presale", "OZ7P"){        
+        _mint(msg.sender, 500_000_000 * (10**decimals()));
     }
 
 }
