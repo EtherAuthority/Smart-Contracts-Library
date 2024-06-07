@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 /**
  * @dev Interface of the ERC-20 standard as defined in the ERC.
  */
 interface IERC20 {
+     /**
+     * @dev Returns the decimals places of the token.
+     */
+    function decimals() external view returns (uint8);
+
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to another (`to`).
      *
@@ -15,11 +20,7 @@ interface IERC20 {
     /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by a call to {approve}. `value` is the new allowance.
      */
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     /**
      * @dev Returns the total supply of tokens in existence.
@@ -45,17 +46,14 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     /**
      * @dev Sets a `value` amount of tokens as the allowance of `spender` over the caller's tokens.
      *
      * Returns a boolean value indicating whether the operation succeeded.
      *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering.
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk that someone may use both the old and the new allowance by unfortunate transaction ordering. 
      * One possible solution to mitigate this race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
      * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
      *
@@ -70,48 +68,135 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
 }
 
-contract PresaleVesting {
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+}
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor() {
+        _transferOwnership(_msgSender());
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _transferOwnership(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Internal function without access restriction.
+     */
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+}
+
+contract PresaleVesting is Ownable{
     /**
      * @dev ERC20 token being sold in the presale.
      */
-    IERC20 public presaleToken;
+    IERC20 immutable public presaleToken;
+
+    /**
+     * @dev USDC token used for payments.
+     */
+    IERC20 immutable public usdcToken;
 
     /**
      * @dev USDT token used for payments.
      */
-    IERC20 public usdtToken;
-
-    /**
-     * @dev Address of the contract owner.
-     */
-    address public owner;
+    IERC20 immutable public usdtToken;
+    
 
     /**
      * @dev Timestamp when the presale starts.
      */
-    uint256 public purchaseStartDate;
+    uint256 immutable public  purchaseStartDate;
 
     /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 public vestingDuration = (4 * 31 days);
+    uint256 constant public  VESTINGDURATION = (4 * 31 days);
 
     /**
      * @dev Timestamp for the start of the vesting period.
      */
-    uint256 public vestingStartDate = 1726310400; // 14th September 2024
+    uint256 constant public  VESTINGSTARTDATE = 1726310400; // 14th September 2024
 
     /**
      * @dev Timestamp for the end of the vesting period.
      */
-    uint256 public vestingEndDate = vestingStartDate + vestingDuration;
+    uint256 constant public  VESTINGENDDATE = VESTINGSTARTDATE + VESTINGDURATION;
 
     /**
      * @dev Current active stage of the presale.
@@ -152,13 +237,7 @@ contract PresaleVesting {
      * @param timestamp Time of purchase.
      * @param stage Stage of the presale.
      */
-    event Purchase(
-        address indexed buyer,
-        uint256 amount,
-        uint256 cost,
-        uint256 timestamp,
-        uint256 stage
-    );
+    event Purchase(address indexed buyer, uint256 amount, uint256 cost, uint256 timestamp, uint256 stage);
 
     /**
      * @dev Emitted when tokens are claimed.
@@ -168,81 +247,86 @@ contract PresaleVesting {
     event TokensClaimed(address indexed claimer, uint256 amount);
 
     /**
+     * @dev Emitted when set stage price.
+     * @param stage set 1 to 5.
+     * @param price in decimal.
+     */
+    event SetStagePrice(uint256 stage , uint256 price);
+
+    /**
+     * @dev Emitted when stage changed.
+     */
+    event ChangeStage(uint256 stage);
+
+    /**
      * @dev Constructor to initialize the contract with token addresses, price, and purchase start date.
      * @param _presaleToken Address of the presale token.
      * @param _usdtToken Address of the USDT token.
      * @param _price Initial price per token in the first stage.
      */
-    constructor(IERC20 _presaleToken, IERC20 _usdtToken, uint256 _price) {
-        owner = msg.sender;
+    constructor(IERC20 _presaleToken, IERC20 _usdtToken, IERC20 _usdcToken, uint256 _price, uint256 _purchaseStartDate) {
         presaleToken = _presaleToken;
+        usdcToken = _usdcToken;
         usdtToken = _usdtToken;
-        purchaseStartDate = block.timestamp;
-        purchaseStage[activeStage - 1] = _price;
+        purchaseStartDate = _purchaseStartDate;
+        purchaseStage[activeStage-1] = _price;
     }
 
     /**
      * @dev Sets the price for a specific stage.
-     * @param _stage Stage number (1-5).
-     * @param _price Price per token for the stage.
+     * @param stage Stage number (1-5).
+     * @param price Price per token for the stage.
      */
-    function setStagePrice(uint256 _stage, uint256 _price) external {
-        require(msg.sender == owner, "Only owner can adjust price!");
-        require(
-            _stage >= activeStage && _stage <= 5,
-            "Please select valid stage!"
-        );
-        purchaseStage[_stage - 1] = _price;
+    function setStagePrice(uint256 stage, uint256 price) external onlyOwner {        
+        require(stage > 0  && stage <= 5 , "Please select valid stage!");
+        require(activeStage-1 <= stage-1, "Please set correct stage!");
+        purchaseStage[stage-1] = price;
+        emit SetStagePrice(stage , price);
     }
 
     /**
      * @dev Changes the current active stage.
      */
-    function changeStage() external {
-        require(msg.sender == owner, "Only owner can adjust price");
-        require(activeStage <= 5, "You can change stage till the 5th stage");
-        require(
-            purchaseStage[activeStage++] > 0,
-            "Please set price before change stage!"
-        );
+    function changeStage() external onlyOwner {        
+        require(activeStage <= 5, "You can change stage till the 5th stage!");
+        require(purchaseStage[activeStage++] > 0, "Please set price before change stage!");
+        emit ChangeStage(activeStage);
     }
 
     /**
      * @dev Allows users to buy tokens during the presale.
-     * @param _amount Number of tokens to purchase.
+     * @param amount Number of tokens to purchase.
+     * @param _token The token to use for the purchase ("USDT" or "USDC").
      */
-    function buyTokens(uint256 _amount) external {
-        require(
-            block.timestamp >= purchaseStartDate,
-            "Presale purchase not active yet!"
-        );
-        require(_amount > 0, "Please set valid token amount!");
-        uint256 cost = _amount * purchaseStage[activeStage - 1];
-        require(
-            usdtToken.transferFrom(msg.sender, address(this), cost),
-            "Token transfer failed"
-        );
+    function buyTokens(uint256 amount , string memory _token) external {
+        require(block.timestamp >= purchaseStartDate, "Presale purchase not active yet!");
+        require(amount > 0, "Please set valid token amount!");
+        uint256 cost = (amount * purchaseStage[activeStage - 1]) / (10 ** 18); 
+       if (keccak256(bytes(_token)) == keccak256(bytes("USDT"))) {
+            require(usdtToken.transferFrom(msg.sender, address(this), cost), "USDT transfer failed");
+        } else if (keccak256(bytes(_token)) == keccak256(bytes("USDC"))) {
+            require(usdcToken.transferFrom(msg.sender, address(this), cost), "USDC transfer failed");
+        } else {
+            revert("Unsupported token");
+        }
 
         noOfPurchases[msg.sender] += 1;
         purchases[msg.sender][noOfPurchases[msg.sender]] = PurchaseDetails(
             noOfPurchases[msg.sender],
-            _amount,
+            amount,
             block.timestamp,
             0,
             activeStage
         );
 
-        emit Purchase(msg.sender, _amount, cost, block.timestamp, activeStage);
+        emit Purchase(msg.sender, amount, cost, block.timestamp, activeStage);
     }
 
     /**
      * @dev Allows users to claim their vested tokens.
      */
     function claimTokens() external {
-        require(
-            block.timestamp >= vestingStartDate,
-            "Vesting period has not started yet"
-        );
+        require(block.timestamp >= VESTINGSTARTDATE, "Vesting period has not started yet");
 
         uint256 claimableAmount;
         for (uint256 i = 1; i <= noOfPurchases[msg.sender]; i++) {
@@ -255,10 +339,8 @@ contract PresaleVesting {
             }
         }
 
-        require(claimableAmount > 0, "No tokens available for claiming");
-        require(presaleToken.transfer(msg.sender, claimableAmount),
-            "Token transfer failed"
-        );
+        require(claimableAmount > 0, "No tokens available for claiming");       
+        require(presaleToken.transfer(msg.sender, claimableAmount), "Token transfer failed"); 
         emit TokensClaimed(msg.sender, claimableAmount);
     }
 
@@ -267,18 +349,33 @@ contract PresaleVesting {
      * @param totalAmount Total number of tokens purchased.
      * @return Vested amount of tokens.
      */
-    function calculateVestedAmount(
-        uint256 totalAmount
-    ) public view returns (uint256) {
-        if (block.timestamp < vestingStartDate) {
+    function calculateVestedAmount(uint256 totalAmount) public view returns (uint256) {
+        if (block.timestamp < VESTINGSTARTDATE) {
             return 0;
-        } else if (block.timestamp >= vestingEndDate) {
+        } else if (block.timestamp >= VESTINGENDDATE) {
             return totalAmount;
         } else {
-            uint256 elapsedTime = block.timestamp - vestingStartDate;
-            uint256 vestingPeriods = elapsedTime / (vestingDuration / 4); // Divide the vesting period into 4 parts
+            uint256 elapsedTime = block.timestamp - VESTINGSTARTDATE;
+            uint256 vestingPeriods = elapsedTime / (VESTINGDURATION / 4); // Divide the vesting period into 4 parts
             uint256 vested = (totalAmount * vestingPeriods) / 4;
             return vested;
         }
+    }
+
+    /**
+    * @dev Allows the owner to withdraw a specified amount of USDT tokens from the presale contract.
+    * @param amount The amount of USDT tokens to withdraw.
+    */
+    function withdrawUSDT(uint256 amount) external onlyOwner {
+        require(usdcToken.transfer(msg.sender, amount), "Withdraw failed");
+    }
+
+     /**
+     * @dev Allows the owner to withdraw a specified amount of USDC tokens from the presale contract.
+     * @param amount The amount of USDC tokens to withdraw.
+     */
+    function withdrawUSDC(uint256 amount) external onlyOwner {
+        // Ensure the transfer of USDC tokens to the owner's address is successful
+        require(usdcToken.transfer(msg.sender, amount), "Withdraw failed");
     }
 }
