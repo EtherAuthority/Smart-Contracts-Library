@@ -301,11 +301,11 @@ contract PresaleVesting is Ownable{
     function buyTokens(uint256 amount , string memory _token) external {
         require(block.timestamp >= purchaseStartDate, "Presale purchase not active yet!");
         require(amount > 0, "Please set valid token amount!");
-        uint256 cost = (amount * purchaseStage[activeStage - 1]) / (10 ** 18); 
+        uint256 cost = (amount * (10 ** 18) / purchaseStage[activeStage - 1]); 
        if (keccak256(bytes(_token)) == keccak256(bytes("USDT"))) {
-            require(usdtToken.transferFrom(msg.sender, address(this), cost), "USDT transfer failed");
+            require(usdtToken.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
         } else if (keccak256(bytes(_token)) == keccak256(bytes("USDC"))) {
-            require(usdcToken.transferFrom(msg.sender, address(this), cost), "USDC transfer failed");
+            require(usdcToken.transferFrom(msg.sender, address(this), amount), "USDC transfer failed");
         } else {
             revert("Unsupported token");
         }
@@ -313,7 +313,7 @@ contract PresaleVesting is Ownable{
         noOfPurchases[msg.sender] += 1;
         purchases[msg.sender][noOfPurchases[msg.sender]] = PurchaseDetails(
             noOfPurchases[msg.sender],
-            amount,
+            cost,
             block.timestamp,
             0,
             activeStage
@@ -340,7 +340,10 @@ contract PresaleVesting is Ownable{
         }
 
         require(claimableAmount > 0, "No tokens available for claiming");       
-        require(presaleToken.transfer(msg.sender, claimableAmount), "Token transfer failed"); 
+        require(presaleToken.transfer(msg.sender, claimableAmount), "Token transfer failed");
+    
+
+        
         emit TokensClaimed(msg.sender, claimableAmount);
     }
 
