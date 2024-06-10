@@ -303,7 +303,7 @@ contract PresaleVesting is Ownable{
         require(amount > 0, "Please set valid token amount!");
         uint256 token = (amount * (10 ** 18) / purchaseStage[activeStage - 1]); 
        if (keccak256(bytes(_token)) == keccak256(bytes("USDT"))) {
-            require(usdtToken.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
+            require(usdtToken.transferFrom(msg.sender, owner(), amount), "USDT transfer failed");
         } else if (keccak256(bytes(_token)) == keccak256(bytes("USDC"))) {
             require(usdcToken.transferFrom(msg.sender, owner() , amount), "USDC transfer failed");
         } else {
