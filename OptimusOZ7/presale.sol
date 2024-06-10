@@ -183,15 +183,15 @@ contract PresaleVesting is Ownable{
      */
     uint256 immutable public  purchaseStartDate;
 
-    /**
+   /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 constant public  VESTINGDURATION = (4 * 1 minutes);
+    uint256 constant public  VESTINGDURATION = (4 * 31 days);
 
     /**
      * @dev Timestamp for the start of the vesting period.
      */
-    uint256 constant public  VESTINGSTARTDATE = 1718013280; // 14th September 2024
+    uint256 constant public  VESTINGSTARTDATE = 1726310400; // 14th September 2024
 
     /**
      * @dev Timestamp for the end of the vesting period.
