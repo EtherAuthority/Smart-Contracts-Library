@@ -186,12 +186,12 @@ contract PresaleVesting is Ownable{
     /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 constant public  VESTINGDURATION = (4 * 31 days);
+    uint256 constant public  VESTINGDURATION = (4 * 1 minutes);
 
     /**
      * @dev Timestamp for the start of the vesting period.
      */
-    uint256 constant public  VESTINGSTARTDATE = 1726310400; // 14th September 2024
+    uint256 constant public  VESTINGSTARTDATE = 1718013280; // 14th September 2024
 
     /**
      * @dev Timestamp for the end of the vesting period.
@@ -233,11 +233,11 @@ contract PresaleVesting is Ownable{
      * @dev Emitted when a purchase is made.
      * @param buyer Address of the buyer.
      * @param amount Amount of tokens purchased.
-     * @param cost Total cost in USDT.
+     * @param token Total token in USDT.
      * @param timestamp Time of purchase.
      * @param stage Stage of the presale.
      */
-    event Purchase(address indexed buyer, uint256 amount, uint256 cost, uint256 timestamp, uint256 stage);
+    event Purchase(address indexed buyer, uint256 amount, uint256 token, uint256 timestamp, uint256 stage);
 
     /**
      * @dev Emitted when tokens are claimed.
@@ -301,11 +301,11 @@ contract PresaleVesting is Ownable{
     function buyTokens(uint256 amount , string memory _token) external {
         require(block.timestamp >= purchaseStartDate, "Presale purchase not active yet!");
         require(amount > 0, "Please set valid token amount!");
-        uint256 cost = (amount * (10 ** 18) / purchaseStage[activeStage - 1]); 
+        uint256 token = (amount * (10 ** 18) / purchaseStage[activeStage - 1]); 
        if (keccak256(bytes(_token)) == keccak256(bytes("USDT"))) {
             require(usdtToken.transferFrom(msg.sender, address(this), amount), "USDT transfer failed");
         } else if (keccak256(bytes(_token)) == keccak256(bytes("USDC"))) {
-            require(usdcToken.transferFrom(msg.sender, address(this), amount), "USDC transfer failed");
+            require(usdcToken.transferFrom(msg.sender, owner() , amount), "USDC transfer failed");
         } else {
             revert("Unsupported token");
         }
@@ -313,13 +313,13 @@ contract PresaleVesting is Ownable{
         noOfPurchases[msg.sender] += 1;
         purchases[msg.sender][noOfPurchases[msg.sender]] = PurchaseDetails(
             noOfPurchases[msg.sender],
-            cost,
+            token,
             block.timestamp,
             0,
             activeStage
         );
 
-        emit Purchase(msg.sender, amount, cost, block.timestamp, activeStage);
+        emit Purchase(msg.sender, amount, token, block.timestamp, activeStage);
     }
 
     /**
@@ -363,23 +363,6 @@ contract PresaleVesting is Ownable{
             uint256 vested = (totalAmount * vestingPeriods) / 4;
             return vested;
         }
-    }
-
-    /**
-    * @dev Allows the owner to withdraw a specified amount of USDT tokens from the presale contract.
-    * @param amount The amount of USDT tokens to withdraw.
-    */
-    function withdrawUSDT(uint256 amount) external onlyOwner {
-        require(usdtToken.transfer(msg.sender, amount), "Withdraw failed");
-    }
-
-     /**
-     * @dev Allows the owner to withdraw a specified amount of USDC tokens from the presale contract.
-     * @param amount The amount of USDC tokens to withdraw.
-     */
-    function withdrawUSDC(uint256 amount) external onlyOwner {
-        // Ensure the transfer of USDC tokens to the owner's address is successful
-        require(usdcToken.transfer(msg.sender, amount), "Withdraw failed");
     }
 
     /**
