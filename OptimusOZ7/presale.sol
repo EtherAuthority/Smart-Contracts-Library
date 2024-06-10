@@ -206,7 +206,7 @@ contract PresaleVesting is Ownable{
     /**
      * @dev Mapping to store prices for different stages.
      */
-    mapping(uint256 => uint256) public purchaseStage;
+    mapping(uint256 => uint256) private purchaseStage;
 
     /**
      * @dev Struct to store purchase details.
@@ -370,7 +370,7 @@ contract PresaleVesting is Ownable{
     * @param amount The amount of USDT tokens to withdraw.
     */
     function withdrawUSDT(uint256 amount) external onlyOwner {
-        require(usdcToken.transfer(msg.sender, amount), "Withdraw failed");
+        require(usdtToken.transfer(msg.sender, amount), "Withdraw failed");
     }
 
      /**
@@ -380,5 +380,18 @@ contract PresaleVesting is Ownable{
     function withdrawUSDC(uint256 amount) external onlyOwner {
         // Ensure the transfer of USDC tokens to the owner's address is successful
         require(usdcToken.transfer(msg.sender, amount), "Withdraw failed");
+    }
+
+    /**
+    * @dev Returns the price of tokens at the current presale stage.
+    * 
+    * The presale stages are defined in the `purchaseStage` mapping, and the `activeStage`
+    * variable indicates the current stage. This function retrieves the price for the 
+    * current stage, which is `activeStage - 1` due to zero-based indexing in the mapping.
+    * 
+    * @return The price of tokens at the current presale stage.
+    */
+    function viewPresaleStage() public view returns(uint256) {
+        return purchaseStage[activeStage-1];
     }
 }
