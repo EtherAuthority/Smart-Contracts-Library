@@ -71,6 +71,6 @@ The `Factory` contract manages the creation and tracking of `Implementation` con
 
 ## Deployed contract address
 
-[Implementation]https://testnet.bscscan.com/address/0xF306b3dA7dDf3Cb10508F9d3951A14d1c96dF901
-[Factory]https://testnet.bscscan.com/address/0x688f70aF96cc26620152132909bb58ABe37c0Bc9
-[TokenContract]https://testnet.bscscan.com/address/0xC7FD75eb9e520bD68f300ddEECAcb729541F68Da
+[Implementation](https://testnet.bscscan.com/address/0xF306b3dA7dDf3Cb10508F9d3951A14d1c96dF901)
+[Factory](https://testnet.bscscan.com/address/0x688f70aF96cc26620152132909bb58ABe37c0Bc9)
+[TokenContract](https://testnet.bscscan.com/address/0xC7FD75eb9e520bD68f300ddEECAcb729541F68Da)
