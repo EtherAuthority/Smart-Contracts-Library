@@ -281,7 +281,7 @@ contract Implementation is Ownable {
      */
     constructor(address _feeWallet, address _tokenToSwap, address _owner, address _factory) Ownable(_owner) {
         feeWallet = _feeWallet;
-        uniswapRouter = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        uniswapRouter = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);  //change router address according to your network
         tokenToSwap = _tokenToSwap;
         factory = _factory;
     }
