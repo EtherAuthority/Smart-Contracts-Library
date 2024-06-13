@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at testnet.bscscan.com on 2024-06-12
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
@@ -11,6 +15,7 @@ pragma solidity 0.8.24;
  *
  * This contract is only required for intermediate, library-like contracts.
  */
+
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
@@ -256,30 +261,29 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 
 contract Implementation is Ownable {
     address public feeWallet;
-    address public mainOwnerFeeWallet;
     IUniswapV2Router02 public immutable uniswapRouter;
     address public tokenToSwap;
     uint256 public feePercent = 1;
+    address public factory;
 
     //event
     event UpdateTokenToSwap(address updatedToken);
-    event UpdateFeeWalet(address feeWallet);
-
+    event UpdateFeeWallet(address feeWallet);
 
     /**
      * @dev Constructor to initialize the contract with the provided addresses.
      * @param _feeWallet The address to receive 0.5% of the fee.
-     * @param _mainOwnerFeeWallet The address of the main owner to receive the other 0.5% of the fee.
      * @param _tokenToSwap The address of the token to swap.
      * @param _owner The address of the owner who deploys this contract.
+     * @param _factory The address of the factory contract.
      * 
      * This constructor sets up the contract by assigning values to key addresses and initializes the contract owner.
      */
-    constructor(address _feeWallet, address _mainOwnerFeeWallet, address _tokenToSwap, address _owner) Ownable(_owner) {
+    constructor(address _feeWallet, address _tokenToSwap, address _owner, address _factory) Ownable(_owner) {
         feeWallet = _feeWallet;
-        mainOwnerFeeWallet = _mainOwnerFeeWallet;
         uniswapRouter = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         tokenToSwap = _tokenToSwap;
+        factory = _factory;
     }
 
     /**
@@ -303,6 +307,8 @@ contract Implementation is Ownable {
         uint256 feeToMainOwner = fee / 2;
         uint256 feeToFeeWallet = fee - feeToMainOwner;
 
+        address mainOwnerFeeWallet = getMainOwnerFeeWallet();
+
         payable(mainOwnerFeeWallet).transfer(feeToMainOwner);
         payable(feeWallet).transfer(feeToFeeWallet);
 
@@ -323,11 +329,11 @@ contract Implementation is Ownable {
      * @dev Updates the fee wallet address.
      * @param newFeeWallet The new address to set as the fee wallet.
      * Only the contract owner can call this function.
-     * Emits an event `UpdateFeeWalet` after updating the fee wallet address.
+     * Emits an event `UpdateFeeWallet` after updating the fee wallet address.
      */
     function updateFeeWallet(address newFeeWallet) external onlyOwner {
         feeWallet = newFeeWallet;
-        emit UpdateFeeWalet(feeWallet);
+        emit UpdateFeeWallet(feeWallet);
     }
 
     /**
@@ -341,7 +347,13 @@ contract Implementation is Ownable {
         emit UpdateTokenToSwap(tokenToSwap);
     }
 
+    function getMainOwnerFeeWallet() public view returns (address) {
+        Factory factoryContract = Factory(factory);
+        return factoryContract.mainOwnerFeeWallet();
+    }
 }
+
+
 
 
 contract Factory is Ownable {
@@ -354,7 +366,6 @@ contract Factory is Ownable {
 
     constructor(address _mainOwnerFeeWallet) Ownable(msg.sender) {
         mainOwnerFeeWallet = _mainOwnerFeeWallet;
-
     }
 
     /**
@@ -364,8 +375,8 @@ contract Factory is Ownable {
      * This function deploys a new Implementation contract with the provided fee wallet and token to swap addresses.
      * Emits a ContractCreated event after deploying the new contract.
      */
-    function createContract(address feeWallet, address tokenToSwap) external  {
-        Implementation newContract = new Implementation(feeWallet, mainOwnerFeeWallet, tokenToSwap, msg.sender);
+    function createContract(address feeWallet, address tokenToSwap) external {
+        Implementation newContract = new Implementation(feeWallet, tokenToSwap, msg.sender, address(this));
         deployedContracts.push(address(newContract));
         emit ContractCreated(address(newContract));
     }
