@@ -357,7 +357,7 @@ contract Implementation is Ownable {
 
 
 contract Factory is Ownable {
-    address[] public deployedContracts;
+    mapping(address=>address[]) private deployedContracts;
     address public mainOwnerFeeWallet;
 
     //event
@@ -369,6 +369,15 @@ contract Factory is Ownable {
     }
 
     /**
+     * @notice Returns all deployed contract addresses associated with the specified wallet address.
+     * @param walletAddress The address of the wallet to query.
+     * @return An array of contract addresses deployed by the wallet.
+     */
+    function deployedContract(address walletAddress) external  view returns(address[] memory){
+        return deployedContracts[walletAddress];
+    }
+
+    /**
      * @dev Creates a new instance of the Implementation contract.
      * @param feeWallet The address to receive 0.5% of the fee.
      * @param tokenToSwap The address of the token to swap.
@@ -377,7 +386,7 @@ contract Factory is Ownable {
      */
     function createContract(address feeWallet, address tokenToSwap) external {
         Implementation newContract = new Implementation(feeWallet, tokenToSwap, msg.sender, address(this));
-        deployedContracts.push(address(newContract));
+        deployedContracts[msg.sender].push(address(newContract));
         emit ContractCreated(address(newContract));
     }
 
