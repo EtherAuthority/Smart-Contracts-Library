@@ -1,6 +1,3 @@
-/**
- *Submitted for verification at testnet.bscscan.com on 2024-06-12
-*/
 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
@@ -122,6 +119,10 @@ abstract contract Ownable is Context {
         _owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
+}
+
+interface IImplementation {
+    function tokenToSwap() external view returns (address);
 }
 
 interface IUniswapV2Router01 {
@@ -263,12 +264,13 @@ contract Implementation is Ownable {
     address public feeWallet;
     IUniswapV2Router02 public immutable uniswapRouter;
     address public tokenToSwap;
-    uint256 public feePercent = 1;
-    address public factory;
+    uint256 public constant FEEPRECENT = 1;
+    address public immutable factory;
 
     //event
     event UpdateTokenToSwap(address updatedToken);
     event UpdateFeeWallet(address feeWallet);
+    event TokensSwapped(uint256 ethAmount, uint256 tokenAmount);
 
     /**
      * @dev Constructor to initialize the contract with the provided addresses.
@@ -301,7 +303,7 @@ contract Implementation is Ownable {
      * This function calculates the fee, performs the swap, and distributes the fees.
      */
     function swapAndSend(uint256 amount) internal {
-        uint256 fee = (amount * feePercent) / 100;
+        uint256 fee = (amount * FEEPRECENT) / 100;
         uint256 swapAmount = amount - fee;
 
         uint256 feeToMainOwner = fee / 2;
@@ -317,12 +319,14 @@ contract Implementation is Ownable {
         path[0] = uniswapRouter.WETH();
         path[1] = tokenToSwap;
 
-        uniswapRouter.swapExactETHForTokens{value: swapAmount}(
+       uint[] memory amounts = uniswapRouter.swapExactETHForTokens{value: swapAmount}(
             0,
             path,
             msg.sender,
             block.timestamp
         );
+        uint256 tokensReceived = amounts[1];
+        emit TokensSwapped(amount, tokensReceived);
     }
 
     /**
@@ -332,6 +336,7 @@ contract Implementation is Ownable {
      * Emits an event `UpdateFeeWallet` after updating the fee wallet address.
      */
     function updateFeeWallet(address newFeeWallet) external onlyOwner {
+        require(newFeeWallet != address(0),"feeWallet can not be zero!");
         feeWallet = newFeeWallet;
         emit UpdateFeeWallet(feeWallet);
     }
@@ -353,10 +358,12 @@ contract Implementation is Ownable {
     }
 }
 
-
-
-
 contract Factory is Ownable {
+
+    struct DeployedContractInfo {
+        address contractAddress;
+        address tokenContract;
+    }
     mapping(address=>address[]) private deployedContracts;
     address public mainOwnerFeeWallet;
 
@@ -369,12 +376,24 @@ contract Factory is Ownable {
     }
 
     /**
-     * @notice Returns all deployed contract addresses associated with the specified wallet address.
-     * @param walletAddress The address of the wallet to query.
-     * @return An array of contract addresses deployed by the wallet.
+     * @notice Returns an array of DeployedContractInfo for the contracts associated with a given wallet address.
+     * @param walletAddress The address of the wallet to query deployed contracts for.
+     * @return An array of DeployedContractInfo containing the contract address and token contract address for each deployed contract.
      */
-    function deployedContract(address walletAddress) external  view returns(address[] memory){
-        return deployedContracts[walletAddress];
+    function deployedContract(address walletAddress) external view returns (DeployedContractInfo[] memory) {
+        address[] memory contracts = deployedContracts[walletAddress];
+        DeployedContractInfo[] memory contractInfos = new DeployedContractInfo[](contracts.length);
+
+        for (uint256 i = 0; i < contracts.length; i++) {
+            IImplementation implementationContract = IImplementation(contracts[i]);
+            address tokenToSwap = implementationContract.tokenToSwap();
+            contractInfos[i] = DeployedContractInfo({
+                contractAddress: contracts[i],
+                tokenContract: tokenToSwap
+            });
+        }
+
+        return contractInfos;
     }
 
     /**
@@ -397,6 +416,7 @@ contract Factory is Ownable {
     * Emits an UpdateMainOwnerFeeWallet event after updating the main owner fee wallet address.
     */
     function updateMainOwnerFeeWallet(address newFeeWallet) external onlyOwner {
+        require(newFeeWallet != address(0),"mainOwnerFeeWallet can not be zero!");
         mainOwnerFeeWallet = newFeeWallet;
         emit UpdateMainOwnerFeeWallet(mainOwnerFeeWallet);
     }
