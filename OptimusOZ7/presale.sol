@@ -187,16 +187,15 @@ contract PresaleVesting is Ownable{
      * @dev Duration of the vesting period (4 months).
      */
     uint256 constant public  VESTINGDURATION = (4 * 31 days);
-
     /**
      * @dev Timestamp for the start of the vesting period.
      */
-    uint256 constant public  VESTINGSTARTDATE = 1726310400; // 14th September 2024
+    uint256  public  vestingStartdate = 1726310400; // 14th September 2024
 
     /**
      * @dev Timestamp for the end of the vesting period.
      */
-    uint256 constant public  VESTINGENDDATE = VESTINGSTARTDATE + VESTINGDURATION;
+    uint256  public  vestingEndDate = vestingStartdate + VESTINGDURATION;
 
     /**
      * @dev Current active stage of the presale.
@@ -284,6 +283,31 @@ contract PresaleVesting is Ownable{
         emit SetStagePrice(stage , price);
     }
 
+    
+     /**
+     * @dev Changes the vesting start date.
+     * 
+     * Requirements:
+     * - The new vesting start date must be earlier than or equal to the current vesting start date.
+     * - The new vesting start date must be later than or equal to the purchase start date.
+     * - Can only be called by the owner.
+     * 
+     * @param newVestingStartDate The new start date for the vesting period.
+     * @return bool Returns true if the operation was successful.
+     */
+    function changeVestingStartDate(uint256 newVestingStartDate) public onlyOwner returns (bool) {
+        // Ensure the new vesting start date is not earlier than the current vesting start date
+        require(vestingStartdate >= newVestingStartDate, "Vesting time has started; you cannot modify the date.");
+        
+        // Ensure the new vesting start date is after or equal to the purchase start date
+        require(purchaseStartDate <= newVestingStartDate, "Vesting start date should be greater than or equal to the purchase start date.");
+        
+        // Update the vesting start date to the new date
+        vestingStartdate = newVestingStartDate;
+        
+        return true; // Indicate that the operation was successful
+    }
+
     /**
      * @dev Changes the current active stage.
      */
@@ -326,7 +350,7 @@ contract PresaleVesting is Ownable{
      * @dev Allows users to claim their vested tokens.
      */
     function claimTokens() external {
-        require(block.timestamp >= VESTINGSTARTDATE, "Vesting period has not started yet");
+        require(block.timestamp >= vestingStartdate, "Vesting period has not started yet");
 
         uint256 claimableAmount;
         for (uint256 i = 1; i <= noOfPurchases[msg.sender]; i++) {
@@ -353,12 +377,12 @@ contract PresaleVesting is Ownable{
      * @return Vested amount of tokens.
      */
     function calculateVestedAmount(uint256 totalAmount) public view returns (uint256) {
-        if (block.timestamp < VESTINGSTARTDATE) {
+        if (block.timestamp < vestingStartdate) {
             return 0;
-        } else if (block.timestamp >= VESTINGENDDATE) {
+        } else if (block.timestamp >= vestingEndDate) {
             return totalAmount;
         } else {
-            uint256 elapsedTime = block.timestamp - VESTINGSTARTDATE;
+            uint256 elapsedTime = block.timestamp - vestingStartdate;
             uint256 vestingPeriods = elapsedTime / (VESTINGDURATION / 4); // Divide the vesting period into 4 parts
             uint256 vested = (totalAmount * vestingPeriods) / 4;
             return vested;
