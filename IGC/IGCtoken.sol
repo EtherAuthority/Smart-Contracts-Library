@@ -13,6 +13,7 @@
 
 pragma solidity ^0.8.24;
 
+
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -606,16 +607,17 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     IERC20 public solidToken;
 
     // Array of all token holders
-    address[] private holders;
+    address[] public holders;
 
     // Array of dividend-eligible holders
-    address[] private dividendHolders;
+    address[] public dividendHolders;
 
     // Mapping to check if an address is a holder
     mapping(address => bool) private isHolder;
 
     // Mapping to check if an address is a dividend holder
-    mapping(address => bool) private isDividendHolder;
+    mapping(address => bool) public isDividendHolder;
+    
 
     // Mapping to store the index of each holder in the holders array
     mapping(address => uint256) private holderIndex;
@@ -626,7 +628,8 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     // Blacklist mapping for DEX addresses
     mapping(address => bool) private blacklist;
 
-
+    uint256 public lastDistributedIndex;
+    uint256 public lastResetIndex;
     constructor() ERC20("Industrial Gold Coin", "IGC"){}
 
     /**
@@ -638,18 +641,19 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
         _addHolder(to);
-        _addDividendHolder(to);
+        _addDividendHolder(to);       
     }
 
     /**
      * @notice Burn tokens
      * @dev Any holder can burn their tokens
+     * @param wallet The wallet address from you want to burn tokens
      * @param amount The amount of tokens to burn
      */
-    function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
+    function burn(address wallet, uint256 amount) external onlyOwner {
+        _burn(wallet, amount);
         if (balanceOf(msg.sender) == 0) {
-            _removeDividendHolder(msg.sender);
+            _removeDividendHolder(msg.sender);            
         }
     }
 
@@ -667,11 +671,13 @@ contract IndustrialGoldCoin is ERC20, Ownable {
 
         if (balanceOf(sender) == 0) {
             _removeDividendHolder(sender);
+           
         }
 
         if (balanceOf(recipient) == amount) {
             _addHolder(recipient);
             _addDividendHolder(recipient);
+           
         }
     }
 
@@ -710,20 +716,22 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @notice Distribute SOLID tokens to all dividend-eligible holders
      * @dev Distributes SOLID tokens based on the holders' token holdings
      */
-    function distributeDividends() external onlyOwner {
+    
+    function distributeDividends() external payable onlyOwner {
         uint256 totalSupply = totalSupply();
         uint256 solidBalance = solidToken.balanceOf(msg.sender);
         require(solidBalance > 0, "No SOLID tokens to distribute");
 
-        uint256 count = dividendHolders.length < maxDistributionHolders ? dividendHolders.length : maxDistributionHolders;
+        uint256 count = (dividendHolders.length <= maxDistributionHolders) ? dividendHolders.length : maxDistributionHolders;      
 
-        for (uint256 i = 0; i < count; i++) {
-            address holder = dividendHolders[i];
-            uint256 holderBalance = balanceOf(holder);
+        for (uint256 i = count; i > 0; i--) {
+            uint256 index = i - 1;
+            uint256 holderBalance = balanceOf(dividendHolders[index]);
             if (holderBalance > 0) {
-                uint256 solidAmount = (solidBalance * holderBalance) / totalSupply;
-                solidToken.transferFrom(msg.sender,holder, solidAmount);
+                solidToken.transferFrom(msg.sender, dividendHolders[index], ((solidBalance * holderBalance) / totalSupply));
             }
+            _removeDividendHolder(dividendHolders[index]);
+            lastDistributedIndex = i; // Update the last distributed index            
         }
     }
 
@@ -737,6 +745,7 @@ contract IndustrialGoldCoin is ERC20, Ownable {
         return holders[index];
     }
 
+  
     /**
      * @notice Add an address to the blacklist
      * @dev Only the owner can add addresses to the blacklist
@@ -793,17 +802,34 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @notice Remove a holder from the dividendHolders list
      * @param holder The address of the holder to remove
      */
+    
     function _removeDividendHolder(address holder) internal {
-        if (isDividendHolder[holder]) {
-            uint256 index = dividendHolderIndex[holder];
-            uint256 lastIndex = dividendHolders.length - 1;
+    if (isDividendHolder[holder]) {
+        uint256 index = dividendHolderIndex[holder];
+        uint256 lastIndex = dividendHolders.length - 1;
+        
+        if (index != lastIndex) {
             address lastHolder = dividendHolders[lastIndex];
-
+            // Move the last holder to the position of the holder to be removed
             dividendHolders[index] = lastHolder;
             dividendHolderIndex[lastHolder] = index;
+        }
 
-            dividendHolders.pop();
-            isDividendHolder[holder] = false;
+        // Remove the last element
+        dividendHolders.pop();
+        delete dividendHolderIndex[holder];
+        isDividendHolder[holder] = false;
         }
     }
-}
+    /**
+    * @notice Reset the dividendHolders array by re-adding all eligible holders
+    */
+    function _resetDividendHolders() public {
+        for (uint256 i = 0; i < holders.length; i++) {
+            address holder = holders[i];
+            if (balanceOf(holder) > 0) {
+                _addDividendHolder(holder);
+            }
+        }
+    }
+}  
