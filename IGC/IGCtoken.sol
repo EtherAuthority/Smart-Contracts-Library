@@ -13,6 +13,7 @@
 
 pragma solidity ^0.8.24;
 
+import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -599,88 +600,56 @@ abstract contract Ownable is Context {
     }
 }
 
+interface ISOLIDToken {
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+}
+
 contract IndustrialGoldCoin is ERC20, Ownable {
-    /// @notice Maximum number of holders for dividend distribution
-    uint256 public maxDistributionHolders = 160;
-
-    /// @notice SOLID token contract interface
-    IERC20 public solidToken;
-
-    // Array of all token holders
+    ISOLIDToken public solidToken;
+    uint256 public totalDividendsDistributed;
+    mapping(address => uint256) public lastClaimedDividends;
+    mapping(address => uint256) public unclaimedDividends;
+    mapping(address => bool) public isHolder;
+    uint256 public totalSupplySnapshot;
+    mapping(address => bool) public isDEX;
     address[] public holders;
 
-    // Array of dividend-eligible holders
-    address[] public dividendHolders;
-
-    // Mapping to check if an address is a holder
-    mapping(address => bool) private isHolder;
-
-    // Mapping to check if an address is a dividend holder
-    mapping(address => bool) public isDividendHolder;
-    
-
-    // Mapping to store the index of each holder in the holders array
-    mapping(address => uint256) private holderIndex;
-
-    // Mapping to store the index of each dividend holder in the dividendHolders array
-    mapping(address => uint256) private dividendHolderIndex;
-
-    // Blacklist mapping for DEX addresses
-    mapping(address => bool) private blacklist;
-
-    uint256 public lastDistributedIndex;
-    uint256 public lastResetIndex;
-    constructor() ERC20("Industrial Gold Coin", "IGC"){}
+    event DividendsDistributed(uint256 amount);
+    event DividendsClaimed(address indexed holder, uint256 amount);
+    event TokensBurned(address indexed holder, uint256 amount);
 
     /**
-     * @notice Mint new tokens
-     * @dev Only the owner can mint new tokens
-     * @param to The address to mint tokens to
-     * @param amount The amount of tokens to mint
+     * @dev Sets the address of the SOLID token contract.
+     * @param _solidTokenAddress Address of the SOLID token contract.
+     */
+    constructor(address _solidTokenAddress) ERC20("IGC Token", "IGC") {
+        solidToken = ISOLIDToken(_solidTokenAddress);
+    }
+
+    /**
+     * @dev Mints new tokens to a specified address.
+     * Only the owner can call this function.
+     * @param to The address to mint the tokens to.
+     * @param amount The amount of tokens to mint.
      */
     function mint(address to, uint256 amount) external onlyOwner {
+        require(!isHolder[to], "Address is already a holder");
         _mint(to, amount);
-        _addHolder(to);
-        _addDividendHolder(to);       
+        _updateSnapshot();
+        holders.push(to);
+        isHolder[to] = true;
     }
 
     /**
-     * @notice Burn tokens
-     * @dev Any holder can burn their tokens
-     * @param wallet The wallet address from you want to burn tokens
-     * @param amount The amount of tokens to burn
+     * @dev Sets the DEX status of an address.
+     * @param dex The address to set the status for.
+     * @param status The status to set (true if the address is a DEX, false otherwise).
      */
-    function burn(address wallet, uint256 amount) external onlyOwner {
-        _burn(wallet, amount);
-        if (balanceOf(msg.sender) == 0) {
-            _removeDividendHolder(msg.sender);            
-        }
+    function setDEX(address dex, bool status) external onlyOwner {
+        isDEX[dex] = status;
     }
-
-    /**
-     * @notice Transfer tokens
-     * @dev Overrides the transfer function to restrict DEX trading
-     * @param sender The address sending the tokens
-     * @param recipient The address receiving the tokens
-     * @param amount The amount of tokens to transfer
-     */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
-        require(!blacklist[sender] && !blacklist[recipient], "Transfers to/from DEX are not allowed");
-        require(!isContract(recipient), "Transfers to contracts are disabled");
-        super._transfer(sender, recipient, amount);
-
-        if (balanceOf(sender) == 0) {
-            _removeDividendHolder(sender);
-           
-        }
-
-        if (balanceOf(recipient) == amount) {
-            _addHolder(recipient);
-            _addDividendHolder(recipient);
-           
-        }
-    }
-
+    
     /**
     * @dev Checks if the given address is a contract.
     */
@@ -694,142 +663,131 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     }
 
     /**
-     * @notice Set the SOLID token contract address
-     * @dev Only the owner can set the SOLID token address
-     * @param solidTokenAddress The address of the SOLID token contract
-     */
-    function setSolidTokenAddress(address solidTokenAddress) external onlyOwner {
-        solidToken = IERC20(solidTokenAddress);
-    }
-
-    /**
-     * @notice Set the maximum number of holders for dividend distribution
-     * @dev Only the owner can set the maximum number of holders
-     * @param maxHolders The maximum number of holders
-     */
-    function setMaxDistributionHolders(uint256 maxHolders) external onlyOwner {
-        require(maxHolders <= 160, "Max holders cannot exceed 160");
-        maxDistributionHolders = maxHolders;
-    }
-
-    /**
-     * @notice Distribute SOLID tokens to all dividend-eligible holders
-     * @dev Distributes SOLID tokens based on the holders' token holdings
-     */
-    
-    function distributeDividends() external payable onlyOwner {
-        uint256 totalSupply = totalSupply();
-        uint256 solidBalance = solidToken.balanceOf(msg.sender);
-        require(solidBalance > 0, "No SOLID tokens to distribute");
-
-        uint256 count = (dividendHolders.length <= maxDistributionHolders) ? dividendHolders.length : maxDistributionHolders;      
-
-        for (uint256 i = count; i > 0; i--) {
-            uint256 index = i - 1;
-            uint256 holderBalance = balanceOf(dividendHolders[index]);
-            if (holderBalance > 0) {
-                solidToken.transferFrom(msg.sender, dividendHolders[index], ((solidBalance * holderBalance) / totalSupply));
-            }
-            _removeDividendHolder(dividendHolders[index]);
-            lastDistributedIndex = i; // Update the last distributed index            
-        }
-    }
-
-    /**
-     * @notice Get the holder address at a specific index
-     * @param index The index of the holder in the holders array
-     * @return The address of the holder
-     */
-    function holderAt(uint256 index) public view returns (address) {
-        require(index < holders.length, "Index out of bounds");
-        return holders[index];
-    }
-
-  
-    /**
-     * @notice Add an address to the blacklist
-     * @dev Only the owner can add addresses to the blacklist
-     * @param account The address to add to the blacklist
-     */
-    function addToBlacklist(address account) external onlyOwner {
-        blacklist[account] = true;
-    }
-
-    /**
-     * @notice Remove an address from the blacklist
-     * @dev Only the owner can remove addresses from the blacklist
-     * @param account The address to remove from the blacklist
-     */
-    function removeFromBlacklist(address account) external onlyOwner {
-        blacklist[account] = false;
-    }
-
-    /**
-     * @notice Hook called before any token transfer
-     * @param from The address transferring the tokens
-     * @param to The address receiving the tokens
-     * @param amount The amount of tokens being transferred
+     * @dev Hook that is called before any transfer of tokens.
+     * Prevents transfers to DEX addresses and updates dividend data.
+     * @param from The address tokens are being transferred from.
+     * @param to The address tokens are being transferred to.
+     * @param amount The amount of tokens being transferred.
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+        require(!isDEX[to], "Transfers to DEX are not allowed");
+         require(!isContract(to), "Transfers to contracts are disabled");
+        _updateUnclaimedDividends(from);
+        _updateUnclaimedDividends(to);
+        _updateSnapshot();
+
+        if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
+            holders.push(to);
+            isHolder[to] = true;
+        }
+
+        if (balanceOf(from) == amount && isHolder[from]) {
+            isHolder[from] = false;
+        }
+
         super._beforeTokenTransfer(from, to, amount);
     }
 
     /**
-     * @notice Add a new holder to the holders list
-     * @param holder The address of the new holder
+     * @dev Updates the total supply snapshot.
      */
-    function _addHolder(address holder) internal {
-        if (!isHolder[holder]) {
-            holders.push(holder);
-            holderIndex[holder] = holders.length - 1;
-            isHolder[holder] = true;
+    function _updateSnapshot() internal {
+        totalSupplySnapshot = totalSupply();
+    }
+
+    /**
+     * @dev Distributes dividends to token holders.
+     * Only the owner can call this function.
+     * @param amount The amount of SOLID tokens to distribute.
+     */
+    function distributeDividends(uint256 amount) external onlyOwner {
+        require(solidToken.transfer(address(this), amount), "Transfer failed");
+        totalDividendsDistributed += amount;
+        emit DividendsDistributed(amount);
+    }
+
+    /**
+     * @dev Calculates the claimable dividend for a holder.
+     * @param holder The address of the holder.
+     * @return The amount of claimable dividends.
+     */
+    function calculateDividend(address holder) public view returns (uint256) {
+        if (totalSupplySnapshot == 0) {
+            return 0;
+        }
+        uint256 holderShare = balanceOf(holder);
+        uint256 totalDistributed = totalDividendsDistributed;
+        uint256 claimableDividends = (holderShare * totalDistributed) / totalSupplySnapshot;
+        uint256 alreadyClaimed = lastClaimedDividends[holder];
+        return claimableDividends - alreadyClaimed + unclaimedDividends[holder];
+    }
+
+    /**
+     * @dev Allows a holder to claim their dividends.
+     */
+    function claimDividends() external {
+        address holder = msg.sender;
+        uint256 claimable = calculateDividend(holder);
+        require(claimable > 0, "No dividends to claim");
+
+        lastClaimedDividends[holder] += claimable;
+        require(solidToken.transfer(holder, claimable), "Transfer failed");
+        unclaimedDividends[holder] = 0;
+
+        emit DividendsClaimed(holder, claimable);
+    }
+
+    /**
+     * @dev Allows the owner to withdraw unclaimed dividends.
+     * Only the owner can call this function.
+     */
+    function withdrawUnclaimedDividends() external onlyOwner {
+        uint256 unclaimed = solidToken.balanceOf(address(this)) - (totalDividendsDistributed - getTotalClaimedDividends());
+        require(unclaimed > 0, "No unclaimed dividends");
+
+        require(solidToken.transfer(owner(), unclaimed), "Transfer failed");
+    }
+
+    /**
+     * @dev Updates the unclaimed dividends for a holder.
+     * @param holder The address of the holder.
+     */
+    function _updateUnclaimedDividends(address holder) internal {
+        if (holder != address(0)) {
+            uint256 claimable = calculateDividend(holder);
+            unclaimedDividends[holder] = claimable;
+            lastClaimedDividends[holder] += claimable;
         }
     }
 
     /**
-     * @notice Add a new dividend-eligible holder to the dividendHolders list
-     * @param holder The address of the new dividend holder
+     * @dev Returns the total amount of claimed dividends.
+     * @return The total claimed dividends.
      */
-    function _addDividendHolder(address holder) internal {
-        if (!isDividendHolder[holder]) {
-            dividendHolders.push(holder);
-            dividendHolderIndex[holder] = dividendHolders.length - 1;
-            isDividendHolder[holder] = true;
-        }
-    }
-
-    /**
-     * @notice Remove a holder from the dividendHolders list
-     * @param holder The address of the holder to remove
-     */
-    
-    function _removeDividendHolder(address holder) internal {
-    if (isDividendHolder[holder]) {
-        uint256 index = dividendHolderIndex[holder];
-        uint256 lastIndex = dividendHolders.length - 1;
-        
-        if (index != lastIndex) {
-            address lastHolder = dividendHolders[lastIndex];
-            // Move the last holder to the position of the holder to be removed
-            dividendHolders[index] = lastHolder;
-            dividendHolderIndex[lastHolder] = index;
-        }
-
-        // Remove the last element
-        dividendHolders.pop();
-        delete dividendHolderIndex[holder];
-        isDividendHolder[holder] = false;
-        }
-    }
-    /**
-    * @notice Reset the dividendHolders array by re-adding all eligible holders
-    */
-    function _resetDividendHolders() public {
+    function getTotalClaimedDividends() public view returns (uint256) {
+        uint256 totalClaimed = 0;
         for (uint256 i = 0; i < holders.length; i++) {
-            address holder = holders[i];
-            if (balanceOf(holder) > 0) {
-                _addDividendHolder(holder);
-            }
+            totalClaimed += lastClaimedDividends[holders[i]];
         }
+        return totalClaimed;
     }
-}  
+
+    /**
+     * @dev Allows the owner to burn tokens.
+     * Only the owner can call this function.
+     * @param amount The amount of tokens to burn.
+     */
+    function ownerBurn(uint256 amount) external onlyOwner {
+        _burn(msg.sender, amount);
+        _updateSnapshot();
+        emit TokensBurned(msg.sender, amount);
+    }
+
+    /**
+     * @dev Allows a holder to view their claimable dividend amount.
+     * @return The amount of claimable dividends.
+     */
+    function viewDividend() external view returns (uint256) {
+        return calculateDividend(msg.sender);
+    }
+}
