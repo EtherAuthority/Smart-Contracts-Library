@@ -13,7 +13,6 @@
 
 pragma solidity ^0.8.24;
 
-import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
