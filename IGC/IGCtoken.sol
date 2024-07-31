@@ -780,19 +780,6 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     }
 
     /**
-     * @dev Returns the total amount of claimed dividends.
-     * @return The total claimed dividends.
-     */
-    function getTotalClaimedDividends() public view returns (uint256) {
-        uint256 totalClaimed = 0;
-        for (uint256 i = 0; i < holders.length; i++) {
-            totalClaimed += lastClaimedDividends[holders[i]];
-        }
-        return totalClaimed;
-    }
-
-   
-    /**
      * @dev Allows the owner to burn tokens.
      * Only the owner can call this function.
      * @param amount The amount of tokens to burn.
