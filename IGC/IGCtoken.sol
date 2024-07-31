@@ -13,7 +13,6 @@
 
 pragma solidity ^0.8.24;
 
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -33,7 +32,6 @@ abstract contract Context {
         return msg.data;
     }
 }
-
 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -600,6 +598,7 @@ abstract contract Ownable is Context {
 }
 
 interface ISOLIDToken {
+    function transferFrom(address sender,address recipient, uint256 amount) external returns (bool);
     function transfer(address recipient, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
 }
@@ -610,9 +609,14 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     mapping(address => uint256) public lastClaimedDividends;
     mapping(address => uint256) public unclaimedDividends;
     mapping(address => bool) public isHolder;
-    uint256 public totalSupplySnapshot;
+    uint256 private totalSupplySnapshot;
     mapping(address => bool) public isDEX;
+    mapping(address => mapping( uint256 => bool)) public claimStatus;
     address[] public holders;
+    // Mapping to store the index of each dividend holder in the dividendHolders array
+    mapping(address => uint256) private holdersIndex;
+    uint256 private NoOftimeDistribution;
+
 
     event DividendsDistributed(uint256 amount);
     event DividendsClaimed(address indexed holder, uint256 amount);
@@ -620,10 +624,10 @@ contract IndustrialGoldCoin is ERC20, Ownable {
 
     /**
      * @dev Sets the address of the SOLID token contract.
-     * @param _solidTokenAddress Address of the SOLID token contract.
+     * @param solidTokenAddress Address of the SOLID token contract.
      */
-    constructor(address _solidTokenAddress) ERC20("IGC Token", "IGC") {
-        solidToken = ISOLIDToken(_solidTokenAddress);
+    constructor(address solidTokenAddress) ERC20("IGC Token", "IGC") {
+        solidToken = ISOLIDToken(solidTokenAddress);
     }
 
     /**
@@ -633,11 +637,16 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @param amount The amount of tokens to mint.
      */
     function mint(address to, uint256 amount) external onlyOwner {
+        require(to != owner(), "Owner cannot be a holder");
         require(!isHolder[to], "Address is already a holder");
         _mint(to, amount);
-        _updateSnapshot();
-        holders.push(to);
-        isHolder[to] = true;
+       
+        if (balanceOf(to) > 0 && !isHolder[to]) {
+            holders.push(to);
+            isHolder[to] = true;
+        }
+         _updateSnapshot();
+        claimStatus[to][NoOftimeDistribution]=false;
     }
 
     /**
@@ -673,17 +682,21 @@ contract IndustrialGoldCoin is ERC20, Ownable {
          require(!isContract(to), "Transfers to contracts are disabled");
         _updateUnclaimedDividends(from);
         _updateUnclaimedDividends(to);
-        _updateSnapshot();
+       
 
         if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
+            holdersIndex[to] = holders.length;
+            claimStatus[to][NoOftimeDistribution]=false;
         }
 
-        if (balanceOf(from) == amount && isHolder[from]) {
+        if (balanceOf(from) == 0 && isHolder[from]) {           
+            _removeDividendHolder(from);
             isHolder[from] = false;
+            claimStatus[from][NoOftimeDistribution]=false;
         }
-
+         _updateSnapshot();
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -696,13 +709,17 @@ contract IndustrialGoldCoin is ERC20, Ownable {
 
     /**
      * @dev Distributes dividends to token holders.
-     * Only the owner can call this function.
-     * @param amount The amount of SOLID tokens to distribute.
+     * Only the owner can call this function.     * 
      */
-    function distributeDividends(uint256 amount) external onlyOwner {
-        require(solidToken.transfer(address(this), amount), "Transfer failed");
-        totalDividendsDistributed += amount;
-        emit DividendsDistributed(amount);
+    function distributeDividends() external onlyOwner {
+        uint256 solidBalance = solidToken.balanceOf(msg.sender);
+        uint256 solidIGCBalance = solidToken.balanceOf(address(this));
+        require(solidBalance > 0, "No SOLID tokens to distribute");
+        require(solidToken.transferFrom(msg.sender,address(this), solidBalance), "Transfer failed");
+        totalDividendsDistributed = solidBalance + solidIGCBalance;
+        NoOftimeDistribution++;
+        emit DividendsDistributed(solidBalance);
+        
     }
 
     /**
@@ -713,27 +730,28 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     function calculateDividend(address holder) public view returns (uint256) {
         if (totalSupplySnapshot == 0) {
             return 0;
-        }
-        uint256 holderShare = balanceOf(holder);
-        uint256 totalDistributed = totalDividendsDistributed;
-        uint256 claimableDividends = (holderShare * totalDistributed) / totalSupplySnapshot;
-        uint256 alreadyClaimed = lastClaimedDividends[holder];
-        return claimableDividends - alreadyClaimed + unclaimedDividends[holder];
+        }       
+        uint256 holderShare = balanceOf(holder);        
+        uint256 totalDistributed = totalDividendsDistributed;        
+        uint256 claimableDividends = (holderShare * totalDistributed) / totalSupplySnapshot;       
+         
+       if(claimStatus[holder][NoOftimeDistribution]==false) {return claimableDividends;} else {return 0; }
+       
     }
 
     /**
      * @dev Allows a holder to claim their dividends.
      */
-    function claimDividends() external {
-        address holder = msg.sender;
-        uint256 claimable = calculateDividend(holder);
-        require(claimable > 0, "No dividends to claim");
+    function claim() external {        
+        require(isHolder[msg.sender], "Only holders can claim for dividend!");        
+        uint256 claimable = calculateDividend(msg.sender);
+        require(claimable > 0, "No dividends to claim!");
+        claimStatus[msg.sender][NoOftimeDistribution]=true;
+        lastClaimedDividends[msg.sender] += claimable;        
+        require(solidToken.transfer(msg.sender, claimable), "Transfer failed!");
+        unclaimedDividends[msg.sender] = 0;
 
-        lastClaimedDividends[holder] += claimable;
-        require(solidToken.transfer(holder, claimable), "Transfer failed");
-        unclaimedDividends[holder] = 0;
-
-        emit DividendsClaimed(holder, claimable);
+        emit DividendsClaimed(msg.sender, claimable);
     }
 
     /**
@@ -741,10 +759,12 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * Only the owner can call this function.
      */
     function withdrawUnclaimedDividends() external onlyOwner {
-        uint256 unclaimed = solidToken.balanceOf(address(this)) - (totalDividendsDistributed - getTotalClaimedDividends());
+        uint256 unclaimed = solidToken.balanceOf(address(this));
         require(unclaimed > 0, "No unclaimed dividends");
 
         require(solidToken.transfer(owner(), unclaimed), "Transfer failed");
+        totalDividendsDistributed=0;
+        
     }
 
     /**
@@ -755,7 +775,7 @@ contract IndustrialGoldCoin is ERC20, Ownable {
         if (holder != address(0)) {
             uint256 claimable = calculateDividend(holder);
             unclaimedDividends[holder] = claimable;
-            lastClaimedDividends[holder] += claimable;
+            lastClaimedDividends[holder] += claimable;           
         }
     }
 
@@ -771,6 +791,7 @@ contract IndustrialGoldCoin is ERC20, Ownable {
         return totalClaimed;
     }
 
+   
     /**
      * @dev Allows the owner to burn tokens.
      * Only the owner can call this function.
@@ -786,7 +807,33 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @dev Allows a holder to view their claimable dividend amount.
      * @return The amount of claimable dividends.
      */
-    function viewDividend() external view returns (uint256) {
-        return calculateDividend(msg.sender);
+    function viewDividend() external view returns (uint256) {       
+        if(claimStatus[msg.sender][NoOftimeDistribution]==false)
+            return calculateDividend(msg.sender);
+        else
+            return 0;
+    }
+    /**
+     * @notice Remove a holder from the dividendHolders list
+     * @param holder The address of the holder to remove
+     */
+    
+    function _removeDividendHolder(address holder) internal {
+    if (isHolder[holder]) {
+        uint256 index = holdersIndex[holder];
+        uint256 lastIndex = holders.length - 1;
+        
+        if (index != lastIndex) {
+            address lastHolder = holders[lastIndex];
+            // Move the last holder to the position of the holder to be removed
+            holders[index] = lastHolder;
+            holdersIndex[lastHolder] = index;
+        }
+
+        // Remove the last element
+        holders.pop();
+        delete holdersIndex[holder];
+        isHolder[holder] = false;
+        }
     }
 }
