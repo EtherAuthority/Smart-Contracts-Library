@@ -727,7 +727,7 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @param holder The address of the holder.
      * @return The amount of claimable dividends.
      */
-    function calculateDividend(address holder) public view returns (uint256) {
+    function calculateDividend(address holder) private returns (uint256) {
         if (totalSupplySnapshot == 0) {
             return 0;
         }       
