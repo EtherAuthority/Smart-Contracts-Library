@@ -31,5 +31,5 @@ The Industrial Gold Coin (IGC) is a custom ERC20 token with additional features 
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/EtherAuthority/Smart-Contracts-Library.git
+   cd IGC
