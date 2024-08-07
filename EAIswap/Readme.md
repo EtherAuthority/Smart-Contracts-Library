@@ -69,7 +69,7 @@ This contract is licensed under the MIT License. See the LICENSE file for more d
 
 - **UpdateTreasuryWallet** : [Trasaction](https://testnet.bscscan.com/tx/0x163a3e7b3f49b79ab45058cf049da8234d1938839d81130fd7c41a7456afb311)
 
-- **SwapAndSend function call after update Swap Percentage, Operation & Treasury wallet*** : [Trasaction](https://testnet.bscscan.com/tx/0xf1567b762da9d101b7c6d6584220947f381a81a4504d2f0b226b001628c02e3a)
+- **SwapAndSend function call after update Swap Percentage, Operation & Treasury wallet** : [Trasaction](https://testnet.bscscan.com/tx/0xf1567b762da9d101b7c6d6584220947f381a81a4504d2f0b226b001628c02e3a)
 
 
 
