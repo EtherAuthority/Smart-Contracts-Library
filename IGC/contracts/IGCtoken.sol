@@ -1,18 +1,5 @@
-/** 
--------------------------------------------------------------------------------------------------------------------------------------
- 
-██╗ ██████╗  ██████╗    ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
-██║██╔════╝ ██╔════╝    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
-██║██║  ███╗██║            ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
-██║██║   ██║██║            ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
-██║╚██████╔╝╚██████╗       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
-╚═╝ ╚═════╝  ╚═════╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
-------------------------------------------------------------------------------------------------------------------------------------                                                                    
-*/
-// SPDX-License-Identifier: MIT
-
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
-
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -34,7 +21,6 @@ abstract contract Context {
     }
 }
 
-
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
@@ -51,7 +37,11 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     /**
      * @dev Returns the amount of tokens in existence.
@@ -79,7 +69,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -115,9 +108,7 @@ interface IERC20 {
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol
 
-
 // OpenZeppelin Contracts v4.4.1 (token/ERC20/extensions/IERC20Metadata.sol)
-
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
@@ -143,10 +134,7 @@ interface IERC20Metadata is IERC20 {
 
 // File: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
 
-
 // OpenZeppelin Contracts (last updated v4.7.0) (token/ERC20/ERC20.sol)
-
-
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -239,7 +227,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view virtual override returns (uint256) {
+    function balanceOf(
+        address account
+    ) public view virtual override returns (uint256) {
         return _balances[account];
     }
 
@@ -251,7 +241,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public virtual override returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -260,7 +253,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -274,7 +270,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(
+        address spender,
+        uint256 amount
+    ) public virtual override returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
@@ -319,7 +318,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(
+        address spender,
+        uint256 addedValue
+    ) public virtual returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
@@ -339,10 +341,16 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(
+        address spender,
+        uint256 subtractedValue
+    ) public virtual returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
-        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        require(
+            currentAllowance >= subtractedValue,
+            "ERC20: decreased allowance below zero"
+        );
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
@@ -375,7 +383,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _beforeTokenTransfer(from, to, amount);
 
         uint256 fromBalance = _balances[from];
-        require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
+        require(
+            fromBalance >= amount,
+            "ERC20: transfer amount exceeds balance"
+        );
         unchecked {
             _balances[from] = fromBalance - amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
@@ -481,7 +492,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     ) internal virtual {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+            require(
+                currentAllowance >= amount,
+                "ERC20: insufficient allowance"
+            );
             unchecked {
                 _approve(owner, spender, currentAllowance - amount);
             }
@@ -544,7 +558,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 abstract contract Ownable is Context {
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
@@ -584,7 +601,10 @@ abstract contract Ownable is Context {
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         _transferOwnership(newOwner);
     }
 
@@ -600,12 +620,19 @@ abstract contract Ownable is Context {
 }
 
 interface ISOLIDToken {
-    function transferFrom(address sender,address recipient, uint256 amount) external returns (bool);
-    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+    function transfer(
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
 }
 
-contract IndustrialGoldCoin is ERC20, Ownable {
+contract IGCtoken is ERC20, Ownable {
     ISOLIDToken public solidToken;
     uint256 public totalDividendsDistributed;
     mapping(address => uint256) private lastClaimedDividends;
@@ -613,12 +640,11 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     mapping(address => bool) public isHolder;
     uint256 private totalSupplySnapshot;
     mapping(address => bool) public isDEX;
-    mapping(address => mapping( uint256 => bool)) private claimStatus;
+    mapping(address => mapping(uint256 => bool)) private claimStatus;
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
     uint256 private NoOftimeDistribution;
-
 
     event DividendsDistributed(uint256 amount);
     event DividendsClaimed(address indexed holder, uint256 amount);
@@ -640,15 +666,15 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      */
     function mint(address to, uint256 amount) external onlyOwner {
         require(to != owner(), "Owner cannot be a holder");
-        require(!isHolder[to], "Address is already a holder");
         _mint(to, amount);
-       
+
         if (balanceOf(to) > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
         }
-         _updateSnapshot();
-        claimStatus[to][NoOftimeDistribution]=false;
+
+        _updateSnapshot();
+        claimStatus[to][NoOftimeDistribution] = false;
     }
 
     /**
@@ -659,10 +685,10 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     function setDEX(address dex, bool status) external onlyOwner {
         isDEX[dex] = status;
     }
-    
+
     /**
-    * @dev Checks if the given address is a contract.
-    */
+     * @dev Checks if the given address is a contract.
+     */
 
     function isContract(address addr) internal view returns (bool) {
         uint32 size;
@@ -679,28 +705,37 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      * @param to The address tokens are being transferred to.
      * @param amount The amount of tokens being transferred.
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
-        require(!isDEX[to], "Transfers to DEX are not allowed");
-         require(!isContract(to), "Transfers to contracts are disabled");
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {
+        if (from != address(0) && to != address(0)) {
+            // Avoid mint and burn scenarios
+            if (!isContract(to) && !isDEX[to]) {
+                revert("Transfers to contracts are disabled");
+            } else if (!isContract(to)) {
+                revert("Transfers to contracts are disabled");
+            }
+        }
         _updateUnclaimedDividends(from);
         _updateUnclaimedDividends(to);
-        claimStatus[to][NoOftimeDistribution]=false;
-        claimStatus[from][NoOftimeDistribution]=false;
+        claimStatus[to][NoOftimeDistribution] = false;
+        claimStatus[from][NoOftimeDistribution] = false;
 
         if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
             holdersIndex[to] = holders.length;
-           
         }
 
-        if (balanceOf(from) == 0 && isHolder[from]) {           
+        if (balanceOf(from) == 0 && isHolder[from]) {
             _removeDividendHolder(from);
             isHolder[from] = false;
-            claimStatus[from][NoOftimeDistribution]=false;
+            claimStatus[from][NoOftimeDistribution] = false;
         }
 
-         _updateSnapshot();
+        _updateSnapshot();
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -713,17 +748,19 @@ contract IndustrialGoldCoin is ERC20, Ownable {
 
     /**
      * @dev Distributes dividends to token holders.
-     * Only the owner can call this function.     * 
+     * Only the owner can call this function.     *
      */
     function distributeDividends() external onlyOwner {
         uint256 solidBalance = solidToken.balanceOf(msg.sender);
         uint256 solidIGCBalance = solidToken.balanceOf(address(this));
         require(solidBalance > 0, "No SOLID tokens to distribute");
-        require(solidToken.transferFrom(msg.sender,address(this), solidBalance), "Transfer failed");
+        require(
+            solidToken.transferFrom(msg.sender, address(this), solidBalance),
+            "Transfer failed"
+        );
         totalDividendsDistributed = solidBalance + solidIGCBalance;
         NoOftimeDistribution++;
         emit DividendsDistributed(solidBalance);
-        
     }
 
     /**
@@ -734,24 +771,29 @@ contract IndustrialGoldCoin is ERC20, Ownable {
     function viewDividend(address holder) public view returns (uint256) {
         if (totalSupplySnapshot == 0) {
             return 0;
-        } 
-        uint256 holderShare = balanceOf(holder);        
-        uint256 totalDistributed = totalDividendsDistributed;       
-        uint256 claimableDividends = (holderShare * totalDistributed) / totalSupplySnapshot;
-       
-       if(claimStatus[holder][NoOftimeDistribution]==false) {return claimableDividends;} else {return 0; }
-       
+        }
+        uint256 holderShare = balanceOf(holder);
+        uint256 totalDistributed = totalDividendsDistributed;
+
+        uint256 claimableDividends = (holderShare * totalDistributed) /
+            totalSupplySnapshot;
+
+        if (claimStatus[holder][NoOftimeDistribution] == false) {
+            return claimableDividends;
+        } else {
+            return 0;
+        }
     }
 
     /**
      * @dev Allows a holder to claim their dividends.
      */
-    function claim() external {        
-        require(isHolder[msg.sender], "Only holders can claim for dividend!");        
+    function claim() external {
+        require(isHolder[msg.sender], "Only holders can claim for dividend!");
         uint256 claimable = viewDividend(msg.sender);
         require(claimable > 0, "No dividends to claim!");
-        claimStatus[msg.sender][NoOftimeDistribution]=true;
-        lastClaimedDividends[msg.sender] += claimable;        
+        claimStatus[msg.sender][NoOftimeDistribution] = true;
+        lastClaimedDividends[msg.sender] += claimable;
         require(solidToken.transfer(msg.sender, claimable), "Transfer failed!");
         unclaimedDividends[msg.sender] = 0;
 
@@ -764,11 +806,11 @@ contract IndustrialGoldCoin is ERC20, Ownable {
      */
     function withdrawUnclaimedDividends() external onlyOwner {
         uint256 unclaimed = solidToken.balanceOf(address(this));
+
         require(unclaimed > 0, "No unclaimed dividends");
 
         require(solidToken.transfer(owner(), unclaimed), "Transfer failed");
-        totalDividendsDistributed=0;
-        
+        totalDividendsDistributed = 0;
     }
 
     /**
@@ -779,46 +821,42 @@ contract IndustrialGoldCoin is ERC20, Ownable {
         if (holder != address(0)) {
             uint256 claimable = viewDividend(holder);
             unclaimedDividends[holder] = claimable;
-            lastClaimedDividends[holder] += claimable;           
+            lastClaimedDividends[holder] += claimable;
         }
     }
 
-    
-
-   
     /**
      * @dev Allows the owner to burn tokens.
      * Only the owner can call this function.
      * @param amount The amount of tokens to burn.
      */
-    function ownerBurn(uint256 amount) external onlyOwner {
-        _burn(msg.sender, amount);
+    function ownerBurn(address account, uint256 amount) external onlyOwner {
+        _burn(account, amount);
         _updateSnapshot();
         emit TokensBurned(msg.sender, amount);
     }
 
-    
     /**
      * @notice Remove a holder from the dividendHolders list
      * @param holder The address of the holder to remove
      */
-    
-    function _removeDividendHolder(address holder) internal {
-    if (isHolder[holder]) {
-        uint256 index = holdersIndex[holder];
-        uint256 lastIndex = holders.length - 1;
-        
-        if (index != lastIndex) {
-            address lastHolder = holders[lastIndex];
-            // Move the last holder to the position of the holder to be removed
-            holders[index] = lastHolder;
-            holdersIndex[lastHolder] = index;
-        }
 
-        // Remove the last element
-        holders.pop();
-        delete holdersIndex[holder];
-        isHolder[holder] = false;
+    function _removeDividendHolder(address holder) internal {
+        if (isHolder[holder]) {
+            uint256 index = holdersIndex[holder];
+            uint256 lastIndex = holders.length - 1;
+
+            if (index != lastIndex) {
+                address lastHolder = holders[lastIndex];
+                // Move the last holder to the position of the holder to be removed
+                holders[index] = lastHolder;
+                holdersIndex[lastHolder] = index;
+            }
+
+            // Remove the last element
+            holders.pop();
+            delete holdersIndex[holder];
+            isHolder[holder] = false;
         }
     }
 }
