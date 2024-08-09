@@ -690,7 +690,7 @@ contract IGCtoken is ERC20, Ownable {
      * @dev Checks if the given address is a contract.
      */
 
-    function isContract(address addr) internal view returns (bool) {
+    function isContract(address addr) public view returns (bool) {
         uint32 size;
         assembly {
             size := extcodesize(addr)
@@ -712,12 +712,14 @@ contract IGCtoken is ERC20, Ownable {
     ) internal override {
         if (from != address(0) && to != address(0)) {
             // Avoid mint and burn scenarios
-            if (!isContract(to) && !isDEX[to]) {
+            if (isContract(to) && isDEX[to]) {
                 revert("Transfers to contracts are disabled");
-            } else if (!isContract(to)) {
+            } else if (isContract(to)) {
                 revert("Transfers to contracts are disabled");
             }
         }
+
+        require(amount > 0, "Transfer amount must be greater than 0");
         _updateUnclaimedDividends(from);
         _updateUnclaimedDividends(to);
         claimStatus[to][NoOftimeDistribution] = false;
