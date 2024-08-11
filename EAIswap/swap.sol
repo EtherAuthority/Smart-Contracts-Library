@@ -439,7 +439,7 @@ contract USDCtoEAISwap is Ownable{
      * @param usdcAmount Amount of USDC to be swapped.
      */
     function swapAndSend(uint256 usdcAmount) external onlyNonExcluded {
-        
+        require(usdcAmount > 0, "No USDC to swap");
         uint256 swapAmount = (usdcAmount * swapPercentage) / 100;
         uint256 sendAmount = usdcAmount - swapAmount;
 
