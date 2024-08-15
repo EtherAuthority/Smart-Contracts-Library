@@ -630,22 +630,31 @@ interface ISOLIDToken {
         uint256 amount
     ) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
+    function owner() external view returns (address);
 }
 
 contract IGCtoken is ERC20, Ownable {
-    ISOLIDToken public solidToken;
-    uint256 public totalDividendsDistributed;
-    mapping(address => uint256) private lastClaimedDividends;
-    mapping(address => uint256) private unclaimedDividends;
-    mapping(address => bool) public isHolder;
-    uint256 private totalSupplySnapshot;
+    ISOLIDToken public solidToken;    
+    mapping(address => bool) public isHolder;    
     mapping(address => bool) public isDEX;
-    mapping(address => mapping(uint256 => bool)) private claimStatus;
+    mapping(uint256 => uint256) public distributionTimeHolder;
+    struct _holdersDetails{
+        uint256 balance;
+        uint256 timestamp;
+        uint256 dividendTimestamp;
+        bool isClaim;
+    }
+    struct _dividendDetails{
+        uint256 amount;
+        uint256 timestamp; 
+    }
+    mapping(address => _holdersDetails[]) public holdersDetails;
+    mapping(address => _dividendDetails[]) public dividendDetails;
+    mapping(address=>uint256) public checkHolder;
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
-    uint256 private NoOftimeDistribution;
-
+    //events
     event DividendsDistributed(uint256 amount);
     event DividendsClaimed(address indexed holder, uint256 amount);
     event TokensBurned(address indexed holder, uint256 amount);
@@ -657,6 +666,8 @@ contract IGCtoken is ERC20, Ownable {
     constructor(address solidTokenAddress) ERC20("IGC Token", "IGC") {
         solidToken = ISOLIDToken(solidTokenAddress);
     }
+
+   
 
     /**
      * @dev Mints new tokens to a specified address.
@@ -673,8 +684,8 @@ contract IGCtoken is ERC20, Ownable {
             isHolder[to] = true;
         }
 
-        _updateSnapshot();
-        claimStatus[to][NoOftimeDistribution] = false;
+        
+       
     }
 
     /**
@@ -710,6 +721,35 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
+        
+        for (uint256 i=0;i<dividendDetails[address(this)].length;i++) 
+        {
+            if(from!=address(0) && holdersDetails[from].length>i)
+            {
+                if(dividendDetails[address(this)][i].timestamp!=holdersDetails[from][i].dividendTimestamp && holdersDetails[from][i].dividendTimestamp==0 )
+                {
+                    setHolderData(from,i);
+                }
+            }
+            else 
+            {
+                setHolderData(from,i);
+            }
+            
+            if(to!=address(0) && holdersDetails[to].length>i)
+            {
+                if(dividendDetails[address(this)][i].timestamp!=holdersDetails[to][i].dividendTimestamp && holdersDetails[to][i].dividendTimestamp==0 )
+                {
+                    setHolderData(to,i);
+                }
+            }
+            else 
+            {
+                setHolderData(to,i);
+            }
+        }
+        
+
         if (from != address(0) && to != address(0)) {
             // Avoid mint and burn scenarios
             if (isContract(to) && isDEX[to]) {
@@ -719,12 +759,8 @@ contract IGCtoken is ERC20, Ownable {
             }
         }
 
-        require(amount > 0, "Transfer amount must be greater than 0");
-        _updateUnclaimedDividends(from);
-        _updateUnclaimedDividends(to);
-        claimStatus[to][NoOftimeDistribution] = false;
-        claimStatus[from][NoOftimeDistribution] = false;
-
+        require(amount > 0, "Transfer amount must be greater than 0");       
+       
         if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
@@ -733,35 +769,45 @@ contract IGCtoken is ERC20, Ownable {
 
         if (balanceOf(from) == 0 && isHolder[from]) {
             _removeDividendHolder(from);
-            isHolder[from] = false;
-            claimStatus[from][NoOftimeDistribution] = false;
-        }
-
-        _updateSnapshot();
+            isHolder[from] = false;           
+        }       
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    /**
-     * @dev Updates the total supply snapshot.
-     */
-    function _updateSnapshot() internal {
-        totalSupplySnapshot = totalSupply();
-    }
+    function setHolderData(address _add,uint256 index) internal returns(bool)
+    {
+            _holdersDetails memory newDetailsTo = _holdersDetails({
+            balance: balanceOf(_add),
+            timestamp: block.timestamp,
+            dividendTimestamp: dividendDetails[address(this)][index].timestamp,
+            isClaim: false
+            });
+        
+            holdersDetails[_add].push(newDetailsTo);
 
+            return true;
+    }
     /**
      * @dev Distributes dividends to token holders.
      * Only the owner can call this function.     *
      */
-    function distributeDividends() external onlyOwner {
-        uint256 solidBalance = solidToken.balanceOf(msg.sender);
-        uint256 solidIGCBalance = solidToken.balanceOf(address(this));
-        require(solidBalance > 0, "No SOLID tokens to distribute");
+    function distributeDividends() external onlyOwner {        
+        uint256 solidBalance = solidToken.balanceOf(solidToken.owner());        
+        require( holders.length > 0 ,"There are no holders for dividends ");
+        require( solidBalance > 0, "No SOLID tokens to distribute" );
         require(
-            solidToken.transferFrom(msg.sender, address(this), solidBalance),
+            solidToken.transferFrom(solidToken.owner(), address(this), solidBalance),
             "Transfer failed"
-        );
-        totalDividendsDistributed = solidBalance + solidIGCBalance;
-        NoOftimeDistribution++;
+        ); 
+        
+         _dividendDetails memory dividend = _dividendDetails({
+             amount: solidBalance,
+             timestamp: block.timestamp            
+        });
+    
+        dividendDetails[address(this)].push(dividend);
+        distributionTimeHolder[dividendDetails[address(this)].length]=holders.length;     
+
         emit DividendsDistributed(solidBalance);
     }
 
@@ -771,33 +817,71 @@ contract IGCtoken is ERC20, Ownable {
      * @return The amount of claimable dividends.
      */
     function viewDividend(address holder) public view returns (uint256) {
-        if (totalSupplySnapshot == 0) {
+        if (totalSupply() == 0) {
             return 0;
         }
-        uint256 holderShare = balanceOf(holder);
-        uint256 totalDistributed = totalDividendsDistributed;
 
-        uint256 claimableDividends = (holderShare * totalDistributed) /
-            totalSupplySnapshot;
+        uint256 claimableDividends=0;
+        uint256 holderShare=0;
+        uint256 totalDistributed=0;
+        
 
-        if (claimStatus[holder][NoOftimeDistribution] == false) {
-            return claimableDividends;
-        } else {
-            return 0;
+        for(uint256 i=0;i<dividendDetails[address(this)].length;i++)
+        {
+            if(holdersDetails[holder].length>i)
+            {
+                if(holdersDetails[holder][i].isClaim==false)
+                {
+                
+                    holderShare = holdersDetails[holder][i].balance;
+                    totalDistributed = dividendDetails[address(this)][i].amount;
+                    claimableDividends += (holderShare * totalDistributed) / totalSupply();
+                }
+            }
+            else 
+            {
+                holderShare = balanceOf(holder);
+                totalDistributed = dividendDetails[address(this)][i].amount;
+                claimableDividends += (holderShare * totalDistributed) / totalSupply();
+            }
+             
         }
+
+
+      
+           return claimableDividends;
+       
     }
 
     /**
      * @dev Allows a holder to claim their dividends.
      */
     function claim() external {
+        for (uint256 i=0;i<dividendDetails[address(this)].length;i++) 
+        {
+            if(msg.sender!=address(0) && holdersDetails[msg.sender].length>i)
+            {
+                if(dividendDetails[address(this)][i].timestamp!=holdersDetails[msg.sender][i].dividendTimestamp && holdersDetails[msg.sender][i].dividendTimestamp==0 )
+                {
+                    setHolderData(msg.sender,i);
+                }
+            }
+            else 
+            {
+                setHolderData(msg.sender,i);
+            }
+        }
         require(isHolder[msg.sender], "Only holders can claim for dividend!");
+        require(holdersIndex[msg.sender] <= distributionTimeHolder[dividendDetails[address(this)].length],"You were not a holder at the time of distribution!");
         uint256 claimable = viewDividend(msg.sender);
         require(claimable > 0, "No dividends to claim!");
-        claimStatus[msg.sender][NoOftimeDistribution] = true;
-        lastClaimedDividends[msg.sender] += claimable;
-        require(solidToken.transfer(msg.sender, claimable), "Transfer failed!");
-        unclaimedDividends[msg.sender] = 0;
+        require(solidToken.transfer(msg.sender, claimable), "Transfer failed!"); 
+
+        for(uint256 i=0;i<dividendDetails[address(this)].length;i++)
+        {
+            holdersDetails[msg.sender][i].isClaim=true;   
+        }
+          
 
         emit DividendsClaimed(msg.sender, claimable);
     }
@@ -808,25 +892,12 @@ contract IGCtoken is ERC20, Ownable {
      */
     function withdrawUnclaimedDividends() external onlyOwner {
         uint256 unclaimed = solidToken.balanceOf(address(this));
-
         require(unclaimed > 0, "No unclaimed dividends");
-
-        require(solidToken.transfer(owner(), unclaimed), "Transfer failed");
-        totalDividendsDistributed = 0;
+        require(solidToken.transfer(owner(), unclaimed), "Transfer failed");      
+       
     }
 
-    /**
-     * @dev Updates the unclaimed dividends for a holder.
-     * @param holder The address of the holder.
-     */
-    function _updateUnclaimedDividends(address holder) internal {
-        if (holder != address(0)) {
-            uint256 claimable = viewDividend(holder);
-            unclaimedDividends[holder] = claimable;
-            lastClaimedDividends[holder] += claimable;
-        }
-    }
-
+   
     /**
      * @dev Allows the owner to burn tokens.
      * Only the owner can call this function.
@@ -834,7 +905,6 @@ contract IGCtoken is ERC20, Ownable {
      */
     function ownerBurn(address account, uint256 amount) external onlyOwner {
         _burn(account, amount);
-        _updateSnapshot();
         emit TokensBurned(msg.sender, amount);
     }
 
@@ -842,7 +912,6 @@ contract IGCtoken is ERC20, Ownable {
      * @notice Remove a holder from the dividendHolders list
      * @param holder The address of the holder to remove
      */
-
     function _removeDividendHolder(address holder) internal {
         if (isHolder[holder]) {
             uint256 index = holdersIndex[holder];
