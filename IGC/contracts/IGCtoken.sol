@@ -726,7 +726,7 @@ contract IGCtoken is ERC20, Ownable {
                 ) {
                     setHolderData(from, i);
                 }
-            } else {
+            } else if (from != address(0)) {
                 setHolderData(from, i);
             }
 
@@ -738,7 +738,7 @@ contract IGCtoken is ERC20, Ownable {
                 ) {
                     setHolderData(to, i);
                 }
-            } else {
+            } else  if (from != address(0)){
                 setHolderData(to, i);
             }
         }
