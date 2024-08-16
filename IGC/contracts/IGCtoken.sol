@@ -738,7 +738,7 @@ contract IGCtoken is ERC20, Ownable {
                 ) {
                     setHolderData(to, i);
                 }
-            } else  if (from != address(0)){
+            } else  if (to != address(0)){
                 setHolderData(to, i);
             }
         }
