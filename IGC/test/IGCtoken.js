@@ -20,7 +20,7 @@ describe("IndustrialGoldCoin", function () {
     // Deploy the IndustrialGoldCoin contract
     IGC = await ethers.getContractFactory("IGCtoken");
     igc = await IGC.deploy(solid.target);
-   
+
   });
 
   it("Should set the right owner", async function () {
@@ -128,4 +128,36 @@ describe("IndustrialGoldCoin", function () {
     await expect(igc.mint(addr1.address, 0)).to.be.revertedWith("Amount must be greater than 0");
     await expect(igc.transfer(addr3.address, 0)).to.be.revertedWith("Amount must be greater than 0");
   });
+
+  it("Holders lose their dividend if owner calls ownerBurn and removeDividendEntry function", async function () {
+    // Step 1: Initial setup
+    await igc.mint(addr1.address, 500); // Mint tokens to addr1
+    await igc.mint(addr3.address, 500); // Mint tokens to addr3
+    await solid.mintToken(owner.address, 526315789473684210527843n); // Mint SOLID tokens to the owner for distribution   
+    // Approve the SOLID tokens for the IGC contract to distribute
+    await solid.approve(igc.target, 526315789473684210527843n);
+
+    // Step 2: Distribute dividends based on the initial holders
+    await igc.distributeDividends();
+
+    // Verify that addr1 and addr3 have claimable dividends
+    const dividendsBeforeBurnAddr1 = await igc.viewDividend(addr1.address);
+    const dividendsBeforeBurnAddr3 = await igc.viewDividend(addr3.address);
+    expect(dividendsBeforeBurnAddr1).to.be.above(0);
+    expect(dividendsBeforeBurnAddr3).to.be.above(0);
+
+    // The owner burns addr1's tokens
+    await igc.ownerBurn(addr1.address, 1900n);
+
+    // The owner removes addr1's dividend entry
+    await igc.removeNumberOfDividend(0);  // Assuming addr1 is the first entry in the dividend details array
+
+    // Verify that addr1 no longer has any claimable dividends
+    const dividendsAfterBurnAddr1 = await igc.viewDividend(addr1.address);
+
+    expect(dividendsAfterBurnAddr1).to.equal(294736842105263157895592n);
+
+
+  });
+
 });
