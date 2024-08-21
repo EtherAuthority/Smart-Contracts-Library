@@ -1,3 +1,6 @@
+/**
+ *Submitted for verification at testnet.bscscan.com on 2024-07-05
+*/
 
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
@@ -123,6 +126,7 @@ abstract contract Ownable is Context {
 
 interface IImplementation {
     function tokenToSwap() external view returns (address);
+    function totalGeneratedTax() external view returns(uint256);
 }
 
 interface IUniswapV2Router01 {
@@ -266,11 +270,12 @@ contract Implementation is Ownable {
     address public tokenToSwap;
     uint256 public constant FEEPRECENT = 1;
     address public immutable factory;
+    uint256 public totalGeneratedTax;
 
     //event
     event UpdateTokenToSwap(address updatedToken);
     event UpdateFeeWallet(address feeWallet);
-    event TokensSwapped(uint256 ethAmount, uint256 tokenAmount);
+    event TokensSwapped(uint256 ethAmount, uint256 tokenAmount,address tokenReciver,address mainOwnerFeeWallet,uint256 feeToMainOwner,address feeWallet,uint256 feeToFeeWallet,uint256 totalGeneratedFee);
 
     /**
      * @dev Constructor to initialize the contract with the provided addresses.
@@ -283,7 +288,7 @@ contract Implementation is Ownable {
      */
     constructor(address _feeWallet, address _tokenToSwap, address _owner, address _factory) Ownable(_owner) {
         feeWallet = _feeWallet;
-        uniswapRouter = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);  //change router address according to your network
+        uniswapRouter = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);  //change router address according to your network
         tokenToSwap = _tokenToSwap;
         factory = _factory;
     }
@@ -301,18 +306,11 @@ contract Implementation is Ownable {
      * @dev Internal function to swap ETH for tokens on Uniswap and distribute fees.
      * @param amount The amount of ETH to swap.
      * This function calculates the fee, performs the swap, and distributes the fees.
+     * The event 'TokensSwapped' is emitted with details of the swap and fee distribution.
      */
     function swapAndSend(uint256 amount) internal {
         uint256 fee = (amount * FEEPRECENT) / 100;
         uint256 swapAmount = amount - fee;
-
-        uint256 feeToMainOwner = fee / 2;
-        uint256 feeToFeeWallet = fee - feeToMainOwner;
-
-        address mainOwnerFeeWallet = getMainOwnerFeeWallet();
-
-        payable(mainOwnerFeeWallet).transfer(feeToMainOwner);
-        payable(feeWallet).transfer(feeToFeeWallet);
 
         // Perform the token swap on Uniswap
         address[] memory path = new address[](2);
@@ -326,7 +324,13 @@ contract Implementation is Ownable {
             block.timestamp
         );
         uint256 tokensReceived = amounts[1];
-        emit TokensSwapped(amount, tokensReceived);
+        totalGeneratedTax += fee;
+        uint256 feeToMainOwner = fee / 2;
+        uint256 feeToImplementationFeeWallet = fee - feeToMainOwner;
+        address mainOwnerFeeWallet = getMainOwnerFeeWallet();
+        payable(mainOwnerFeeWallet).transfer(feeToMainOwner);
+        payable(feeWallet).transfer(feeToImplementationFeeWallet);
+        emit TokensSwapped(amount, tokensReceived,msg.sender,mainOwnerFeeWallet,feeToMainOwner,feeWallet,feeToImplementationFeeWallet,totalGeneratedTax);
     }
 
     /**
@@ -368,7 +372,7 @@ contract Factory is Ownable {
     address public mainOwnerFeeWallet;
 
     //event
-    event ContractCreated(address newContract);
+    event ContractCreated(address newContract, address implementationOwner);
     event UpdateMainOwnerFeeWallet(address mainOwnerFeeWallet);
 
     constructor(address _mainOwnerFeeWallet) Ownable(msg.sender) {
@@ -380,7 +384,7 @@ contract Factory is Ownable {
      * @param walletAddress The address of the wallet to query deployed contracts for.
      * @return An array of DeployedContractInfo containing the contract address and token contract address for each deployed contract.
      */
-    function deployedContract(address walletAddress) external view returns (DeployedContractInfo[] memory) {
+    function deployedContractInformation(address walletAddress) external view returns (DeployedContractInfo[] memory) {
         address[] memory contracts = deployedContracts[walletAddress];
         DeployedContractInfo[] memory contractInfos = new DeployedContractInfo[](contracts.length);
 
@@ -406,7 +410,7 @@ contract Factory is Ownable {
     function createContract(address feeWallet, address tokenToSwap) external {
         Implementation newContract = new Implementation(feeWallet, tokenToSwap, msg.sender, address(this));
         deployedContracts[msg.sender].push(address(newContract));
-        emit ContractCreated(address(newContract));
+        emit ContractCreated(address(newContract),msg.sender);
     }
 
     /**
