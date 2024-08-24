@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
-import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -655,8 +654,8 @@ contract IGCtoken is ERC20, Ownable {
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
-    mapping(address=>uint256) public userClaimIndex;
-    mapping(address=>uint256) public userSetIndex;
+    mapping(address => uint256) public userClaimIndex;
+    mapping(address => uint256) public userSetIndex;
 
     //events
     event DividendsDistributed(uint256 amount);
@@ -683,10 +682,10 @@ contract IGCtoken is ERC20, Ownable {
         if (balanceOf(to) > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
-            userClaimIndex[to]=dividendDetails[address(this)].length;
-            userSetIndex[to]=dividendDetails[address(this)].length;
+            userClaimIndex[to] = dividendDetails[address(this)].length;
+            userSetIndex[to] = dividendDetails[address(this)].length;
         }
-         _mint(to, amount);
+        _mint(to, amount);
     }
 
     /**
@@ -722,30 +721,34 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
-
-        for (uint256 i = userSetIndex[from]; i < dividendDetails[address(this)].length; i++) {
+        for (
+            uint256 i = userSetIndex[from];
+            i < dividendDetails[address(this)].length;
+            i++
+        ) {
             if (from != address(0)) {
-                console.log(i);
-                console.log("1st");
+                
                 setHolderData(from, i);
             }
-
         }
 
-        for (uint256 i = userSetIndex[to]; i < dividendDetails[address(this)].length; i++) {
-            if (to != address(0)){
-                console.log(userSetIndex[to]);
-                console.log("2nd");
+        for (
+            uint256 i = userSetIndex[to];
+            i < dividendDetails[address(this)].length;
+            i++
+        ) {
+            if (to != address(0)) {
+               
                 setHolderData(to, i);
             }
         }
-        
+
         if (from != address(0) && to != address(0)) {
             // Avoid mint and burn scenarios
-           
-            if (isContract(to) || isDEX[to]) {               
+
+            if (isContract(to) || isDEX[to]) {
                 revert("Transfers to contracts are disabled");
-            } else if (isContract(from) || isDEX[from]) {                
+            } else if (isContract(from) || isDEX[from]) {
                 revert("Transfers to contracts are disabled");
             }
         }
@@ -758,29 +761,22 @@ contract IGCtoken is ERC20, Ownable {
             holdersIndex[to] = holders.length;
         }
 
-        if (balanceOf(from) == 0 && isHolder[from]) {           
+        if (balanceOf(from) == 0 && isHolder[from]) {
             isHolder[from] = false;
         }
         super._beforeTokenTransfer(from, to, amount);
     }
 
-  
-
-    function setHolderData(
-        address _add,
-        uint256 index
-    ) internal {
+    function setHolderData(address _add, uint256 index) internal {
         _holdersDetails memory newDetailsTo = _holdersDetails({
             balance: balanceOf(_add),
             timestamp: block.timestamp,
             dividendTimestamp: dividendDetails[address(this)][index].timestamp,
             isClaim: false
         });
-        
 
         holdersDetails[_add].push(newDetailsTo);
-        userSetIndex[_add]=dividendDetails[address(this)].length;
-      
+        userSetIndex[_add] = dividendDetails[address(this)].length;
     }
 
     /**
@@ -826,7 +822,11 @@ contract IGCtoken is ERC20, Ownable {
         uint256 holderShare = 0;
         uint256 totalDistributed = 0;
 
-        for (uint256 i = userClaimIndex[holder]; i < dividendDetails[address(this)].length; i++) {
+        for (
+            uint256 i = userClaimIndex[holder];
+            i < dividendDetails[address(this)].length;
+            i++
+        ) {
             if (holdersDetails[holder].length > i) {
                 if (holdersDetails[holder][i].isClaim == false) {
                     holderShare = holdersDetails[holder][i].balance;
@@ -851,13 +851,16 @@ contract IGCtoken is ERC20, Ownable {
      * @dev Allows a holder to claim their dividends.
      */
     function claim() external {
-
-        for (uint256 i = userSetIndex[msg.sender]; i < dividendDetails[address(this)].length; i++) {
-            if (msg.sender != address(0)){
+        for (
+            uint256 i = userSetIndex[msg.sender];
+            i < dividendDetails[address(this)].length;
+            i++
+        ) {
+            if (msg.sender != address(0)) {
                 setHolderData(msg.sender, i);
             }
         }
-     
+
         require(isHolder[msg.sender], "Only holders can claim for dividend!");
         require(
             holdersIndex[msg.sender] <=
@@ -868,11 +871,15 @@ contract IGCtoken is ERC20, Ownable {
         require(claimable > 0, "No dividends to claim!");
         require(solidToken.transfer(msg.sender, claimable), "Transfer failed!");
 
-        for (uint256 i = userClaimIndex[msg.sender]; i < holdersDetails[msg.sender].length; i++) {
+        for (
+            uint256 i = userClaimIndex[msg.sender];
+            i < holdersDetails[msg.sender].length;
+            i++
+        ) {
             holdersDetails[msg.sender][i].isClaim = true;
         }
 
-        userClaimIndex[msg.sender]=dividendDetails[address(this)].length;
+        userClaimIndex[msg.sender] = dividendDetails[address(this)].length;
         emit DividendsClaimed(msg.sender, claimable);
     }
 
@@ -894,24 +901,24 @@ contract IGCtoken is ERC20, Ownable {
     function ownerBurn(address account, uint256 amount) external onlyOwner {
         _burn(account, amount);
         emit TokensBurned(msg.sender, amount);
-    }  
+    }
 
     /**
-    * @dev Removes the dividend entry at the specified index from the dividend details array.
-    * This function is designed to be efficient by using the "swap and pop" method:
-    * If the element to remove is not the last one, it replaces the element at the given index 
-    * with the last element in the array, then removes the last element, minimizing the need 
-    * to shift elements.
-    *
-    * Requirements:
-    * - `index` must be a valid index within the `dividendDetails[address(this)]` array.
-    *
-    * Edge Cases:
-    * - If the `index` points to the last element, no swap is performed; the element is simply removed.
-    * - If the array has only one element, the array will be empty after this operation.
-    *
-    * @param index The index of the dividend entry to remove from the array.
-    */
+     * @dev Removes the dividend entry at the specified index from the dividend details array.
+     * This function is designed to be efficient by using the "swap and pop" method:
+     * If the element to remove is not the last one, it replaces the element at the given index
+     * with the last element in the array, then removes the last element, minimizing the need
+     * to shift elements.
+     *
+     * Requirements:
+     * - `index` must be a valid index within the `dividendDetails[address(this)]` array.
+     *
+     * Edge Cases:
+     * - If the `index` points to the last element, no swap is performed; the element is simply removed.
+     * - If the array has only one element, the array will be empty after this operation.
+     *
+     * @param index The index of the dividend entry to remove from the array.
+     */
     function removeNumberOfDividend(uint256 index) public {
         require(index < dividendDetails[address(this)].length, "Invalid index");
 
@@ -919,11 +926,12 @@ contract IGCtoken is ERC20, Ownable {
 
         // If the element to remove is not the last one, replace it with the last element
         if (index < lastIndex) {
-            dividendDetails[address(this)][index] = dividendDetails[address(this)][lastIndex];
+            dividendDetails[address(this)][index] = dividendDetails[
+                address(this)
+            ][lastIndex];
         }
 
         // Remove the last element
         dividendDetails[address(this)].pop();
     }
-
 }
