@@ -245,12 +245,14 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         uint256 purchaseTime;
         uint256 claimedAmount;
         uint256 purchaseStage;
+        uint256 claimedMonth;
+        mapping(uint256 => uint256) claimsPerStage; // New mapping to track claims per stage
     }
 
     /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 public constant VESTINGDURATION = (4 * 31 days);
+    uint256 public constant VESTINGDURATION = (5 * 2 minutes);
     /**
      * @dev Timestamp for the start of the vesting period.
      */
@@ -264,15 +266,26 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     /**
      * @dev Mapping to store the number of purchases made by each buyer.
      */
-    mapping(address => uint256) public noOfPurchases;
+    uint256 public noOfPurchases;
 
     /**
      * @dev Nested mapping to store purchase details for each buyer.
      */
     mapping(address => mapping(uint256 => PurchaseDetails)) public purchases;
 
-    IERC20 public USDC = IERC20(0x5E1c50eEDF58d410B9402753855713A66e5F7003);
-    IERC20 public token = IERC20(0x8083f306F987fd6965b1Cec9EaFc4e7Ac64B6c5c); 
+    /**
+    * @dev Mapping to track the total amount of USDC spent by each address
+    */
+    mapping(address => uint256) public totalSpentByAddress;
+
+   /**
+   * @dev Define the maximum purchase limit
+   */
+    uint256 public constant MAX_PURCHASE_AMOUNT = 10000 * 1e6; // $10,000 in USDC (assuming 6 decimals)
+
+
+    IERC20 public USDC = IERC20(0xd9145CCE52D386f254917e481eB44e9943F39138);
+    IERC20 public token = IERC20(0xb7bb1792BBfabbA361c46DC5860940e0E1bFb4b9); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -291,26 +304,26 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         );
 
         presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
-            50000000 * 1e18,
+            token.totalSupply()*2/100,
             100 * 1e18
         );
         presalePhases[uint256(PresalePhase.Phase2)] = PresaleInfo(
-            50000000 * 1e18,
+            token.totalSupply()*3/100,
             66 * 1e18
         );
         presalePhases[uint256(PresalePhase.Phase3)] = PresaleInfo(
-            50000000 * 1e18,
+            token.totalSupply()*4/100,
             50 * 1e18
         );
         presalePhases[uint256(PresalePhase.Phase4)] = PresaleInfo(
-            50000000 * 1e18,
+            token.totalSupply()*5/100,
             40 * 1e18
         );
         presalePhases[uint256(PresalePhase.Phase5)] = PresaleInfo(
-            50000000 * 1e18,
+            token.totalSupply()*6/100,
             33 * 1e18
         );
-        vestingStartdate = block.timestamp + 90 days;
+        vestingStartdate = block.timestamp +  4 minutes;
         vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
 
@@ -324,6 +337,13 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
                 phase == PresalePhase.Phase5,
             "Invalid phase"
         );
+
+        // Ensure the purchase does not exceed the $10,000 limit
+        require(
+            totalSpentByAddress[msg.sender] + amount <= MAX_PURCHASE_AMOUNT,
+            "Purchase exceeds maximum allowed"
+        );
+
         PresaleInfo storage presale = presalePhases[uint256(phase)];
         uint256 tokensToBuy = usdcToToken(amount, phase);
         require(
@@ -331,45 +351,68 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             "Not enough tokens left for sale"
         );
 
-        noOfPurchases[msg.sender] += 1;
-        purchases[msg.sender][noOfPurchases[msg.sender]] = PurchaseDetails(
-            noOfPurchases[msg.sender],
-            tokensToBuy,
-            block.timestamp,
-            0,
-            uint256(phase)
-        );
+             
+        PurchaseDetails storage newPurchase = purchases[msg.sender][noOfPurchases];
+        if(newPurchase.purchaseId == 0){
+            noOfPurchases += 1;   
+            newPurchase.purchaseId = noOfPurchases;
+            newPurchase.amount = tokensToBuy;
+            newPurchase.purchaseTime = block.timestamp;
+            newPurchase.claimedAmount = 0;
+            newPurchase.purchaseStage = uint256(phase);
+            newPurchase.claimedMonth = 0;
+        }else{
+            newPurchase.purchaseId = noOfPurchases;
+            newPurchase.amount+= tokensToBuy;
+            newPurchase.purchaseTime = block.timestamp;
+            newPurchase.claimedAmount+= 0;
+            newPurchase.purchaseStage = uint256(phase);
+            newPurchase.claimedMonth = 0;
+        }
+        // Update the total amount spent by the address
+        totalSpentByAddress[msg.sender] += amount;
 
         USDC.transferFrom(msg.sender, owner(), amount);
         emit TokensPurchasedUsdc(msg.sender, tokensToBuy, amount, phase);
     }
 
-    function claimTokens() external {
+
+    function claimTokens(uint256 id) external {
+        claimCalculation(msg.sender,id);
+    }
+
+    function onlyOwnerClaimTokens(address user,uint256 id) public onlyOwner {
+         claimCalculation(user,id);
+    }
+    
+    function claimCalculation(address wallet, uint id) public {
         require(
             block.timestamp >= vestingStartdate,
             "Vesting period has not started yet"
         );
 
         uint256 claimableAmount;
-        for (uint256 i = 1; i <= noOfPurchases[msg.sender]; i++) {
-            PurchaseDetails storage purchase = purchases[msg.sender][i];
-            uint256 vestedAmount = calculateVestedAmount(purchase.amount);
-            uint256 unclaimedAmount = vestedAmount - purchase.claimedAmount;
-            if (unclaimedAmount > 0) {
-                claimableAmount += unclaimedAmount;
-                purchase.claimedAmount = vestedAmount;
-            }
+       
+        PurchaseDetails storage purchase = purchases[wallet][id];
+        (uint256 vestedAmount, uint256  updatedclaimMonth)= calculateVestedAmount(purchase.amount,purchase.claimedMonth);
+        uint256 unclaimedAmount = vestedAmount - purchase.claimedAmount;
+        purchase.claimedMonth=updatedclaimMonth;
+        if (unclaimedAmount > 0) {
+            claimableAmount += unclaimedAmount;
+            purchase.claimedAmount += vestedAmount;
+            purchase.claimsPerStage[updatedclaimMonth] += unclaimedAmount; // Track claims per stage
         }
+    
 
         require(claimableAmount > 0, "No tokens available for claiming");
         require(
-            token.transfer(msg.sender, claimableAmount),
+            token.transfer(wallet, claimableAmount),
             "Token transfer failed"
         );
 
-        emit TokensClaimed(msg.sender, claimableAmount);
+        emit TokensClaimed(wallet, claimableAmount);
     }
-
+    
     function usdcToToken(uint256 _amount, PresalePhase phase)
         public
         view
@@ -442,41 +485,49 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         presalePhases[uint256(phase)].totalTokens = _totalTokens;
     }
 
-    function calculateVestedAmount(uint256 totalAmount)
+    function calculateVestedAmount(uint256 totalAmount, uint256 claimedMonth)
         public
         view
-        returns (uint256)
+        returns (uint256,uint256)
     {
-        if (block.timestamp >= vestingEndDate) {
-            return totalAmount;
-        } else {
-            uint256 elapsedTime = block.timestamp - vestingStartdate;
-            uint256 vested;
-                if (elapsedTime <= 31 days) {
-                    // First month: 10%
-                    vested = (totalAmount * 10) / 100;
-                } else if (elapsedTime <= 62 days) {
-                    // Second month: 10% + 15% = 25%
-                    vested = (totalAmount * 25) / 100;
-                } else if (elapsedTime <= 93 days) {
-                    // Third month: 25% + 25% = 50%
-                    vested = (totalAmount * 50) / 100;
-                } else if (elapsedTime <= 124 days) {
-                    // Fourth month: 50% + 25% = 75%
-                    vested = (totalAmount * 75) / 100;
-                } else {
-                    // Fifth month: 75% + 25% = 100%
-                    vested = totalAmount;
-                }
+        uint256 vestedAmount = 0;
 
-            return vested;
+        if (block.timestamp >= vestingStartdate + (1 * 2 minutes) && claimedMonth == 0) {
+            vestedAmount += (totalAmount * 10) / 100;
+            claimedMonth = 1;
         }
-    }
+        if (block.timestamp >= vestingStartdate + (2 *  2 minutes) && claimedMonth == 1) {
+            vestedAmount += (totalAmount * 15) / 100;
+            claimedMonth = 2;
+        }
+        if (block.timestamp >= vestingStartdate + (3 *  2 minutes)  && claimedMonth == 2) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 3;
+        }
+        if (block.timestamp >= vestingStartdate + (4 *  2 minutes) && claimedMonth == 3) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 4;
+        }
+        if (block.timestamp >= vestingStartdate + (5 *  2 minutes) && claimedMonth == 4) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 5;
+        }
 
-        function changeVestingStartDate(uint256 newVestingStartDate) public onlyOwner returns (bool) {
+        return (vestedAmount,claimedMonth);
+       
+            
+        }
+    
+
+    function changeVestingStartDate(uint256 newVestingStartDate) public onlyOwner returns (bool) {
         require(vestingStartdate >= newVestingStartDate, "Vesting time has started; you cannot modify the date.");
         vestingStartdate = newVestingStartDate;
         return true;
+    
+     }
+
+    function getClaimsPerStage(address user, uint256 purchaseId, uint256 stage) external view returns (uint256) {
+        return purchases[user][purchaseId].claimsPerStage[stage];
     }
 
 }
