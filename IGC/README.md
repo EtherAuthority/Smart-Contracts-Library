@@ -11,6 +11,7 @@ The Industrial Gold Coin (IGC) is a custom ERC20 token with additional features 
 3. **Dividend Distribution**: Distributes SOLID tokens to IGC holders based on their holdings. The owner can specify the number of holders and the amount to distribute.
 4. **Transfer Restrictions**: Transfers to Decentralized Exchanges (DEX) are restricted to prevent trading. Only the owner can designate DEX addresses.
 5. **Holder Management**: The contract tracks holders and manages their eligibility for dividend claims.
+6. **Claim Missed Dividends**: Claim All Dividends that User never claimed and Eligible to Claim.
 
 ## Contract Details
 
