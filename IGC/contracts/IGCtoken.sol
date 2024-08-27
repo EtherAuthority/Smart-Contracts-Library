@@ -902,36 +902,4 @@ contract IGCtoken is ERC20, Ownable {
         _burn(account, amount);
         emit TokensBurned(msg.sender, amount);
     }
-
-    /**
-     * @dev Removes the dividend entry at the specified index from the dividend details array.
-     * This function is designed to be efficient by using the "swap and pop" method:
-     * If the element to remove is not the last one, it replaces the element at the given index
-     * with the last element in the array, then removes the last element, minimizing the need
-     * to shift elements.
-     *
-     * Requirements:
-     * - `index` must be a valid index within the `dividendDetails[address(this)]` array.
-     *
-     * Edge Cases:
-     * - If the `index` points to the last element, no swap is performed; the element is simply removed.
-     * - If the array has only one element, the array will be empty after this operation.
-     *
-     * @param index The index of the dividend entry to remove from the array.
-     */
-    function removeNumberOfDividend(uint256 index) public {
-        require(index < dividendDetails[address(this)].length, "Invalid index");
-
-        uint256 lastIndex = dividendDetails[address(this)].length - 1;
-
-        // If the element to remove is not the last one, replace it with the last element
-        if (index < lastIndex) {
-            dividendDetails[address(this)][index] = dividendDetails[
-                address(this)
-            ][lastIndex];
-        }
-
-        // Remove the last element
-        dividendDetails[address(this)].pop();
-    }
 }
