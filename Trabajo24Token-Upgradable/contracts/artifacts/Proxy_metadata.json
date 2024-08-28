@@ -1,0 +1,56 @@
+{
+	"compiler": {
+		"version": "0.8.20+commit.a1b79de6"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"stateMutability": "payable",
+				"type": "fallback"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "receive"
+			}
+		],
+		"devdoc": {
+			"details": "Implements delegation of calls to other contracts, with proper forwarding of return values and bubbling of failures. It defines a fallback function that delegates all calls to the address returned by the abstract _implementation() internal function.",
+			"kind": "dev",
+			"methods": {},
+			"title": "Proxy",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Token/AdminProxy.sol": "Proxy"
+		},
+		"evmVersion": "shanghai",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Token/AdminProxy.sol": {
+			"keccak256": "0xe6d8056aace4196f4deec17492a6bbfb64aaa07ac4576d507c253b5f92277325",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ae732c005dd25a2d92e4474ba89918546811ec6c1f04f797b514f299c8985b1b",
+				"dweb:/ipfs/QmdAzLsYjxbLv5zd2QyFArTUZhgUQEyaFwTqmShzyj9J5L"
+			]
+		}
+	},
+	"version": 1
+}

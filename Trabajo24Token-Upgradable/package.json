@@ -1,0 +1,20 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "@openzeppelin/hardhat-upgrades": "^3.2.1",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.8"
+  },
+  "dependencies": {
+    "@gnosis.pm/safe-core-sdk": "^3.2.0",
+    "@gnosis.pm/safe-ethers-lib": "^1.7.0",
+    "@gnosis.pm/safe-service-client": "^1.4.0",
+    "@openzeppelin/defender-admin-client": "^1.54.6",
+    "@safe-global/api-kit": "^2.4.4",
+    "@safe-global/protocol-kit": "^4.0.4",
+    "@safe-global/safe-ethers-lib": "^1.9.4",
+    "ethers": "^6.13.2"
+  }
+}
