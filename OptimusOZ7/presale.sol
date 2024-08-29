@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
+
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -242,14 +243,13 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         uint256 purchaseTime;
         uint256 claimedAmount;
         uint256 purchaseStage;
-        uint256 claimedMonth;
-        mapping(uint256 => uint256) claimsPerStage; // New mapping to track claims per stage
+        uint256 claimedMonth;        
     }
 
     /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 public constant VESTINGDURATION = (5 * 2 minutes);
+    uint256 public constant VESTINGDURATION = (5 * 31 days);
     /**
      * @dev Timestamp for the start of the vesting period.
      */
@@ -268,21 +268,24 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     /**
      * @dev Nested mapping to store purchase details for each buyer.
      */
-    mapping(address => PurchaseDetails) public purchases;
+    mapping(address => mapping(uint256 => PurchaseDetails)) public purchases;
 
     /**
     * @dev Mapping to track the total amount of USDC spent by each address
     */
-    mapping(address => uint256) public totalSpentByAddress;
+    mapping(address => mapping(uint256 => uint256)) public totalSpentByAddress;
 
    /**
    * @dev Define the maximum purchase limit
    */
     uint256 public constant MAX_PURCHASE_AMOUNT = 10000 * 1e6; // $10,000 in USDC (assuming 6 decimals)
+    // State variables for presale and claim phases
+    bool public presaleActive;
+    bool public claimActive;
 
 
-    IERC20 public USDC = IERC20(0x3328358128832A260C76A4141e19E2A943CD4B6D);
-    IERC20 public token = IERC20(0x5e17b14ADd6c386305A32928F985b29bbA34Eff5); 
+    IERC20 public USDC = IERC20(0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d);
+    IERC20 public token = IERC20(0x0fC5025C764cE34df352757e82f7B5c4Df39A836); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -293,6 +296,18 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     );
 
     event TokensClaimed(address indexed claimer, uint256 amount);
+
+    // Modifier to check if presale is active
+    modifier whenPresaleActive() {
+        require(presaleActive, "Presale is not active");
+        _;
+    }
+
+    // Modifier to check if claim is active
+    modifier whenClaimActive() {
+        require(claimActive, "Claim phase is not active");
+        _;
+    }
 
     constructor() {
         priceFeed = AggregatorV3Interface(
@@ -325,10 +340,35 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             33 * 1e18,
             30000000 * 1e6 // Set an initial max amount for Phase 5
         );
-        vestingStartdate = block.timestamp + 4 minutes;
+       
         vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
+    // Admin function to start the presale
+    function startPresale() external onlyOwner {
+        require(claimActive!=true,"Vesting time already started");
+        presaleActive = true;
+        claimActive = false;        
+    }
 
+    // Admin function to close the presale
+    function closePresale() external onlyOwner {
+        presaleActive = false;
+    }
+
+    // Admin function to start the claim phase
+    function startClaiming() external onlyOwner {
+        require(!presaleActive, "Presale is still active");
+        require(claimActive!=true,"Vesting time already started");
+        claimActive = true;
+        vestingStartdate=block.timestamp;
+    }
+
+    // Admin function to terminate the presale and start claiming
+    function terminatePresaleAndStartClaim() external onlyOwner {
+        require(claimActive!=true,"Vesting time already started");
+        presaleActive = false;
+        claimActive = true;
+    }
     // Function to allow the owner to set the max amount for a specific phase
     function setMaxAmount(PresalePhase phase, uint256 maxAmount) external onlyOwner {
         require(
@@ -344,91 +384,70 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     }
 
 
-    function buyTokensUSDC(uint256 amount, PresalePhase phase) public {
-        require(amount > 0, "Can't buy tokens");
+    function buyTokensUSDC(uint256 amount, PresalePhase phase) public whenPresaleActive {
+        require(amount > 0, "Can't buy tokens! Amount should be grater then 0.");
         require(
             phase == PresalePhase.Phase1 ||
-                phase == PresalePhase.Phase2 ||
-                phase == PresalePhase.Phase3 ||
-                phase == PresalePhase.Phase4 ||
-                phase == PresalePhase.Phase5,
+            phase == PresalePhase.Phase2 ||
+            phase == PresalePhase.Phase3 ||
+            phase == PresalePhase.Phase4 ||
+            phase == PresalePhase.Phase5,
             "Invalid phase"
         );
 
-        // Ensure the purchase does not exceed the $10,000 limit
         require(
-            totalSpentByAddress[msg.sender] + amount <= MAX_PURCHASE_AMOUNT,
+            totalSpentByAddress[msg.sender][uint256(phase)] + amount <= MAX_PURCHASE_AMOUNT,
             "Purchase exceeds maximum allowed"
         );
-
-        // Check if the current time is before the vesting start date
-        require(block.timestamp < vestingStartdate, "Presale has ended; vesting period has started");
-
-
-         // Ensure the purchase does not exceed the max amount for this phase
-        require(
-            amount <= presalePhases[uint256(phase)].maxAmount,
-            "Purchase exceeds max amount for this phase"
-        );
+        
+        require(amount <= presalePhases[uint256(phase)].maxAmount, "Purchase exceeds max amount for this phase");
 
         PresaleInfo storage presale = presalePhases[uint256(phase)];
         uint256 tokensToBuy = usdcToToken(amount, phase);
-        require(
-            tokensToBuy <= presale.totalTokens,
-            "Not enough tokens left for sale"
-        );
+        require(tokensToBuy <= presale.totalTokens, "Not enough tokens left for sale");
 
-             
-        PurchaseDetails storage newPurchase = purchases[msg.sender];
-        if(newPurchase.amount == 0){
-            noOfPurchases += 1;   
+        PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];
+        bool isNewPurchase = newPurchase.amount == 0;
+
+        if (isNewPurchase) {
+            noOfPurchases++;
             newPurchase.purchaseId = noOfPurchases;
-            newPurchase.amount = tokensToBuy;
-            newPurchase.purchaseTime = block.timestamp;
-            newPurchase.claimedAmount = 0;
-            newPurchase.purchaseStage = uint256(phase);
-            newPurchase.claimedMonth = 0;
-        }else{
-            newPurchase.purchaseId = noOfPurchases;
-            newPurchase.amount+= tokensToBuy;
-            newPurchase.purchaseTime = block.timestamp;
-            newPurchase.claimedAmount+= 0;
-            newPurchase.purchaseStage = uint256(phase);
-            newPurchase.claimedMonth = 0;
         }
-        // Update the total amount spent by the address
-        totalSpentByAddress[msg.sender] += amount;
 
+        newPurchase.amount += tokensToBuy;
+        newPurchase.purchaseTime = block.timestamp;
+        newPurchase.claimedAmount = 0;
+        newPurchase.purchaseStage = uint256(phase);
+        newPurchase.claimedMonth = 0;
+        
+        totalSpentByAddress[msg.sender][uint256(phase)] += amount;
         USDC.transferFrom(msg.sender, owner(), amount);
         emit TokensPurchasedUsdc(msg.sender, tokensToBuy, amount, phase);
     }
 
 
-    function claimTokens() external {
-        claimCalculation(msg.sender);
+
+    function claimTokens(PresalePhase phase) whenClaimActive external {
+        claimCalculation(msg.sender,phase);
     }
 
-    function onlyOwnerClaimTokens(address[] memory users) public onlyOwner {
+    function onlyOwnerClaimTokens(address[] memory users,PresalePhase phase) public onlyOwner {
         for (uint256 i = 0; i < users.length; i++) {
-            claimCalculation(users[i]);
+            claimCalculation(users[i],phase);
         }
     }
-    function claimCalculation(address wallet) public {
-        require(
-            block.timestamp >= vestingStartdate,
-            "Vesting period has not started yet"
-        );
 
+    function claimCalculation(address wallet,PresalePhase phase) public {
+       
         uint256 claimableAmount;
        
-        PurchaseDetails storage purchase = purchases[wallet];
+        PurchaseDetails storage purchase = purchases[wallet][uint256(phase)];
         (uint256 vestedAmount, uint256  updatedclaimMonth)= calculateVestedAmount(purchase.amount,purchase.claimedMonth);
-        uint256 unclaimedAmount = vestedAmount - purchase.claimedAmount;
+        uint256 unclaimedAmount = purchase.amount - purchase.claimedAmount;
         purchase.claimedMonth=updatedclaimMonth;
         if (unclaimedAmount > 0) {
             claimableAmount += unclaimedAmount;
-            purchase.claimedAmount += vestedAmount;
-            purchase.claimsPerStage[updatedclaimMonth] += unclaimedAmount; // Track claims per stage
+            purchase.claimedAmount += vestedAmount;            
         }else if(unclaimedAmount == 0){
             purchase.amount=0;
         }
@@ -522,42 +541,42 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     {
         uint256 vestedAmount = 0;
        
-        if (block.timestamp >= vestingStartdate + (1 * 2 minutes) && claimedMonth == 0) {
+        if (block.timestamp >= vestingStartdate + (1 * 31 days) && claimedMonth == 0) {
             vestedAmount += (totalAmount * 10) / 100;
             claimedMonth = 1;
         }
-        if (block.timestamp >= vestingStartdate + (2 *  2 minutes) && claimedMonth == 1) {
+        if (block.timestamp >= vestingStartdate + (2 * 31 days) && claimedMonth == 1) {
             vestedAmount += (totalAmount * 15) / 100;
             claimedMonth = 2;
         }
-        if (block.timestamp >= vestingStartdate + (3 *  2 minutes)  && claimedMonth == 2) {
+        if (block.timestamp >= vestingStartdate + (3 * 31 days)  && claimedMonth == 2) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 3;
         }
-        if (block.timestamp >= vestingStartdate + (4 *  2 minutes) && claimedMonth == 3) {
+        if (block.timestamp >= vestingStartdate + (4 * 31 days) && claimedMonth == 3) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 4;
         }
-        if (block.timestamp >= vestingStartdate + (5 *  2 minutes) && claimedMonth == 4) {
+        if (block.timestamp >= vestingStartdate + (5 * 31 days) && claimedMonth == 4) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 5;
         }
        
-        return (vestedAmount,claimedMonth);
-       
+        return (vestedAmount,claimedMonth);       
             
-        }
-    
+    }      
 
-    function changeVestingStartDate(uint256 newVestingStartDate) public onlyOwner returns (bool) {
-        require(vestingStartdate >= newVestingStartDate, "Vesting time has started; you cannot modify the date.");
-        vestingStartdate = newVestingStartDate;
-        return true;
-    
-     }
+    // Function to get claims per stage for a given address and presale phase
+    function getClaimsPerStage(address wallet, PresalePhase phase) public view returns (uint256) {
+        PurchaseDetails storage purchase = purchases[wallet][uint256(phase)]; 
+        return  purchase.claimedAmount;
+    }
 
-    function getClaimsPerStage(address user, uint256 stage) external view returns (uint256) {
-        return purchases[user].claimsPerStage[stage];
+    // Admin function to withdraw unsold tokens
+    function withdrawUnsoldTokens() external onlyOwner {
+        require(!presaleActive, "Presale is still active");
+        uint256 unsoldTokens = token.balanceOf(address(this));
+        token.transfer(owner(), unsoldTokens);
     }
 
 }
