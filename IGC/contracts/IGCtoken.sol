@@ -652,7 +652,7 @@ contract IGCtoken is ERC20, Ownable {
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
     mapping(address => _dividendDetails[]) public dividendDetails;
-    mapping(address => uint256) public checkHolder;
+
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
