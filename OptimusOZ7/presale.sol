@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -284,8 +283,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     bool public claimActive;
 
 
-    IERC20 public USDC = IERC20(0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d);
-    IERC20 public token = IERC20(0x0fC5025C764cE34df352757e82f7B5c4Df39A836); 
+    IERC20 public USDC = IERC20(0xE3Ca443c9fd7AF40A2B5a95d43207E763e56005F);
+    IERC20 public token = IERC20(0xd7Ca4e99F7C171B9ea2De80d3363c47009afaC5F); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -341,7 +340,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             30000000 * 1e6 // Set an initial max amount for Phase 5
         );
        
-        vestingEndDate = vestingStartdate + VESTINGDURATION;
+        
     }
     // Admin function to start the presale
     function startPresale() external onlyOwner {
@@ -356,18 +355,24 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     }
 
     // Admin function to start the claim phase
-    function startClaiming() external onlyOwner {
+    function startClaiming() external onlyOwner {        
+        require(noOfPurchases > 0, "There are no purchases for claim");        
         require(!presaleActive, "Presale is still active");
         require(claimActive!=true,"Vesting time already started");
         claimActive = true;
         vestingStartdate=block.timestamp;
+        vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
 
     // Admin function to terminate the presale and start claiming
     function terminatePresaleAndStartClaim() external onlyOwner {
         require(claimActive!=true,"Vesting time already started");
+        require(presaleActive, "Presale not activeted");
+        require(noOfPurchases > 0,  "There are no purchases for claim");  
         presaleActive = false;
         claimActive = true;
+        vestingStartdate=block.timestamp;
+        vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
     // Function to allow the owner to set the max amount for a specific phase
     function setMaxAmount(PresalePhase phase, uint256 maxAmount) external onlyOwner {
@@ -419,13 +424,11 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         newPurchase.claimedAmount = 0;
         newPurchase.purchaseStage = uint256(phase);
         newPurchase.claimedMonth = 0;
-        
+
         totalSpentByAddress[msg.sender][uint256(phase)] += amount;
         USDC.transferFrom(msg.sender, owner(), amount);
         emit TokensPurchasedUsdc(msg.sender, tokensToBuy, amount, phase);
     }
-
-
 
     function claimTokens(PresalePhase phase) whenClaimActive external {
         claimCalculation(msg.sender,phase);
@@ -438,6 +441,10 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     }
 
     function claimCalculation(address wallet,PresalePhase phase) public {
+        require(
+            block.timestamp >= vestingStartdate,
+            "Vesting period has not started yet"
+        );
        
         uint256 claimableAmount;
        
@@ -461,6 +468,38 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
         emit TokensClaimed(wallet, claimableAmount);
     }
+
+    function calculateVestedAmount(uint256 totalAmount, uint256 claimedMonth)
+        public
+        view
+        returns (uint256,uint256)
+    {
+        
+        uint256 vestedAmount = 0;
+        if (block.timestamp >= vestingStartdate + (1 * 31 days) && claimedMonth == 0) {
+            vestedAmount += (totalAmount * 10) / 100;
+            claimedMonth = 1;
+        }
+        if (block.timestamp >= vestingStartdate + (2 *  31 days) && claimedMonth == 1) {
+            vestedAmount += (totalAmount * 15) / 100;
+            claimedMonth = 2;
+        }
+        if (block.timestamp >= vestingStartdate + (3 *  31 days)  && claimedMonth == 2) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 3;
+        }
+        if (block.timestamp >= vestingStartdate + (4 *  31 days) && claimedMonth == 3) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 4;
+        }
+        if (block.timestamp >= vestingStartdate + (5 *  31 days) && claimedMonth == 4) {
+            vestedAmount += (totalAmount * 25) / 100;
+            claimedMonth = 5;
+        }
+       
+        return (vestedAmount,claimedMonth);       
+            
+    }  
     
     function usdcToToken(uint256 _amount, PresalePhase phase)
         public
@@ -533,38 +572,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         require(_totalTokens > 0, "Tokens must be greater than 0");
         presalePhases[uint256(phase)].totalTokens = _totalTokens;
     }
-
-    function calculateVestedAmount(uint256 totalAmount, uint256 claimedMonth)
-        public
-        view
-        returns (uint256,uint256)
-    {
-        uint256 vestedAmount = 0;
-       
-        if (block.timestamp >= vestingStartdate + (1 * 31 days) && claimedMonth == 0) {
-            vestedAmount += (totalAmount * 10) / 100;
-            claimedMonth = 1;
-        }
-        if (block.timestamp >= vestingStartdate + (2 * 31 days) && claimedMonth == 1) {
-            vestedAmount += (totalAmount * 15) / 100;
-            claimedMonth = 2;
-        }
-        if (block.timestamp >= vestingStartdate + (3 * 31 days)  && claimedMonth == 2) {
-            vestedAmount += (totalAmount * 25) / 100;
-            claimedMonth = 3;
-        }
-        if (block.timestamp >= vestingStartdate + (4 * 31 days) && claimedMonth == 3) {
-            vestedAmount += (totalAmount * 25) / 100;
-            claimedMonth = 4;
-        }
-        if (block.timestamp >= vestingStartdate + (5 * 31 days) && claimedMonth == 4) {
-            vestedAmount += (totalAmount * 25) / 100;
-            claimedMonth = 5;
-        }
-       
-        return (vestedAmount,claimedMonth);       
-            
-    }      
+    
 
     // Function to get claims per stage for a given address and presale phase
     function getClaimsPerStage(address wallet, PresalePhase phase) public view returns (uint256) {
