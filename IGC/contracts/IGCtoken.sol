@@ -762,8 +762,6 @@ contract IGCtoken is ERC20, Ownable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-  
-
     function setHolderData(
         address _add,
         uint256 index
@@ -889,8 +887,6 @@ contract IGCtoken is ERC20, Ownable {
     function ownerBurn(address account, uint256 amount) external onlyOwner {
         _burn(account, amount);
         emit TokensBurned(msg.sender, amount);
-    }  
-
-    
+    }   
 
 }
