@@ -1,0 +1,91 @@
+Variables:=
+
+1. distributionTimeHolder= it will store the no of holders at the time when the dividend added to contract.
+2. holdersDetails= it will store the users token holding balance at the time of dividend distribution along with claim status and time in array format.
+3. dividendDetails= it will store each dividend added to contract in array format.
+4. userClaimIndex= it will store the users claimIndex means the last index of dividendDetails array which user already claimed.
+5. userSetIndex=it will store the dividendDetails array index from which user joined in this contract.
+
+
+Work Flow:=
+
+->  User minted to contract with some value of token then he will be a holder for that contract.
+->  Once there is a holder in contract owner can put dividend to this contract.
+->  When owner add dividend to contract the dividend amount and time and that time contract IGC token total supply will be stored in "dividendDetails" mapping.
+->  After that there are 3 ways to snapshot a users balance for that dividend.
+	1. When user transfer some token to other wallet that time users balance before transfer captured in "holdersDetails" mapping if the transfer happens after the dividend distribution.
+	2. When user gets some token from other wallet that time users balance before adding captured in "holdersDetails" mapping if the transfer happens after the dividend distribution.
+	3. while claiming his part of dividend if there is no record for this dividend then firstly record will be captured then the claim process proceed.
+->  Then by using holdershare logic we calculate the holders claimable share and transfer it to the user.
+
+-> ((Holders balance from "holdersDetails" mapping * Dividend value from "dividendDetails" mapping) / Total supply of the IGC token when the dividend added to contract from "dividendDetails" mapping) * 1000000000000000000. 
+
+-> The above formula gives us the users claimable dividend and transfer it to user. Above we multiply with 1000000000000000000 because the division may give decimal value and solidity doesn't support decimal to we multiply with 1000000000000000000 and while transfer we divide with 1000000000000000000 to get the proper decimal point token value.
+
+
+Example1:=
+
+-> "A" user minted to contract with 50 token and "B" user minted to contract with 38 token and "C" user minted to contract with 69 token.
+-> Then dividend added of 1000 tokens. At that time the IGC totalsupply was 157.
+-> Now user "A" wants to claim his part so now first it will check wheather "holdersDetails" mapping having the value for the first dividend distribution.
+-> If there is no value for first dividend then first add values to "holdersDetails" mapping.
+-> Then the calculation will be like:=
+	Holder Balance=50(A),38(B),69(C).
+	Dividend amount=1000.
+	Total Supply=157.
+
+Lets put the formula :=
+	
+	(50 * 1000)/157=318.471338 ( User "A" Claimable Amount)
+	(38 * 1000)/157=242.038217 ( User "B" Claimable Amount)
+	(69 * 1000)/157=439.490446 ( User "C" Claimable Amount)
+
+
+Example2:=
+
+-> "A" user minted to contract with 50 token and "B" user minted to contract with 38 token and "C" user minted to contract with 69 token.
+-> Then dividend added of 1000 tokens. At that time the IGC totalsupply was 157.
+-> Now user "A" wants to claim his part so now first it will check wheather "holdersDetails" mapping having the value for the first dividend distribution.
+-> If there is no value for first dividend then first add values to "holdersDetails" mapping.
+-> Then the calculation will be like:=
+	Holder Balance=50(A),38(B),69(C).
+	Dividend amount=1000.
+	Total Supply=157.
+-> Now Holder "C" send 19 tokens to Holder "A" and now the balance changes of Holder "C" and holder "A" as per the contract balanceOF(). Now holder "C" balance is 50 and Holder "A" balance is 69.
+-> But still Holder "A" and holder "C" will get their divident claimable amount according to the balance before the transfer happens which is like holder "A" 50 token and Holder "C" 69 token. Which is captured from "holdersDetails" mapping.
+
+Lets put the formula :=
+	
+	(50 * 1000)/157=318.471338 ( User "A" Claimable Amount)
+	(38 * 1000)/157=242.038217 ( User "B" Claimable Amount)
+	(69 * 1000)/157=439.490446 ( User "C" Claimable Amount)
+
+
+Example3:=
+
+-> Lets assume there are already 3 dividends distributed before Holder "A" joins in the contract.
+-> When Holder "A" joins at that time userClaimIndex=3 and userSetIndex=3.
+-> So that when ever user claim for the 4th dividend the loop will start from index 3 instead of index 0 so that there will be no useless gas consuption. Here the main use of "userSetIndex" takes place for looping concept.
+-> Then when After claim again "userSetIndex" and "userClaimIndex" both are set to 4 as the 4th dividend claim done.
+-> So for next dividend distribution the loop start from 4 and ends at 5 so there will never gas related issues arise.
+-> As there is no calcultation based of holder count so the logic wont fail wheather there are 1 million or 100 million holders avalable in contract.
+
+
+Example4:=
+
+-> Holder "A" minted with 50 token and Holder "B" minted with 40 Token .
+-> 1st dividend added for 100 token.
+-> Holder "A" missed to withdraw and Holder "B" claimed his part.
+	(40 * 100)/90=44.4444444 ( User "B" Claimable Amount)
+-> Holder "A" Mint another 50 token now his balance is 100 token.
+-> 2nd Dividend added for 100 token again.
+-> Now both Holder "A" and "B" claimed their part.
+	(50 * 100)/90=44.4444444 ( User "A" Claimable Amount)(1st Missed dividend Calculation)
+	(100 * 100)/140=71.4285714 ( User "A" Claimable Amount)(2nd Dividend calculation)
+	(40 * 100)/140=28.5714286 ( User "B" Claimable Amount)(2nd Dividend calculation)
+
+-> So in the 2nd dividend claim process Holder "A" will get amount for dividend one on the basis of that time balance which is 90 and dividend two on the basis of that time balance which is 140( after the minting 50 tokens).
+
+
+
+
