@@ -109,6 +109,7 @@ contract Multisign is owned {
     // Function to create a new proposal
     function createProposal(uint256 _amount) public returns (uint256) {
         require(_amount > 0, "Invalid Amount");  // Ensure the amount is positive
+        require(user[msg.sender]==true,"Invalid Signer");
         _proposal memory newproposal = _proposal({
             user: msg.sender,
             amount: _amount,
