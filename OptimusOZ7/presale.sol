@@ -232,8 +232,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
     struct PresaleInfo {
         uint256 totalTokens;
-        uint256 tokenPrice;
-        uint256 maxAmount; // Maximum amount for this phase
+        uint256 tokenPrice;        
     }
 
     struct PurchaseDetails {
@@ -315,29 +314,27 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         );
 
         presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
-            token.totalSupply() * 2 / 100,
-            100 * 1e18,
-            10000000 * 1e6 // Set an initial max amount for Phase 1
+            10000000 * 1e6, // Set an initial max amount for Phase 1
+            100 * 1e18
+            
         );
         presalePhases[uint256(PresalePhase.Phase2)] = PresaleInfo(
-            token.totalSupply() * 3 / 100,
-            66 * 1e18,
-            15000000 * 1e6 // Set an initial max amount for Phase 2
+             15000000 * 1e6, // Set an initial max amount for Phase 2
+            66 * 1e18           
         );
         presalePhases[uint256(PresalePhase.Phase3)] = PresaleInfo(
-            token.totalSupply() * 4 / 100,
-            50 * 1e18,
-            20000000 * 1e6 // Set an initial max amount for Phase 3
+            20000000 * 1e6, // Set an initial max amount for Phase 3
+            50 * 1e18
+            
         );
         presalePhases[uint256(PresalePhase.Phase4)] = PresaleInfo(
-            token.totalSupply() * 5 / 100,
-            40 * 1e18,
-            25000000 * 1e6 // Set an initial max amount for Phase 4
+            25000000 * 1e6, // Set an initial max amount for Phase 4
+            40 * 1e18
+           
         );
         presalePhases[uint256(PresalePhase.Phase5)] = PresaleInfo(
-            token.totalSupply() * 6 / 100,
-            33 * 1e18,
-            30000000 * 1e6 // Set an initial max amount for Phase 5
+            30000000 * 1e6, // Set an initial max amount for Phase 5
+            33 * 1e18            
         );
        
         
@@ -374,19 +371,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         vestingStartdate=block.timestamp;
         vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
-    // Function to allow the owner to set the max amount for a specific phase
-    function setMaxAmount(PresalePhase phase, uint256 maxAmount) external onlyOwner {
-        require(
-            phase == PresalePhase.Phase1 ||
-            phase == PresalePhase.Phase2 ||
-            phase == PresalePhase.Phase3 ||
-            phase == PresalePhase.Phase4 ||
-            phase == PresalePhase.Phase5,
-            "Invalid phase"
-        );
-        require(maxAmount > 0, "Max amount must be greater than 0");
-        presalePhases[uint256(phase)].maxAmount = maxAmount;
-    }
+  
 
 
     function buyTokensUSDC(uint256 amount, PresalePhase phase) public whenPresaleActive {
@@ -405,7 +390,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             "Purchase exceeds maximum allowed"
         );
         
-        require(amount <= presalePhases[uint256(phase)].maxAmount, "Purchase exceeds max amount for this phase");
+        require(amount <= presalePhases[uint256(phase)].totalTokens, "Purchase exceeds max amount for this phase");
 
         PresaleInfo storage presale = presalePhases[uint256(phase)];
         uint256 tokensToBuy = usdcToToken(amount, phase);
