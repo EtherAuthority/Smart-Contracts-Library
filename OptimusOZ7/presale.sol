@@ -345,8 +345,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     // Admin function to start the presale
     function startPresale() external onlyOwner {
         require(claimActive!=true,"Vesting time already started");
-        presaleActive = true;
-        claimActive = false;        
+        presaleActive = true;       
     }
 
     // Admin function to close the presale
@@ -374,21 +373,6 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         vestingStartdate=block.timestamp;
         vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
-    // Function to allow the owner to set the max amount for a specific phase
-    function setMaxAmount(PresalePhase phase, uint256 maxAmount) external onlyOwner {
-        require(
-            phase == PresalePhase.Phase1 ||
-            phase == PresalePhase.Phase2 ||
-            phase == PresalePhase.Phase3 ||
-            phase == PresalePhase.Phase4 ||
-            phase == PresalePhase.Phase5,
-            "Invalid phase"
-        );
-        require(maxAmount > 0, "Max amount must be greater than 0");
-        presalePhases[uint256(phase)].maxAmount = maxAmount;
-    }
-
-
     function buyTokensUSDC(uint256 amount, PresalePhase phase) public whenPresaleActive {
         require(amount > 0, "Can't buy tokens! Amount should be grater then 0.");
         require(
