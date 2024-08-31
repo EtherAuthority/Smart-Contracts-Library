@@ -96,3 +96,6 @@ Ensure that only authorized signers vote on proposals.
 Carefully manage ownership and signer addresses to prevent unauthorized access.
 Follow best practices for Solidity development, including using safe libraries and auditing contracts.
 
+## Testing on Testnet
+https://www.oklink.com/amoy/address/0x825490b8f7124114370a121362b121af8955570a
+
