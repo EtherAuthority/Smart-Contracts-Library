@@ -315,27 +315,27 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         );
 
             presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
-            10000000 * 1e6, // Set an initial max amount for Phase 1
+            10000000 * 1e18, // Set an initial max amount for Phase 1
             100 * 1e18,
             0
         );
         presalePhases[uint256(PresalePhase.Phase2)] = PresaleInfo(
-            15000000 * 1e6, // Set an initial max amount for Phase 2
+            15000000 * 1e18, // Set an initial max amount for Phase 2
             66 * 1e18,
             0           
         );
         presalePhases[uint256(PresalePhase.Phase3)] = PresaleInfo(
-            20000000 * 1e6, // Set an initial max amount for Phase 3
+            20000000 * 1e18, // Set an initial max amount for Phase 3
             50 * 1e18,
             0
         );
         presalePhases[uint256(PresalePhase.Phase4)] = PresaleInfo(
-            25000000 * 1e6, // Set an initial max amount for Phase 4
+            25000000 * 1e18, // Set an initial max amount for Phase 4
             40 * 1e18,
             0
         );
         presalePhases[uint256(PresalePhase.Phase5)] = PresaleInfo(
-            30000000 * 1e6, // Set an initial max amount for Phase 5
+            30000000 * 1e18, // Set an initial max amount for Phase 5
             33 * 1e18,
             0            
         );
