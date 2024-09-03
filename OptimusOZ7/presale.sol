@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: UNDEFINED
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -438,7 +437,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         require((presale.maxAmount+tokensToBuy) <= presale.totalTokens, "Not enough tokens left for sale");
 
         PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];
-        console.log(" Activestage ",presale.activeStage);
+       
         require(presale.activeStage==true, "This phase is not active");
 
         bool isNewPurchase = newPurchase.amount == 0;
