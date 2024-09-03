@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNDEFINED
 pragma solidity 0.8.21;
+
+import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -234,6 +236,9 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         uint256 totalTokens;
         uint256 tokenPrice;
         uint256 maxAmount; // Maximum amount for this phase
+        uint256 startDateTime; // Start date and time for this phase
+        uint256 endDateTime;   // End date and time for this phase
+        bool activeStage;
     }
 
     struct PurchaseDetails {
@@ -283,8 +288,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     bool public claimActive;
 
 
-    IERC20 public USDC = IERC20(0xE3Ca443c9fd7AF40A2B5a95d43207E763e56005F);
-    IERC20 public token = IERC20(0xd7Ca4e99F7C171B9ea2De80d3363c47009afaC5F); 
+    IERC20 public USDC = IERC20(0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B);
+    IERC20 public token = IERC20(0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -314,39 +319,74 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             // 0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE //mainnet bsc
         );
 
-            presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
-            10000000 * 1e18, // Set an initial max amount for Phase 1
+        presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
+            5000, // Set an initial max amount for Phase 1
             100 * 1e18,
-            0
+            0,
+            1727794800,      // Start date for Phase 1 (example timestamp)
+            1730991600,      // End date for Phase 1 (example timestamp)
+            false            // Active stage
         );
         presalePhases[uint256(PresalePhase.Phase2)] = PresaleInfo(
             15000000 * 1e18, // Set an initial max amount for Phase 2
             66 * 1e18,
-            0           
+            0,
+            1730991600,      // Start date for Phase 1 (example timestamp)
+            1734966000,      // End date for Phase 1 (example timestamp)
+            false            // Active stage
         );
         presalePhases[uint256(PresalePhase.Phase3)] = PresaleInfo(
             20000000 * 1e18, // Set an initial max amount for Phase 3
             50 * 1e18,
-            0
+            0,
+            1734966000,      // Start date for Phase 1 (example timestamp)
+            1696752000,      // End date for Phase 1 (example timestamp)
+            false            // Active stage
+        
         );
         presalePhases[uint256(PresalePhase.Phase4)] = PresaleInfo(
             25000000 * 1e18, // Set an initial max amount for Phase 4
             40 * 1e18,
-            0
+            0,
+            1694160000,      // Start date for Phase 1 (example timestamp)
+            1696752000,      // End date for Phase 1 (example timestamp)
+            false            // Active stage
         );
         presalePhases[uint256(PresalePhase.Phase5)] = PresaleInfo(
             30000000 * 1e18, // Set an initial max amount for Phase 5
             33 * 1e18,
-            0            
+            0,
+            1696752000,      // Start date for Phase 1 (example timestamp)
+            1741100400,      // End date for Phase 1 (example timestamp)
+            false            // Active stage
         );
-       
         
     }
     // Admin function to start the presale
     function startPresale() external onlyOwner {
         require(claimActive!=true,"Vesting time already started");
-        presaleActive = true;       
+        presaleActive = true;
+        claimActive = false;  
+        for (uint256 i = 0; i < presalePhases.length; i++) {
+            if (block.timestamp >= presalePhases[i].startDateTime && block.timestamp <= presalePhases[i].endDateTime) {
+                presalePhases[i].activeStage = true;
+            } else {
+                presalePhases[i].activeStage = false;
+            }
+        }      
     }
+
+    function updateActivePhases() public onlyOwner {    
+
+    for (uint256 i = 0; i < presalePhases.length; i++) {
+            if (block.timestamp >= presalePhases[i].startDateTime && block.timestamp <= presalePhases[i].endDateTime) {
+                presalePhases[i].activeStage = true;
+            } else {
+                presalePhases[i].activeStage = false;
+            }
+        }
+    }
+
 
     // Admin function to close the presale
     function closePresale() external onlyOwner {
@@ -373,6 +413,9 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         vestingStartdate=block.timestamp;
         vestingEndDate = vestingStartdate + VESTINGDURATION;
     }
+   
+
+
     function buyTokensUSDC(uint256 amount, PresalePhase phase) public whenPresaleActive {
         require(amount > 0, "Can't buy tokens! Amount should be grater then 0.");
         require(
@@ -391,10 +434,13 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
         PresaleInfo storage presale = presalePhases[uint256(phase)];
         uint256 tokensToBuy = usdcToToken(amount, phase);
-        presale.maxAmount+= tokensToBuy;        
-        require(presale.maxAmount <= presale.totalTokens, "Not enough tokens left for sale");
+               
+        require((presale.maxAmount+tokensToBuy) <= presale.totalTokens, "Not enough tokens left for sale");
 
         PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];
+        console.log(" Activestage ",presale.activeStage);
+        require(presale.activeStage==true, "This phase is not active");
+
         bool isNewPurchase = newPurchase.amount == 0;
 
         if (isNewPurchase) {
@@ -410,6 +456,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
         totalSpentByAddress[msg.sender][uint256(phase)] += amount;
         USDC.transferFrom(msg.sender, owner(), amount);
+        presale.maxAmount+= tokensToBuy; 
+
         emit TokensPurchasedUsdc(msg.sender, tokensToBuy, amount, phase);
     }
 
@@ -552,8 +600,27 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
                 phase == PresalePhase.Phase5,
             "Invalid phase"
         );
+
         require(_totalTokens > 0, "Tokens must be greater than 0");
+        // Calculate the total tokens allocated to all phases
+        uint256 totalAllocatedTokens = 0;
+        for (uint256 i = 0; i < presalePhases.length; i++) {
+            if (i == uint256(phase)) {
+                totalAllocatedTokens += _totalTokens;
+            } else {
+                totalAllocatedTokens += presalePhases[i].totalTokens;
+            }
+        }
+
+        // Ensure the total allocated tokens do not exceed the total supply of the token
+        require(
+            totalAllocatedTokens <= token.totalSupply(),
+            "Cannot set above the total supply of the token"
+        );
+
+        // Set the total tokens for the specified phase
         presalePhases[uint256(phase)].totalTokens = _totalTokens;
+        
     }
     
 
@@ -568,6 +635,18 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         require(!presaleActive, "Presale is still active");
         uint256 unsoldTokens = token.balanceOf(address(this));
         token.transfer(owner(), unsoldTokens);
+    }
+    // Function to update the start and end dates of a presale phase
+    function updatePresaleDates(
+        uint256 phaseIndex,
+        uint256 newStartDate,
+        uint256 newEndDate
+    ) external onlyOwner {
+        require(phaseIndex < presalePhases.length, "Invalid phase index");
+        require(newEndDate > newStartDate, "End date must be after start date");
+        presalePhases[phaseIndex].startDateTime = newStartDate;
+        presalePhases[phaseIndex].endDateTime = newEndDate;
+        updateActivePhases();  // Ensure the active status of the phases is updated based on the new dates
     }
 
 }
