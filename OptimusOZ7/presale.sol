@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNDEFINED
 pragma solidity 0.8.21;
 
+import 'hardhat/console.sol';
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -339,7 +340,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             50 * 1e18,
             0,
             1734966000,      // Start date for Phase 1 (example timestamp)
-            1696752000,      // End date for Phase 1 (example timestamp)
+            1736348400,      // End date for Phase 1 (example timestamp)
             false            // Active stage
         
         );
@@ -347,16 +348,16 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             25000000 * 1e18, // Set an initial max amount for Phase 4
             40 * 1e18,
             0,
-            1694160000,      // Start date for Phase 1 (example timestamp)
-            1696752000,      // End date for Phase 1 (example timestamp)
+            1736348400,      // Start date for Phase 1 (example timestamp)
+            1741100400,      // End date for Phase 1 (example timestamp)
             false            // Active stage
         );
         presalePhases[uint256(PresalePhase.Phase5)] = PresaleInfo(
             30000000 * 1e18, // Set an initial max amount for Phase 5
             33 * 1e18,
             0,
-            1696752000,      // Start date for Phase 1 (example timestamp)
-            1741100400,      // End date for Phase 1 (example timestamp)
+            1741100400,      // Start date for Phase 1 (example timestamp)
+            1746896400,      // End date for Phase 1 (example timestamp)
             false            // Active stage
         );
         
@@ -437,7 +438,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         require((presale.maxAmount+tokensToBuy) <= presale.totalTokens, "Not enough tokens left for sale");
 
         PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];
-       
+        console.log(" Activestage ",presale.activeStage);
         require(presale.activeStage==true, "This phase is not active");
 
         bool isNewPurchase = newPurchase.amount == 0;
@@ -449,7 +450,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
         newPurchase.amount += tokensToBuy;
         newPurchase.purchaseTime = block.timestamp;
-        newPurchase.claimedAmount = 0;
+        newPurchase.claimedAmount = 0;1741100400
         newPurchase.purchaseStage = uint256(phase);
         newPurchase.claimedMonth = 0;
 
