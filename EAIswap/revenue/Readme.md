@@ -15,11 +15,5 @@ This is a smart contract designed to swap **EAI tokens** for **ETH** using Unisw
 - `_uniswapRouterAddress`: The address of the Uniswap V2 Router.
 - `_monitoredWallet`: The address of the wallet allowed to initiate token swaps.
 
-### Example Deployment
-```solidity
-RevenueContract revenueContract = new RevenueContract(
-    "0xEaiTokenAddress",   // EAI Token Address
-    "0xUniswapRouterAddress",  // Uniswap V2 Router Address
-    "0xMonitoredWallet"   // Monitored Wallet Address
-);
+
 
