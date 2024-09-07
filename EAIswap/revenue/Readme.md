@@ -15,5 +15,8 @@ This is a smart contract designed to swap **EAI tokens** for **ETH** using Unisw
 - `_uniswapRouterAddress`: The address of the Uniswap V2 Router.
 - `_monitoredWallet`: The address of the wallet allowed to initiate token swaps.
 
+### Contract on testnet
+```solidity
+https://testnet.bscscan.com/address/0x0a17C362A6CFA5aF881C98a5ce9Ef5133B71E928
 
 
