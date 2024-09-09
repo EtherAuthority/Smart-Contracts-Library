@@ -10,7 +10,7 @@
  ======================= Quick Stats ================================================================================================
     => Name        : OptimusZ7 presale
     => Symbol      : OZ7P
-    => Total supply: 100,000,000 
+    => Total supply: 500,000,000 
     => Decimals    : 18
 -------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                   
 **/
@@ -538,7 +538,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 contract OptimusZ7PresaleToken is ERC20 {
 
     constructor() ERC20("OptimusZ7 Presale", "OZ7P"){        
-        _mint(msg.sender, 100_000_000 * (10**decimals()));
+        _mint(msg.sender, 500_000_000 * (10**decimals()));
     }
 
 }
