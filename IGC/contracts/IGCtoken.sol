@@ -639,6 +639,7 @@ contract IGCtoken is ERC20, Ownable {
     mapping(address => bool) public isHolder;
     mapping(address => bool) public isDEX;
     mapping(uint256 => uint256) public distributionTimeHolder;
+
     struct _holdersDetails {
         uint256 balance;
         uint256 timestamp;
@@ -653,7 +654,10 @@ contract IGCtoken is ERC20, Ownable {
         bool active;
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
-    mapping(address => _dividendDetails[]) public dividendDetails;
+    //mapping(address => _dividendDetails[]) public dividendDetails;
+
+    _dividendDetails[] public dividendDetails;
+    
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
@@ -687,8 +691,8 @@ contract IGCtoken is ERC20, Ownable {
         if (balanceOf(to) > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
-            userClaimIndex[to]=dividendDetails[address(this)].length;
-            userSetIndex[to]=dividendDetails[address(this)].length;
+            userClaimIndex[to]=dividendDetails.length;
+            userSetIndex[to]=dividendDetails.length;
        
         }
         _mint(to, amount);
@@ -728,14 +732,14 @@ contract IGCtoken is ERC20, Ownable {
         uint256 amount
     ) internal override {
 
-        for (uint256 i = userSetIndex[from]; i < dividendDetails[address(this)].length; i++) {
+        for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
             if (from != address(0)) {
                 setHolderData(from, i);
             }
 
         }
 
-        for (uint256 i = userSetIndex[to]; i < dividendDetails[address(this)].length; i++) {
+        for (uint256 i = userSetIndex[to]; i < dividendDetails.length; i++) {
             if (to != address(0)){
                 setHolderData(to, i);
             }
@@ -773,7 +777,7 @@ contract IGCtoken is ERC20, Ownable {
     ) internal {
         // Initialize a flag to track if the dividend is considered lost
         bool lost=false;
-        if(dividendDetails[address(this)][index].active==false)
+        if(dividendDetails[index].active==false)
         {
             lost=true;
         }
@@ -782,7 +786,7 @@ contract IGCtoken is ERC20, Ownable {
         _holdersDetails memory newDetailsTo = _holdersDetails({
             balance: balanceOf(_add),
             timestamp: block.timestamp,
-            dividendTimestamp: dividendDetails[address(this)][index].timestamp,
+            dividendTimestamp: dividendDetails[index].timestamp,
             isClaim: false,
             isLost:lost
         });
@@ -790,7 +794,7 @@ contract IGCtoken is ERC20, Ownable {
         holdersDetails[_add].push(newDetailsTo);
         
         // Update the index of the last processed dividend for the holder
-        userSetIndex[_add]=dividendDetails[address(this)].length;
+        userSetIndex[_add]=dividendDetails.length;
       
     }
 
@@ -818,8 +822,8 @@ contract IGCtoken is ERC20, Ownable {
             active:true
         });
 
-        dividendDetails[address(this)].push(dividend);
-        distributionTimeHolder[dividendDetails[address(this)].length] = holders
+        dividendDetails.push(dividend);
+        distributionTimeHolder[dividendDetails.length] = holders
             .length;
 
         emit DividendsDistributed(solidBalance);
@@ -839,19 +843,19 @@ contract IGCtoken is ERC20, Ownable {
         uint256 holderShare = 0;
         uint256 totalDistributed = 0;
 
-        for (uint256 i = userClaimIndex[holder]; i < dividendDetails[address(this)].length; i++) {
-            if(dividendDetails[address(this)][i].active==true)
+        for (uint256 i = userClaimIndex[holder]; i < dividendDetails.length; i++) {
+            if(dividendDetails[i].active==true)
             {
                 if (holdersDetails[holder].length > i) {
                     if (holdersDetails[holder][i].isClaim == false) {
                         holderShare = holdersDetails[holder][i].balance;
-                        totalDistributed = dividendDetails[address(this)][i].amount;
-                        claimableDividends +=((holderShare * totalDistributed) / dividendDetails[address(this)][i].balance)*1e18;
+                        totalDistributed = dividendDetails[i].amount;
+                        claimableDividends +=((holderShare * totalDistributed) / dividendDetails[i].balance)*1e18;
                     }
                 } else {
                     holderShare = balanceOf(holder);
-                    totalDistributed = dividendDetails[address(this)][i].amount;
-                    claimableDividends +=((holderShare * totalDistributed) / dividendDetails[address(this)][i].balance)*1e18;
+                    totalDistributed = dividendDetails[i].amount;
+                    claimableDividends +=((holderShare * totalDistributed) / dividendDetails[i].balance)*1e18;
                 }
             }
             
@@ -865,7 +869,7 @@ contract IGCtoken is ERC20, Ownable {
      */
     function claim() external {
 
-        for (uint256 i = userSetIndex[msg.sender]; i < dividendDetails[address(this)].length; i++) {
+        for (uint256 i = userSetIndex[msg.sender]; i < dividendDetails.length; i++) {
             if (msg.sender != address(0)){
                 setHolderData(msg.sender, i);
             }
@@ -874,7 +878,7 @@ contract IGCtoken is ERC20, Ownable {
         require(isHolder[msg.sender], "Only holders can claim for dividend!");
         require(
             holdersIndex[msg.sender] <=
-                distributionTimeHolder[dividendDetails[address(this)].length],
+                distributionTimeHolder[dividendDetails.length],
             "You were not a holder at the time of distribution!"
         );
         uint256 claimable = viewDividend(msg.sender);
@@ -884,13 +888,13 @@ contract IGCtoken is ERC20, Ownable {
         for (uint256 i = userClaimIndex[msg.sender]; i < holdersDetails[msg.sender].length; i++) {
             holdersDetails[msg.sender][i].isClaim = true;
 
-            if(dividendDetails[address(this)][i].active==false)
+            if(dividendDetails[i].active==false)
             {
                 holdersDetails[msg.sender][i].isLost=true;
             }
         }
 
-        userClaimIndex[msg.sender]=dividendDetails[address(this)].length;
+        userClaimIndex[msg.sender]=dividendDetails.length;
         emit DividendsClaimed(msg.sender, claimable/1e18);
     }
 
@@ -906,11 +910,11 @@ contract IGCtoken is ERC20, Ownable {
 
     // Function to clear all active dividends and transfer the remaining balance of the token to the owner
     function clearDividends() public onlyOwner{
-        uint256 len=dividendDetails[address(this)].length;
+        uint256 len=dividendDetails.length;
         require(len>lastdividentIndex,"No Active Dividends");
         for(uint256 i=lastdividentIndex;i<len;i++)
         {
-            dividendDetails[address(this)][i].active=false;
+            dividendDetails[i].active=false;
         }
 
         lastdividentIndex=len;
