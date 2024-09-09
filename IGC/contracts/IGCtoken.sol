@@ -731,17 +731,17 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
-        
-        for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
-            if (from != address(0)) {
+        if (from != address(0)) {
+            for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
+                console.log(i);
                 setHolderData(from, i);
             }
-
         }
 
-        for (uint256 i = userSetIndex[to]; i < dividendDetails.length; i++) {
-            if (to != address(0)){
-                setHolderData(to, i);
+        if (to != address(0)){
+            for (uint256 i = userSetIndex[to]; i < dividendDetails.length; i++) {
+                
+                    setHolderData(to, i);
             }
         }
         
@@ -775,7 +775,7 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override  {
-        
+
         if (balanceOf(from) == 0 && isHolder[from]) {  
             isHolder[from] = false;
         }
@@ -880,8 +880,9 @@ contract IGCtoken is ERC20, Ownable {
      */
     function claim() external {
 
-        for (uint256 i = userSetIndex[msg.sender]; i < dividendDetails.length; i++) {
-            if (msg.sender != address(0)){
+        if (msg.sender != address(0)){
+            for (uint256 i = userSetIndex[msg.sender]; i < dividendDetails.length; i++) {
+            
                 setHolderData(msg.sender, i);
             }
         }
