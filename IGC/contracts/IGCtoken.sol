@@ -895,16 +895,6 @@ contract IGCtoken is ERC20, Ownable {
     }
 
     /**
-     * @dev Allows the owner to withdraw unclaimed dividends.
-     * Only the owner can call this function.
-     */
-    function withdrawUnclaimedDividends() external onlyOwner {
-        uint256 unclaimed = solidToken.balanceOf(address(this));
-        require(unclaimed > 0, "No unclaimed dividends");
-        require(solidToken.transfer(owner(), unclaimed), "Transfer failed");
-    }
-
-    /**
      * @dev Allows the owner to burn tokens.
      * Only the owner can call this function.
      * @param amount The amount of tokens to burn.
