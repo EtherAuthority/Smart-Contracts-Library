@@ -654,6 +654,8 @@ contract IGCtoken is ERC20, Ownable {
         bool active;
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
+    //mapping(address => _dividendDetails[]) public dividendDetails;
+
     _dividendDetails[] public dividendDetails;
     
     address[] public holders;
@@ -729,7 +731,7 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
-
+        
         for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
             if (from != address(0)) {
                 setHolderData(from, i);
@@ -754,19 +756,30 @@ contract IGCtoken is ERC20, Ownable {
         }
 
         require(amount > 0, "Amount must be greater than 0");
-
+        
         if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
             holders.push(to);
             isHolder[to] = true;
             holdersIndex[to] = holders.length;
         }
 
-        if (balanceOf(from) == 0 && isHolder[from]) {           
+        if (balanceOf(from) == 0 && isHolder[from]) {  
+        
             isHolder[from] = false;
         }
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override  {
+        
+        if (balanceOf(from) == 0 && isHolder[from]) {  
+            isHolder[from] = false;
+        }
+    }
   
     // Internal function to set or update the holder's dividend data
     function setHolderData(
