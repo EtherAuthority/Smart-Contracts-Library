@@ -654,8 +654,6 @@ contract IGCtoken is ERC20, Ownable {
         bool active;
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
-    //mapping(address => _dividendDetails[]) public dividendDetails;
-
     _dividendDetails[] public dividendDetails;
     
     address[] public holders;
