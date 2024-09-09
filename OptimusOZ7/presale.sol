@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: UNDEFINED
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import 'hardhat/console.sol';
+
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -320,7 +320,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         );
 
         presalePhases[uint256(PresalePhase.Phase1)] = PresaleInfo(
-            5000, // Set an initial max amount for Phase 1
+            10000000 * 1e18, // Set an initial max amount for Phase 1
             100 * 1e18,
             0,
             1727794800,      // Start date for Phase 1 (example timestamp)
@@ -437,8 +437,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
                
         require((presale.maxAmount+tokensToBuy) <= presale.totalTokens, "Not enough tokens left for sale");
 
-        PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];
-        console.log(" Activestage ",presale.activeStage);
+        PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];       
         require(presale.activeStage==true, "This phase is not active");
 
         bool isNewPurchase = newPurchase.amount == 0;
@@ -450,7 +449,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
         newPurchase.amount += tokensToBuy;
         newPurchase.purchaseTime = block.timestamp;
-        newPurchase.claimedAmount = 0;1741100400
+        newPurchase.claimedAmount = 0;
         newPurchase.purchaseStage = uint256(phase);
         newPurchase.claimedMonth = 0;
 
