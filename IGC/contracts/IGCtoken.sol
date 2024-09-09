@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 import 'hardhat/console.sol';
 
 /**
@@ -644,20 +644,23 @@ contract IGCtoken is ERC20, Ownable {
         uint256 timestamp;
         uint256 dividendTimestamp;
         bool isClaim;
+        bool isLost;
     }
     struct _dividendDetails {
         uint256 amount;
         uint256 timestamp;
         uint256 balance;
+        bool active;
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
     mapping(address => _dividendDetails[]) public dividendDetails;
-
     address[] public holders;
     // Mapping to store the index of each dividend holder in the dividendHolders array
     mapping(address => uint256) private holdersIndex;
     mapping(address=>uint256) public userClaimIndex;
     mapping(address=>uint256) public userSetIndex;
+
+    uint256 public lastdividentIndex=0;
 
     //events
     event DividendsDistributed(uint256 amount);
@@ -762,19 +765,31 @@ contract IGCtoken is ERC20, Ownable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
+  
+    // Internal function to set or update the holder's dividend data
     function setHolderData(
         address _add,
         uint256 index
     ) internal {
+        // Initialize a flag to track if the dividend is considered lost
+        bool lost=false;
+        if(dividendDetails[address(this)][index].active==false)
+        {
+            lost=true;
+        }
+
+        // Create a new instance of _holdersDetails with updated information
         _holdersDetails memory newDetailsTo = _holdersDetails({
             balance: balanceOf(_add),
             timestamp: block.timestamp,
             dividendTimestamp: dividendDetails[address(this)][index].timestamp,
-            isClaim: false
+            isClaim: false,
+            isLost:lost
         });
         
-
         holdersDetails[_add].push(newDetailsTo);
+        
+        // Update the index of the last processed dividend for the holder
         userSetIndex[_add]=dividendDetails[address(this)].length;
       
     }
@@ -783,23 +798,24 @@ contract IGCtoken is ERC20, Ownable {
      * @dev Distributes dividends to token holders.
      * Only the owner can call this function.     *
      */
-    function distributeDividends() external onlyOwner {
+    function distributeDividends(uint256 _amount) external onlyOwner {
         uint256 solidBalance = solidToken.balanceOf(solidToken.owner());
         require(holders.length > 0, "There are no holders for dividends ");
-        require(solidBalance > 0, "No SOLID tokens to distribute");
+        require(solidBalance >= _amount, "No SOLID tokens to distribute");
         require(
             solidToken.transferFrom(
                 solidToken.owner(),
                 address(this),
-                solidBalance
+                _amount
             ),
             "Transfer failed"
         );
 
         _dividendDetails memory dividend = _dividendDetails({
-            amount: solidBalance,
+            amount: _amount,
             timestamp: block.timestamp,
-            balance: totalSupply()
+            balance: totalSupply(),
+            active:true
         });
 
         dividendDetails[address(this)].push(dividend);
@@ -824,17 +840,21 @@ contract IGCtoken is ERC20, Ownable {
         uint256 totalDistributed = 0;
 
         for (uint256 i = userClaimIndex[holder]; i < dividendDetails[address(this)].length; i++) {
-            if (holdersDetails[holder].length > i) {
-                if (holdersDetails[holder][i].isClaim == false) {
-                    holderShare = holdersDetails[holder][i].balance;
+            if(dividendDetails[address(this)][i].active==true)
+            {
+                if (holdersDetails[holder].length > i) {
+                    if (holdersDetails[holder][i].isClaim == false) {
+                        holderShare = holdersDetails[holder][i].balance;
+                        totalDistributed = dividendDetails[address(this)][i].amount;
+                        claimableDividends +=((holderShare * totalDistributed) / dividendDetails[address(this)][i].balance)*1e18;
+                    }
+                } else {
+                    holderShare = balanceOf(holder);
                     totalDistributed = dividendDetails[address(this)][i].amount;
                     claimableDividends +=((holderShare * totalDistributed) / dividendDetails[address(this)][i].balance)*1e18;
                 }
-            } else {
-                holderShare = balanceOf(holder);
-                totalDistributed = dividendDetails[address(this)][i].amount;
-                claimableDividends +=((holderShare * totalDistributed) / dividendDetails[address(this)][i].balance)*1e18;
             }
+            
         }
 
         return claimableDividends;
@@ -863,6 +883,11 @@ contract IGCtoken is ERC20, Ownable {
 
         for (uint256 i = userClaimIndex[msg.sender]; i < holdersDetails[msg.sender].length; i++) {
             holdersDetails[msg.sender][i].isClaim = true;
+
+            if(dividendDetails[address(this)][i].active==false)
+            {
+                holdersDetails[msg.sender][i].isLost=true;
+            }
         }
 
         userClaimIndex[msg.sender]=dividendDetails[address(this)].length;
@@ -886,7 +911,23 @@ contract IGCtoken is ERC20, Ownable {
      */
     function ownerBurn(address account, uint256 amount) external onlyOwner {
         _burn(account, amount);
-        emit TokensBurned(msg.sender, amount);
-    }   
+        emit TokensBurned(account, amount);
+    }  
+
+    // Function to clear all active dividends and transfer the remaining balance of the token to the owner
+    function clearDividends() public onlyOwner{
+        uint256 len=dividendDetails[address(this)].length;
+        require(len>lastdividentIndex,"No Active Dividends");
+        for(uint256 i=lastdividentIndex;i<len;i++)
+        {
+            dividendDetails[address(this)][i].active=false;
+        }
+
+        lastdividentIndex=len;
+        uint256 bal=ISOLIDToken(solidToken).balanceOf(address(this));
+        ISOLIDToken(solidToken).transfer(msg.sender,bal);
+    }
+
+    
 
 }
