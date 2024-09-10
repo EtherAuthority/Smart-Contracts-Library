@@ -468,13 +468,14 @@ interface IUniswapV2Router01 {
 }
 
 /**
- * @dev Contract to swap USDC to EAI tokens using Uniswap, with configurable parameters.
- */
-
+ * @dev Contract to swap EAI token to ETH using Uniswap, with configurable parameters.
+*/
 contract RevenueContract is Ownable, Pausable {
     IERC20 public EAI;
     IUniswapV2Router02 public uniswapRouter;
     address public monitoredWallet;
+    
+    event EAIToETHSwapped(address indexed wallet, uint256 EAIAmount, uint256 ETHReceived);
 
     constructor(
         address _eaiTokenAddress,
@@ -486,37 +487,58 @@ contract RevenueContract is Ownable, Pausable {
         monitoredWallet = _monitoredWallet;
     }
     
-
     // Allows contract owner to change the monitored wallet address
     function setMonitoredWallet(address _newWallet) external onlyOwner {
         monitoredWallet = _newWallet;
     }
 
-    // Main function to execute the swap
-    function swapEAIForETH(uint256 amountIn) external whenNotPaused {
-        require(msg.sender == monitoredWallet, "Unauthorized caller");
-        require(amountIn > 0, "Amount must be greater than zero");
-
-        // Transfer EAI tokens from the monitored wallet to this contract
-        require(EAI.transferFrom(monitoredWallet, address(this), amountIn), "Transfer failed");
-
-        // Approve Uniswap Router to spend EAI
-        EAI.approve(address(uniswapRouter), amountIn);
-
-        // Define path for swapping EAI -> WETH -> ETH
-        address[] memory path = new address[](2);
-        path[0] = address(EAI);
-        path[1] = uniswapRouter.WETH();
-
-        // Execute the swap
-        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            amountIn,
-            0, // accept any amount of ETH
-            path,
-            monitoredWallet,
-            block.timestamp
-        );
-    }
+    /**
+     * @notice This function swaps all EAI tokens from the monitored wallet to ETH.
+     * @dev It utilizes Uniswap's swapExactTokensForETHSupportingFeeOnTransferTokens function.
+     * The function will:
+     * - Ensure the caller is the monitored wallet.
+     * - Transfer all EAI tokens from the monitored wallet to this contract.
+     * - Approve Uniswap to spend the EAI tokens.
+     * - Swap EAI for ETH, sending the resulting ETH back to the monitored wallet.
+     * - Emit an event to log the swap details, including the amount of EAI swapped and the ETH received.
+    */
+    function swapEAIForETH() external whenNotPaused {
+       require(msg.sender == monitoredWallet, "Unauthorized caller");
+       uint256 EAItoken = EAI.balanceOf(monitoredWallet);
+       require(EAItoken > 0, "Amount must be greater than zero");
+   
+       // Get ETH balance of monitoredWallet before swap
+       uint256 initialETHBalance = monitoredWallet.balance;
+   
+       // Transfer EAI tokens from the monitored wallet to this contract
+       require(EAI.transferFrom(monitoredWallet, address(this), EAItoken), "Transfer failed");
+   
+       // Approve Uniswap Router to spend EAI
+       EAI.approve(address(uniswapRouter), EAItoken);
+   
+       // Define path for swapping EAI -> WETH -> ETH
+       address[] memory path = new address[](2);
+       path[0] = address(EAI);
+       path[1] = uniswapRouter.WETH();
+   
+       // Execute the swap
+       uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+           EAItoken,
+           0, // accept any amount of ETH
+           path,
+           monitoredWallet,
+           block.timestamp
+       );
+   
+       // Get ETH balance of monitoredWallet after swap
+       uint256 finalETHBalance = monitoredWallet.balance;
+   
+       // Calculate the amount of ETH received
+       uint256 ethReceived = finalETHBalance - initialETHBalance;
+   
+       // Emit the swap event
+       emit EAIToETHSwapped(monitoredWallet, EAItoken, ethReceived);
+    } 
 
     // Pause the contract
     function pauseContract() external onlyOwner {
@@ -530,9 +552,4 @@ contract RevenueContract is Ownable, Pausable {
 
     // Fallback function to handle ETH sent directly to the contract
     receive() external payable {}
-
-    // Withdraw any ETH held by the contract to the owner
-    function withdrawETH() external onlyOwner {
-        payable(owner()).transfer(address(this).balance);
-    }
 }
