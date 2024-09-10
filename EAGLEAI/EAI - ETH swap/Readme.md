@@ -17,6 +17,6 @@ This is a smart contract designed to swap **EAI tokens** for **ETH** using Unisw
 
 ### Contract on testnet
 ```solidity
-https://testnet.bscscan.com/address/0x0a17C362A6CFA5aF881C98a5ce9Ef5133B71E928
+https://testnet.bscscan.com/address/0x5318CD6AFaD08350D5919ce73e3B90862cE92723#readContract
 
 
