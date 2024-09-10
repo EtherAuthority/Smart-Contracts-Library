@@ -475,9 +475,6 @@ contract RevenueContract is Ownable, Pausable {
     IERC20 public EAI;
     IUniswapV2Router02 public uniswapRouter;
     address public monitoredWallet;
-    address public WETHAddress;
-
-    event SwappedEAIForETH(uint256 eaiAmount, uint256 ethReceived);
 
     constructor(
         address _eaiTokenAddress,
