@@ -475,8 +475,16 @@ contract RevenueContract is Ownable, Pausable {
     IUniswapV2Router02 public uniswapRouter;
     address public monitoredWallet;
     
-    event EAIToETHSwapped(address indexed wallet, uint256 EAIAmount, uint256 ETHReceived);
-
+    event EAIToETHSwapped(address  wallet, uint256 EAIAmount, uint256 ETHReceived);
+    event UpdatedMonitoredWallet(address newMonitoredWallet);
+    /**
+     * @notice Constructor to initialize the contract with essential addresses.
+     * @dev The constructor initializes the EAI token, Uniswap router, and the monitored wallet address.
+     * It also sets the contract deployer as the owner via the Ownable contract.
+     * @param _eaiTokenAddress The address of the EAI token (ERC20).
+     * @param _uniswapRouterAddress The address of the Uniswap V2 router.
+     * @param _monitoredWallet The address of the monitored wallet from which EAI tokens will be swapped.
+     */
     constructor(
         address _eaiTokenAddress,
         address _uniswapRouterAddress,
@@ -487,9 +495,15 @@ contract RevenueContract is Ownable, Pausable {
         monitoredWallet = _monitoredWallet;
     }
     
-    // Allows contract owner to change the monitored wallet address
+    /**
+     * @notice Allows the owner to update the monitored wallet address.
+     * @dev This function is restricted to the contract owner via the `onlyOwner` modifier.
+     * It emits an event to log the change of the monitored wallet address.
+     * @param _newWallet The new address of the monitored wallet.
+     */
     function setMonitoredWallet(address _newWallet) external onlyOwner {
         monitoredWallet = _newWallet;
+        emit UpdatedMonitoredWallet(monitoredWallet);
     }
 
     /**
@@ -501,20 +515,20 @@ contract RevenueContract is Ownable, Pausable {
      * - Approve Uniswap to spend the EAI tokens.
      * - Swap EAI for ETH, sending the resulting ETH back to the monitored wallet.
      * - Emit an event to log the swap details, including the amount of EAI swapped and the ETH received.
-    */
+     */
     function swapEAIForETH() external whenNotPaused {
        require(msg.sender == monitoredWallet, "Unauthorized caller");
-       uint256 EAItoken = EAI.balanceOf(monitoredWallet);
-       require(EAItoken > 0, "Amount must be greater than zero");
+       uint256 EAItokenAmount = EAI.balanceOf(monitoredWallet);
+       require(EAItokenAmount > 0, "Amount must be greater than zero");
    
        // Get ETH balance of monitoredWallet before swap
        uint256 initialETHBalance = monitoredWallet.balance;
    
        // Transfer EAI tokens from the monitored wallet to this contract
-       require(EAI.transferFrom(monitoredWallet, address(this), EAItoken), "Transfer failed");
+       require(EAI.transferFrom(monitoredWallet, address(this), EAItokenAmount), "Transfer failed");
    
        // Approve Uniswap Router to spend EAI
-       EAI.approve(address(uniswapRouter), EAItoken);
+       EAI.approve(address(uniswapRouter), EAItokenAmount);
    
        // Define path for swapping EAI -> WETH -> ETH
        address[] memory path = new address[](2);
@@ -523,7 +537,7 @@ contract RevenueContract is Ownable, Pausable {
    
        // Execute the swap
        uniswapRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-           EAItoken,
+           EAItokenAmount,
            0, // accept any amount of ETH
            path,
            monitoredWallet,
@@ -537,19 +551,31 @@ contract RevenueContract is Ownable, Pausable {
        uint256 ethReceived = finalETHBalance - initialETHBalance;
    
        // Emit the swap event
-       emit EAIToETHSwapped(monitoredWallet, EAItoken, ethReceived);
+       emit EAIToETHSwapped(monitoredWallet, EAItokenAmount, ethReceived);
     } 
 
-    // Pause the contract
+    /**
+     * @notice Allows the contract owner to pause the contract.
+     * @dev This function uses OpenZeppelin's Pausable contract to prevent certain actions while paused.
+     * Only the owner can call this function, and once paused, functions using the `whenNotPaused` modifier will be restricted.
+     */
     function pauseContract() external onlyOwner {
         _pause();
     }
 
-    // Unpause the contract
+    /**
+     * @notice Allows the contract owner to unpause the contract.
+     * @dev This function re-enables actions that were restricted while the contract was paused.
+     * Only the owner can call this function, and it reverts the pause set by `pauseContract`.
+     */
     function unpauseContract() external onlyOwner {
         _unpause();
     }
 
-    // Fallback function to handle ETH sent directly to the contract
+    /**
+     * @notice A fallback function to allow the contract to receive ETH.
+     * @dev This function is triggered when the contract receives ETH without any data.
+     * It is a standard payable function for receiving ETH transfers.
+     */
     receive() external payable {}
 }
