@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 
-
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -282,14 +281,14 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
    /**
    * @dev Define the maximum purchase limit
    */
-    uint256 public constant MAX_PURCHASE_AMOUNT = 10000 * 1e6; // $10,000 in USDC (assuming 6 decimals)
+    uint256 public constant MAX_PURCHASE_AMOUNT = 10000; // $10,000 in USDC (assuming 6 decimals)
     // State variables for presale and claim phases
     bool public presaleActive;
     bool public claimActive;
 
 
-    IERC20 public USDC = IERC20(0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B);
-    IERC20 public token = IERC20(0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47); 
+    IERC20 public USDC = IERC20(0xf2B1114C644cBb3fF63Bf1dD284c8Cd716e95BE9);
+    IERC20 public token = IERC20(0x870f80823772b3Ef098844A852dDfBeec1061776); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -480,23 +479,29 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
        
         PurchaseDetails storage purchase = purchases[wallet][uint256(phase)];
         (uint256 vestedAmount, uint256  updatedclaimMonth)= calculateVestedAmount(purchase.amount,purchase.claimedMonth);
-        uint256 unclaimedAmount = purchase.amount - purchase.claimedAmount;
+       
+        
         purchase.claimedMonth=updatedclaimMonth;
-        if (unclaimedAmount > 0) {
-            claimableAmount += unclaimedAmount;
-            purchase.claimedAmount += vestedAmount;            
-        }else if(unclaimedAmount == 0){
+        if (vestedAmount > 0) {
+            claimableAmount += vestedAmount;
+            purchase.claimedAmount += vestedAmount;  
+            
+        }         
+        
+        uint256 unclaimedAmount = purchase.amount - purchase.claimedAmount;        
+        
+        if(unclaimedAmount == 0){
             purchase.amount=0;
-        }
+        } 
     
 
-        require(claimableAmount > 0, "No tokens available for claiming");
+        require(vestedAmount > 0, "No tokens available for claiming");
         require(
-            token.transfer(wallet, claimableAmount),
+            token.transfer(wallet, vestedAmount),
             "Token transfer failed"
         );
 
-        emit TokensClaimed(wallet, claimableAmount);
+        emit TokensClaimed(wallet, vestedAmount);
     }
 
     function calculateVestedAmount(uint256 totalAmount, uint256 claimedMonth)
@@ -506,23 +511,23 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     {
         
         uint256 vestedAmount = 0;
-        if (block.timestamp >= vestingStartdate + (1 * 31 days) && claimedMonth == 0) {
+        if (block.timestamp >= vestingStartdate && claimedMonth == 0) {
             vestedAmount += (totalAmount * 10) / 100;
             claimedMonth = 1;
         }
-        if (block.timestamp >= vestingStartdate + (2 *  31 days) && claimedMonth == 1) {
+        if (block.timestamp > vestingStartdate + (1 * 31 days) && claimedMonth == 1) {
             vestedAmount += (totalAmount * 15) / 100;
             claimedMonth = 2;
         }
-        if (block.timestamp >= vestingStartdate + (3 *  31 days)  && claimedMonth == 2) {
+        if (block.timestamp > vestingStartdate + (2 * 31 days) && claimedMonth == 2) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 3;
         }
-        if (block.timestamp >= vestingStartdate + (4 *  31 days) && claimedMonth == 3) {
+        if (block.timestamp > vestingStartdate + (3 * 31 days) && claimedMonth == 3) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 4;
         }
-        if (block.timestamp >= vestingStartdate + (5 *  31 days) && claimedMonth == 4) {
+        if (block.timestamp > vestingStartdate + (4 * 31 days) && claimedMonth == 4 && claimedMonth != 5) {
             vestedAmount += (totalAmount * 25) / 100;
             claimedMonth = 5;
         }
@@ -640,12 +645,19 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         uint256 phaseIndex,
         uint256 newStartDate,
         uint256 newEndDate
-    ) external onlyOwner {
+    ) external whenPresaleActive onlyOwner {
         require(phaseIndex < presalePhases.length, "Invalid phase index");
         require(newEndDate > newStartDate, "End date must be after start date");
-        presalePhases[phaseIndex].startDateTime = newStartDate;
-        presalePhases[phaseIndex].endDateTime = newEndDate;
-        updateActivePhases();  // Ensure the active status of the phases is updated based on the new dates
+
+        for (uint256 i = 1; i < presalePhases.length; i++) {
+            if(phaseIndex !=0)
+                require(presalePhases[phaseIndex-1].startDateTime < newStartDate || presalePhases[phaseIndex-1].endDateTime < newEndDate);              
+       }
+
+         presalePhases[phaseIndex].startDateTime = newStartDate;
+         presalePhases[phaseIndex].endDateTime = newEndDate;
+         updateActivePhases();  // Ensure the active status of the phases is updated based on the new dates
+        
     }
 
 }
