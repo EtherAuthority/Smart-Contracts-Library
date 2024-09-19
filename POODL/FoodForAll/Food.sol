@@ -328,7 +328,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract TestTokens is Context, IERC20, Ownable {
+contract FoodToken is Context, IERC20, Ownable {
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -354,7 +354,6 @@ contract TestTokens is Context, IERC20, Ownable {
     uint256 public constant BUYREFLECTIONTAX=0;
     //sell tax percentage
     uint256 public  constant SELLREFLECTIONTAX = 50;
-    uint256 public constant MAXAMOUNT = 300 * 10**6 * 10**18;
  
     event ReflectedFee(uint256 totalReflectFee);
     event Burn(address,uint256);
@@ -379,7 +378,7 @@ contract TestTokens is Context, IERC20, Ownable {
     *
     * @param _router The address of the Uniswap V2 router.
     */
-    function setRouter(address _router)external  onlyOwner(){
+    function setRouter(address _router)external  onlyOwner{
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
@@ -749,7 +748,6 @@ contract TestTokens is Context, IERC20, Ownable {
     * 
     * @notice This function is intended for internal use and should not be called directly.
     */
-
     function _approve(address owner, address spender, uint256 amount) private {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
@@ -772,9 +770,6 @@ contract TestTokens is Context, IERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-         if(from != owner() && to != owner())
-        require(amount <= MAXAMOUNT, "Transfer amount exceeds the maxTxAmount.");
-
  
         if (from == owner() || to == owner()){
             _tokenTransfer(from,to,amount,false);
