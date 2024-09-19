@@ -286,6 +286,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     bool public presaleActive;
     bool public claimActive;
 
+    uint256 public claimableAmount;
+
 
     IERC20 public USDC = IERC20(0xf2B1114C644cBb3fF63Bf1dD284c8Cd716e95BE9);
     IERC20 public token = IERC20(0x870f80823772b3Ef098844A852dDfBeec1061776); 
@@ -454,22 +456,22 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     }
 
     function claimTokens(PresalePhase phase) whenClaimActive external {
-        claimCalculation(msg.sender,phase);
+        _claimCalculation(msg.sender,phase);
     }
 
     function onlyOwnerClaimTokens(address[] memory users,PresalePhase phase) public onlyOwner {
         for (uint256 i = 0; i < users.length; i++) {
-            claimCalculation(users[i],phase);
+            _claimCalculation(users[i],phase);
         }
     }
 
-    function claimCalculation(address wallet,PresalePhase phase) public view {
+    function _claimCalculation(address wallet,PresalePhase phase) internal  {
         require(
             block.timestamp >= vestingStartdate,
             "Vesting period has not started yet"
         );
        
-        uint256 claimableAmount;
+        
        
         PurchaseDetails storage purchase = purchases[wallet][uint256(phase)];
         (uint256 vestedAmount, uint256  updatedclaimMonth)= calculateVestedAmount(purchase.amount,purchase.claimedMonth);
