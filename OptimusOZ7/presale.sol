@@ -366,13 +366,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         require(claimActive!=true,"Vesting time already started");
         presaleActive = true;
         claimActive = false;  
-        for (uint256 i = 0; i < presalePhases.length; i++) {
-            if (block.timestamp >= presalePhases[i].startDateTime && block.timestamp <= presalePhases[i].endDateTime) {
-                presalePhases[i].activeStage = true;
-            } else {
-                presalePhases[i].activeStage = false;
-            }
-        }      
+       updateActivePhases();
     }
 
     function updateActivePhases() public onlyOwner {    
@@ -469,7 +463,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         }
     }
 
-    function claimCalculation(address wallet,PresalePhase phase) public {
+    function claimCalculation(address wallet,PresalePhase phase) public view {
         require(
             block.timestamp >= vestingStartdate,
             "Vesting period has not started yet"
