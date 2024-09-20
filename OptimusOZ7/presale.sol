@@ -286,9 +286,6 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     bool public presaleActive;
     bool public claimActive;
 
-    uint256 public claimableAmount;
-
-
     IERC20 public USDC = IERC20(0xf2B1114C644cBb3fF63Bf1dD284c8Cd716e95BE9);
     IERC20 public token = IERC20(0x870f80823772b3Ef098844A852dDfBeec1061776); 
     PresaleInfo[5] public presalePhases;
@@ -472,7 +469,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         );
        
         
-       
+        uint256 claimableAmount;
         PurchaseDetails storage purchase = purchases[wallet][uint256(phase)];
         (uint256 vestedAmount, uint256  updatedclaimMonth)= calculateVestedAmount(purchase.amount,purchase.claimedMonth);
        
