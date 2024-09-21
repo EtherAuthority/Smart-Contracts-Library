@@ -654,8 +654,6 @@ contract IGCtoken is ERC20, Ownable {
         bool active;
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
-    //mapping(address => _dividendDetails[]) public dividendDetails;
-
     _dividendDetails[] public dividendDetails;
     
     address[] public holders;
@@ -757,16 +755,12 @@ contract IGCtoken is ERC20, Ownable {
 
         require(amount > 0, "Amount must be greater than 0");
         
-        if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
+        if (balanceOf(to) == 0 && amount > 0) {
             holders.push(to);
             isHolder[to] = true;
             holdersIndex[to] = holders.length;
         }
 
-        if (balanceOf(from) == 0 && isHolder[from]) {  
-        
-            isHolder[from] = false;
-        }
         super._beforeTokenTransfer(from, to, amount);
     }
 
@@ -776,7 +770,7 @@ contract IGCtoken is ERC20, Ownable {
         uint256 amount
     ) internal override  {
 
-        if (balanceOf(from) == 0 && isHolder[from]) {  
+        if (balanceOf(from) == 0) {  
             isHolder[from] = false;
         }
     }
