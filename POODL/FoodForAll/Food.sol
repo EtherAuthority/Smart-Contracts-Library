@@ -1,3 +1,4 @@
+                            
 /**
         ███████╗ ██████╗  ██████╗ ██████╗     ███████╗ ██████╗ ██████╗      █████╗ ██╗     ██╗     
         ██╔════╝██╔═══██╗██╔═══██╗██╔══██╗    ██╔════╝██╔═══██╗██╔══██╗    ██╔══██╗██║     ██║     
@@ -5,8 +6,7 @@
         ██╔══╝  ██║   ██║██║   ██║██║  ██║    ██╔══╝  ██║   ██║██╔══██╗    ██╔══██║██║     ██║     
         ██║     ╚██████╔╝╚██████╔╝██████╔╝    ██║     ╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
         ╚═╝      ╚═════╝  ╚═════╝ ╚═════╝     ╚═╝      ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝                                                                                       
-*/                                
-
+*/   
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.26;
@@ -371,26 +371,29 @@ contract FoodToken is Context, IERC20, Ownable {
     }   
     
     /**
-    * @dev Function to set the Uniswap V2 router and create a trading pair for the token.
-    * Only the contract owner can call this function. It sets up the Uniswap V2 router and
-    * creates a liquidity pair between this token and WETH (Wrapped Ether).
-    * The owner and the contract itself are excluded from transaction fees.
+    * @dev Sets the Uniswap router and creates a pair for this token if it doesn't already exist.
+    * If the pair already exists, it will use the existing pair instead of creating a new one.
     *
-    * @param _router The address of the Uniswap V2 router.
+    * @param _router The address of the UniswapV2 router.
     */
     function setRouter(address _router)external  onlyOwner{
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_router);
-         // Create a uniswap pair for this new token
-        uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
-            .createPair(address(this), _uniswapV2Router.WETH());
-
+         // Check if the pair is already created
+        address pair = IUniswapV2Factory(_uniswapV2Router.factory())
+            .getPair(address(this), _uniswapV2Router.WETH());
+    
+        // If the pair doesn't exist, create it
+        if (pair == address(0)) {
+            uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
+                .createPair(address(this), _uniswapV2Router.WETH());
+        } else {
+            // Pair already exists, use the existing pair
+            uniswapV2Pair = pair;
+        }
         // set the rest of the contract variables
         uniswapV2Router = _uniswapV2Router;
         
-        //exclude owner and this contract from fee
-        _isExcludedFromFee[owner()] = true;
-        _isExcludedFromFee [address(this)] = true;
-     
+        excludeFromReward(uniswapV2Pair);
     }
 
     /**
@@ -608,6 +611,23 @@ contract FoodToken is Context, IERC20, Ownable {
         uint256 currentRate =  _getRate();
         return rAmount / currentRate;
     }
+    
+    /**
+    * @dev Excludes an account from receiving rewards.
+    * If the account holds tokens, it converts their reflection balance
+    * to the actual token balance before exclusion.
+    * The account is then marked as excluded, and added to the list of excluded accounts.
+    *
+    * @param account The address of the account to be excluded from rewards.
+    */
+    function excludeFromReward(address account) private {
+        require(!_isExcluded[account], "Account is already excluded");
+        if(_rOwned[account] > 0) {
+            _tOwned[account] = tokenFromReflection(_rOwned[account]);
+        }
+        _isExcluded[account] = true;
+        _excluded.push(account);
+    }
  
     /**
     * @dev Internal function to handle the reflection of fees. 
@@ -770,26 +790,16 @@ contract FoodToken is Context, IERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
- 
-        if (from == owner() || to == owner()){
-            _tokenTransfer(from,to,amount,false);
-            return;
-        }
-        
+
         //indicates if fee should be deducted from transfer
         bool takeFee = true;
-        
-        //if any account belongs to _isExcludedFromFee account then remove the fee
-        if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
-            takeFee = false;
-        }
         
         //if takeFee is true then set sell or buy tax percentage
         if(takeFee)
         _sellBuyTax(from,to); 
        _tokenTransfer(from,to,amount,takeFee);
     }
-
+    
     /**
     * @dev Internal function to apply the appropriate tax based on whether the transaction is a buy or a sell.
     * It adjusts the reflection tax percentage based on the type of transaction and whether it is a buy,
@@ -802,7 +812,7 @@ contract FoodToken is Context, IERC20, Ownable {
         //sell and buy logic
         bool isBuy = from == uniswapV2Pair;
         bool isSell = to == uniswapV2Pair;
-
+             
             if (isBuy) {    
               refAmt = BUYREFLECTIONTAX; //0
             } 
@@ -881,7 +891,7 @@ contract FoodToken is Context, IERC20, Ownable {
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
-
+    
     /**
     * @dev Internal function to handle token transfers from a regular address to an excluded address.
     * It calculates the reflection and token values, updates the balances of the sender and excluded recipient,
