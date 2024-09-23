@@ -1,4 +1,4 @@
-                            
+                              
 /**
         ███████╗ ██████╗  ██████╗ ██████╗     ███████╗ ██████╗ ██████╗      █████╗ ██╗     ██╗     
         ██╔════╝██╔═══██╗██╔═══██╗██╔══██╗    ██╔════╝██╔═══██╗██╔══██╗    ██╔══██╗██║     ██║     
@@ -394,6 +394,7 @@ contract FoodToken is Context, IERC20, Ownable {
         uniswapV2Router = _uniswapV2Router;
         
         excludeFromReward(uniswapV2Pair);
+        _isExcludedFromFee[address(this)] = true;
     }
 
     /**
@@ -628,7 +629,37 @@ contract FoodToken is Context, IERC20, Ownable {
         _isExcluded[account] = true;
         _excluded.push(account);
     }
- 
+    
+    /**
+    * @dev Excludes the specified account from transaction fees.
+    * Only the contract owner can call this function.
+    * 
+    * @param account The address of the account to exclude from fees.
+    */
+    function excludeFromFee(address account) external  onlyOwner {
+        _isExcludedFromFee[account] = true;
+    }
+    
+    /**
+    * @dev Includes the specified account in transaction fees.
+    * Only the contract owner can call this function.
+    * 
+    * @param account The address of the account to include in fees.
+    */
+    function includeInFee(address account) external  onlyOwner {
+        _isExcludedFromFee[account] = false;
+    }
+
+    /**
+    * @dev Checks if the specified account is excluded from transaction fees.
+    * This function can be called by anyone.
+    * 
+    * @param account The address of the account to check.
+    * @return bool Returns true if the account is excluded from fees, false otherwise.
+    */
+    function isExcludedFromFee(address account) external  view returns(bool) {
+        return _isExcludedFromFee[account];
+    }
     /**
     * @dev Internal function to handle the reflection of fees. 
     * It updates the total reflection supply and total fees collected. 
@@ -794,6 +825,9 @@ contract FoodToken is Context, IERC20, Ownable {
         //indicates if fee should be deducted from transfer
         bool takeFee = true;
         
+        if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
+            takeFee = false;
+        }
         //if takeFee is true then set sell or buy tax percentage
         if(takeFee)
         _sellBuyTax(from,to); 
@@ -812,7 +846,7 @@ contract FoodToken is Context, IERC20, Ownable {
         //sell and buy logic
         bool isBuy = from == uniswapV2Pair;
         bool isSell = to == uniswapV2Pair;
-             
+              
             if (isBuy) {    
               refAmt = BUYREFLECTIONTAX; //0
             } 
@@ -820,7 +854,7 @@ contract FoodToken is Context, IERC20, Ownable {
               refAmt = SELLREFLECTIONTAX; //50%           
             }
             else {
-             removeAllFee();
+              removeAllFee();
             }
     } 
 
