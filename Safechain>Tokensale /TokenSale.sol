@@ -327,7 +327,7 @@ contract TokenSale is Context, IERC20, Ownable{
 
     mapping(address=>_users[]) public userPurchase;
 
-    uint256 public constant claimInterval=5;
+    uint256 public constant claimInterval=2592000;
 
     mapping(address=>uint256) public claimedIndex;
 
@@ -339,6 +339,9 @@ contract TokenSale is Context, IERC20, Ownable{
     uint8 private _decimals;
     string private _symbol;
     string private _name;
+
+    event BuyToken(address indexed user,uint256 indexed amount,uint256 indexed price,uint256 time);
+    event ClaimToken(address indexed user,uint256 indexed amount,uint256 time);
 
     constructor() {
         _name = "TestToken";
@@ -459,9 +462,6 @@ contract TokenSale is Context, IERC20, Ownable{
         return true;
     }
 
-    function gettime() public view returns(uint256){
-        return block.timestamp;
-    }
 
     /**
      * @dev Atomically increases the allowance granted to `spender` by the caller.
@@ -624,6 +624,7 @@ contract TokenSale is Context, IERC20, Ownable{
                 
                 userPurchase[msg.sender].push(user);
                 Stages[i].soldTokens+=_tokenAmount;
+                emit BuyToken(msg.sender,_tokenAmount,Stages[i].price,block.timestamp);
                 break;
             }
         }
@@ -651,7 +652,7 @@ contract TokenSale is Context, IERC20, Ownable{
                 userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
                 userPurchase[msg.sender][i].claimCount+=totalMonth;
                 _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
-
+                emit ClaimToken(msg.sender, ((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth, block.timestamp);
                 if(userPurchase[msg.sender][i].claimCount==18)
                 {
                     claimedIndex[msg.sender]++;
