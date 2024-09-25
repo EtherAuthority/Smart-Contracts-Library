@@ -328,8 +328,6 @@ contract TokenSale is Context, IERC20, Ownable{
 
     uint256 public constant claimInterval=30;
 
-    mapping(address=>uint256) public claimedIndex;
-
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -621,28 +619,29 @@ contract TokenSale is Context, IERC20, Ownable{
 
     }
 
+
     function claimToken() external{
 
         for(uint256 i=0;i<userPurchase[msg.sender].length;i++)
         {
             if(userPurchase[msg.sender][i].claimCount<18)
             {
-                uint256 loopcounter=18-userPurchase[msg.sender][i].claimCount;
-                for(uint256 j=0;j<loopcounter;j++)
-                {
-                    if(userPurchase[msg.sender][i].claimCount<17 && userPurchase[msg.sender][i].lastClaimIndexTime+claimInterval<=block.timestamp)
-                    {
-                        userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval;
+                uint256 totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
+                //uint256 loopcounter=18-userPurchase[msg.sender][i].claimCount;
+                // for(uint256 j=0;j<loopcounter;j++)
+                // {
+                    // if(userPurchase[msg.sender][i].claimCount<18 && userPurchase[msg.sender][i].lastClaimIndexTime+claimInterval<=block.timestamp)
+                    // {
+                        userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
                         userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
-                        userPurchase[msg.sender][i].claimCount++;
-                        _transfer(address(this),msg.sender,(userPurchase[msg.sender][i].tokenAmount*5)/100);
-                        claimedIndex[msg.sender]=userPurchase[msg.sender][i].claimCount;
-                    }
-                    else 
-                    {
-                        break;
-                    }
-                }
+                        userPurchase[msg.sender][i].claimCount+=totalMonth;
+                        _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
+                    // }
+                    // else 
+                    // {
+                    //     break;
+                    // }
+               // }
             }
             
         }
