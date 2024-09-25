@@ -348,8 +348,8 @@ contract TokenSale is Context, IERC20, Ownable{
         _name = "TestToken";
         _symbol = "TKN";
         _decimals = 18;
-        _totalSupply = 3150000 * 10 ** _decimals;
-        _balances[address(this)] = _totalSupply;
+        // _totalSupply = 3150000 * 10 ** _decimals;
+        // _balances[address(this)] = _totalSupply;
 
         emit Transfer(address(0), address(this), _totalSupply);
     }
@@ -595,6 +595,9 @@ contract TokenSale is Context, IERC20, Ownable{
         });
 
         Stages.push(stage);
+
+        _totalSupply += _tokenamt;
+        _balances[address(this)] += _tokenamt;
 
         if(_end>endSaledate)
         {
