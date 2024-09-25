@@ -305,7 +305,8 @@ library SafeMath {
 
 contract TokenSale is Context, IERC20, Ownable{
     using SafeMath for uint256;
-    address public tokenAddress;
+    address public susdtokenAdd;
+    address public usdttokenAdd;
     uint256 public endSaledate;
     struct _Stages{
         uint256 startTime;
@@ -569,9 +570,10 @@ contract TokenSale is Context, IERC20, Ownable{
     }
 
 
-    function setTokenAddress(address _tokenadd) public onlyOwner{
-        require(_tokenadd!=address(0),"Invalid Token Address");
-        tokenAddress=_tokenadd;
+    function setTokenAddress(address _susdadd,address _usdtadd) public onlyOwner{
+        require(_susdadd!=address(0) && _usdtadd!=address(0),"Invalid Token Address");
+        susdtokenAdd=_susdadd;
+        usdttokenAdd=_usdtadd;
     }
 
     function setStage(uint256 _start,uint256 _end,uint256 _price,uint256 _tokenamt) public onlyOwner{
@@ -600,7 +602,8 @@ contract TokenSale is Context, IERC20, Ownable{
         }
     }
 
-    function buyToken(uint256 _tokenAmount) external {
+    function buyToken(uint256 _tokenAmount,address _tokenaddress) external {
+        require(_tokenaddress==susdtokenAdd || _tokenaddress==usdttokenAdd,"Invalid Token Address Provided");
         require(_tokenAmount>0,"Invalid Token Amount");
         require(endSaledate>block.timestamp,"Sale Ended");
         for(uint256 i=0;i<Stages.length;i++)
@@ -610,7 +613,7 @@ contract TokenSale is Context, IERC20, Ownable{
             {
                 require(Stages[i].tokenAmount-Stages[i].soldTokens>=_tokenAmount,"Insufficient Balance");
                 
-                IERC20(tokenAddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
+                IERC20(_tokenaddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
 
                 _transfer(address(this),msg.sender,(_tokenAmount*10)/100);
 
