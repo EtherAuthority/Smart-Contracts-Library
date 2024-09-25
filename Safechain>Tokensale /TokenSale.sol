@@ -306,6 +306,7 @@ library SafeMath {
 contract TokenSale is Context, IERC20, Ownable{
     using SafeMath for uint256;
     address public tokenAddress;
+    uint256 public endSaledate;
     struct _Stages{
         uint256 startTime;
         uint256 endTime;
@@ -592,17 +593,23 @@ contract TokenSale is Context, IERC20, Ownable{
         });
 
         Stages.push(stage);
+
+        if(_end>endSaledate)
+        {
+            endSaledate=_end;
+        }
     }
 
     function buyToken(uint256 _tokenAmount) external {
         require(_tokenAmount>0,"Invalid Token Amount");
+        require(endSaledate>block.timestamp,"Sale Ended");
         for(uint256 i=0;i<Stages.length;i++)
         {
             if(block.timestamp>=Stages[i].startTime && block.timestamp<=Stages[i].endTime)
             {
                 require(Stages[i].tokenAmount-Stages[i].soldTokens>=_tokenAmount,"Insufficient Balance");
                 
-                //IERC20(tokenAddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
+                IERC20(tokenAddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
 
                 _transfer(address(this),msg.sender,(_tokenAmount*10)/100);
 
@@ -651,6 +658,46 @@ contract TokenSale is Context, IERC20, Ownable{
             }
             
         }
+    }
+
+
+    function purchaseLength(address _add) public view returns(uint256){
+        return userPurchase[_add].length;
+    }
+
+    function stagelength() public view returns(uint256){
+        return Stages.length;
+    }
+
+    function viewClaimAmount() public view returns(uint256){
+
+        uint256 totalclaim;
+        for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
+        {
+            if(userPurchase[msg.sender][i].claimCount<18)
+            {
+                uint256 totalMonth;
+                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                {
+                    totalMonth=18-userPurchase[msg.sender][i].claimCount;
+                }
+                else 
+                {
+                    totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
+                }
+                
+                totalclaim+=((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth;       
+                  
+            }
+            
+        }
+
+        return totalclaim;
+    }
+
+    function leftTokensStagewise(uint256 _stage) public view returns(uint256)
+    {
+        return Stages[_stage].tokenAmount-Stages[_stage].soldTokens;
     }
 
     receive() external payable { }
