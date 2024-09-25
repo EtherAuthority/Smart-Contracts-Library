@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
+import 'hardhat/console.sol';
+
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -290,8 +292,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     bool public claimActive;
 
 
-    IERC20 public USDC = IERC20(0xd60d2BdB60E9FC877cBA00fFf5F0676B910E3eC5);
-    IERC20 public token = IERC20(0x928C0221CA29E42d1b3f820c8B3C43e5A3bF65Ef); 
+    IERC20 public USDC = IERC20(0xd9145CCE52D386f254917e481eB44e9943F39138);
+    IERC20 public token = IERC20(0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8); 
     PresaleInfo[5] public presalePhases;
 
     event TokensPurchasedUsdc(
@@ -325,8 +327,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
             10000000 * 1e18, // Set an initial max amount for Phase 1
             100 * 1e18,
             0,
-            1726541429,      // Start date for Phase 1 (example timestamp)
-            1726920987,      // End date for Phase 1 (example timestamp)
+            1727264987,      // Start date for Phase 1 (example timestamp)
+            1727405429,      // End date for Phase 1 (example timestamp)
             false            // Active stage
         );
         presalePhases[uint256(PresalePhase.Phase2)] = PresaleInfo(
@@ -373,22 +375,19 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
     function updateActivePhases() public onlyOwner {    
 
-    for (uint256 i = 0; i < presalePhases.length; i++) {
-            if (block.timestamp >= presalePhases[i].startDateTime && block.timestamp <= presalePhases[i].endDateTime) {
-                presalePhases[i].activeStage = true;
+    for (uint256 i = 1; i <= presalePhases.length; i++) {
+            if (block.timestamp >= presalePhases[i-1].startDateTime && block.timestamp <= presalePhases[i-1].endDateTime) {
+                presalePhases[i-1].activeStage = true;
             } else {
-                presalePhases[i].activeStage = false;
+                presalePhases[i-1].activeStage = false;
             }
         }
     }
 
-    function activePhase() public view returns(uint256){
-        for (uint256 i = 0; i < presalePhases.length; i++) {
-            if (block.timestamp >= presalePhases[i].startDateTime && block.timestamp <= presalePhases[i].endDateTime) {
-                if(presalePhases[i].activeStage == true)
-                    return i;
-            }else 
-                    return 0;   
+    function activePhase() public returns(uint256){        
+        for (uint256 i = 0; i < presalePhases.length; i++) {           
+                require(presalePhases[i].activeStage == true,"Phase is not active!");
+                return i;            
         }
     }
 
@@ -450,6 +449,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         newPurchase.tokenAmount += tokensToBuy;
         newPurchase.purchaseTime = block.timestamp;        
         newPurchase.purchaseStage = uint256(phase);
+
+        totalPurchased[msg.sender]+=tokensToBuy;
         
 
         purchases[msg.sender][uint256(phase)].usdcAmount += amount;
@@ -469,37 +470,25 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         }
     }
 
-    // Claim function, updated for vesting
-    function claimCalculation(address wallet) public  {
+   function claimCalculation(address wallet) public {
         require(block.timestamp > vestingStartTime, "Vesting has not started yet");
 
         uint256 totalAmount = totalPurchased[wallet]; // Total amount buyer has purchased
-        uint256 claimableAmount = 0;                      // Amount buyer is allowed to claim
+        uint256 claimableAmount = 0;                  // Amount buyer is allowed to claim
 
-        uint256 monthsPassed = (block.timestamp - vestingStartTime) / 30 days; // Calculate how many months have passed
+        bool[5] memory claimableMonths = this.viewClaimMonth(wallet); // External call
+       
 
-        // Ensure vesting has passed at least one month
-        require(monthsPassed > 0, "No tokens are vested yet");
-
-        // Loop through each vesting month and calculate the claimable amount
-        for (uint8 i = 0; i < monthsPassed && i < 5; i++) {
-            // Check if buyer has already claimed for this month
-            if (!hasClaimed[wallet][i]) {
-                uint256 percentage = vestingPercentages[i];
-                uint256 claimForThisMonth = (totalAmount * percentage) / 100;
-
-                claimableAmount += claimForThisMonth;
-                hasClaimed[wallet][i] = true; // Mark this month's claim as done
+        for (uint8 i = 0; i < 5; i++) {
+            if (claimableMonths[i]==true) {
+                claimableAmount += totalAmount / 5;
+                hasClaimed[wallet][i]=true;
             }
         }
 
-        // Ensure they have something to claim
         require(claimableAmount > 0, "No claimable tokens available");
 
-        // Update total claimed amount for the buyer
         totalClaimed[wallet] += claimableAmount;
-
-        // Transfer claimable amount to buyer
         token.transfer(wallet, claimableAmount);
     }
 
@@ -508,17 +497,19 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         return totalClaimed[_buyer];
     }
 
-    // View claim availability for each vesting month (returns an array of booleans)
-    function viewClaimMonthAvailability(address _buyer) external view returns (bool[5] memory) {
+    // View claim month for each vesting month (returns an array of booleans)
+    function viewClaimMonth(address _buyer) external view returns (bool[5] memory) {
         bool[5] memory availableToClaim;
         
         // Calculate how many months have passed since vesting started
-        uint256 monthsPassed = (block.timestamp - vestingStartTime) / 30 days;
+        uint256 monthsPassed = (31*1*(24*60*60));
 
+         console.log("monthsPassed",monthsPassed);
         // Loop through each vesting month and set availability
         for (uint8 i = 0; i < 5; i++) {
-            if (i < monthsPassed && !hasClaimed[_buyer][i]) {
+            if (block.timestamp >= vestingStartdate+(monthsPassed*i) && !hasClaimed[_buyer][i]) {
                 // If the vesting month has passed and the buyer hasn't claimed, mark it as available
+                  console.log("vestingStartdate+(monthsPassed*i)",vestingStartdate+(monthsPassed*i));
                 availableToClaim[i] = true;
             } else {
                 // Otherwise, mark it as not available
@@ -658,8 +649,8 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
                 require(presalePhases[phaseIndex-1].startDateTime < newStartDate || presalePhases[phaseIndex-1].endDateTime < newEndDate);              
        }
 
-         presalePhases[phaseIndex].startDateTime = newStartDate;
-         presalePhases[phaseIndex].endDateTime = newEndDate;
+         presalePhases[phaseIndex-1].startDateTime = newStartDate;
+         presalePhases[phaseIndex-1].endDateTime = newEndDate;
          updateActivePhases();  // Ensure the active status of the phases is updated based on the new dates
         
     }
