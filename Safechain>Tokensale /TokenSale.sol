@@ -326,7 +326,9 @@ contract TokenSale is Context, IERC20, Ownable{
 
     mapping(address=>_users[]) public userPurchase;
 
-    uint256 public constant claimInterval=30;
+    uint256 public constant claimInterval=5;
+
+    mapping(address=>uint256) public claimedIndex;
 
     mapping(address => uint256) private _balances;
 
@@ -600,7 +602,7 @@ contract TokenSale is Context, IERC20, Ownable{
             {
                 require(Stages[i].tokenAmount-Stages[i].soldTokens>=_tokenAmount,"Insufficient Balance");
                 
-                IERC20(tokenAddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
+                //IERC20(tokenAddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
 
                 _transfer(address(this),msg.sender,(_tokenAmount*10)/100);
 
@@ -622,7 +624,7 @@ contract TokenSale is Context, IERC20, Ownable{
 
     function claimToken() external{
 
-        for(uint256 i=0;i<userPurchase[msg.sender].length;i++)
+        for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
         {
             if(userPurchase[msg.sender][i].claimCount<18)
             {
@@ -640,6 +642,11 @@ contract TokenSale is Context, IERC20, Ownable{
                 userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
                 userPurchase[msg.sender][i].claimCount+=totalMonth;
                 _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
+
+                if(userPurchase[msg.sender][i].claimCount==18)
+                {
+                    claimedIndex[msg.sender]++;
+                }                
                   
             }
             
