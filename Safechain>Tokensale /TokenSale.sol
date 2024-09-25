@@ -569,7 +569,11 @@ contract TokenSale is Context, IERC20, Ownable{
         require(_start<=_end,"Invalid Duration");
         require(_price>0,"Invalid Price");
         require(_tokenamt!=0,"Invalid Token Amount");
-        require(Stages[Stages.length-1].endTime<=_start,"Conflict Stage");
+        
+        if(Stages.length>0)
+        {
+            require(Stages[Stages.length-1].endTime<=_start,"Conflict Stage");
+        }
 
         _Stages memory stage = _Stages({
             startTime:_start,
