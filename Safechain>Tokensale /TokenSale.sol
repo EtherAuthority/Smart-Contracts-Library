@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity ^0.8.24;
+//import 'hardhat/console.sol';
 
 interface IERC20 {
 
@@ -319,12 +320,15 @@ contract TokenSale is Context, IERC20, Ownable{
         uint256 purchaseTime;
         uint256 tokenAmount;
         uint256 lastClaimTime;
+        uint256 lastClaimIndexTime;
         uint256 claimCount;
     }
 
     mapping(address=>_users[]) public userPurchase;
 
-    uint256 public constant claimInterval=3600;
+    uint256 public constant claimInterval=30;
+
+    mapping(address=>uint256) public claimedIndex;
 
     mapping(address => uint256) private _balances;
 
@@ -452,6 +456,10 @@ contract TokenSale is Context, IERC20, Ownable{
             )
         );
         return true;
+    }
+
+    function gettime() public view returns(uint256){
+        return block.timestamp;
     }
 
     /**
@@ -602,6 +610,7 @@ contract TokenSale is Context, IERC20, Ownable{
                     purchaseTime:block.timestamp,
                     tokenAmount:_tokenAmount,
                     lastClaimTime:block.timestamp,
+                    lastClaimIndexTime:block.timestamp,
                     claimCount:0
                 });
                 
@@ -618,13 +627,16 @@ contract TokenSale is Context, IERC20, Ownable{
         {
             if(userPurchase[msg.sender][i].claimCount<18)
             {
-                for(uint256 j=0;j<18-userPurchase[msg.sender][i].claimCount;j++)
+                uint256 loopcounter=18-userPurchase[msg.sender][i].claimCount;
+                for(uint256 j=0;j<loopcounter;j++)
                 {
-                    if(userPurchase[msg.sender][i].claimCount<18 && userPurchase[msg.sender][i].lastClaimTime+claimInterval<=block.timestamp)
+                    if(userPurchase[msg.sender][i].claimCount<17 && userPurchase[msg.sender][i].lastClaimIndexTime+claimInterval<=block.timestamp)
                     {
+                        userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval;
                         userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
                         userPurchase[msg.sender][i].claimCount++;
                         _transfer(address(this),msg.sender,(userPurchase[msg.sender][i].tokenAmount*5)/100);
+                        claimedIndex[msg.sender]=userPurchase[msg.sender][i].claimCount;
                     }
                     else 
                     {
