@@ -626,22 +626,21 @@ contract TokenSale is Context, IERC20, Ownable{
         {
             if(userPurchase[msg.sender][i].claimCount<18)
             {
-                uint256 totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
-                //uint256 loopcounter=18-userPurchase[msg.sender][i].claimCount;
-                // for(uint256 j=0;j<loopcounter;j++)
-                // {
-                    // if(userPurchase[msg.sender][i].claimCount<18 && userPurchase[msg.sender][i].lastClaimIndexTime+claimInterval<=block.timestamp)
-                    // {
-                        userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
-                        userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
-                        userPurchase[msg.sender][i].claimCount+=totalMonth;
-                        _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
-                    // }
-                    // else 
-                    // {
-                    //     break;
-                    // }
-               // }
+                uint256 totalMonth;
+                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                {
+                    totalMonth=18-userPurchase[msg.sender][i].claimCount;
+                }
+                else 
+                {
+                    totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
+                }
+                
+                userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
+                userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
+                userPurchase[msg.sender][i].claimCount+=totalMonth;
+                _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
+                  
             }
             
         }
