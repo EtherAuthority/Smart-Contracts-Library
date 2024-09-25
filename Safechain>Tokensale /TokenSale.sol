@@ -605,6 +605,7 @@ contract TokenSale is Context, IERC20, Ownable{
         require(endSaledate>block.timestamp,"Sale Ended");
         for(uint256 i=0;i<Stages.length;i++)
         {
+            require(Stages[i].startTime<=block.timestamp,"Sale Not Started");
             if(block.timestamp>=Stages[i].startTime && block.timestamp<=Stages[i].endTime)
             {
                 require(Stages[i].tokenAmount-Stages[i].soldTokens>=_tokenAmount,"Insufficient Balance");
@@ -623,6 +624,7 @@ contract TokenSale is Context, IERC20, Ownable{
                 
                 userPurchase[msg.sender].push(user);
                 Stages[i].soldTokens+=_tokenAmount;
+                break;
             }
         }
 
