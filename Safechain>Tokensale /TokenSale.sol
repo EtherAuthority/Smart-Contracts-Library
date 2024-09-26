@@ -335,19 +335,29 @@ contract TokenSale is Context, Ownable{
 
     event BuyToken(address indexed user,uint256 indexed amount,uint256 indexed price,uint256 time);
     event ClaimToken(address indexed user,uint256 indexed amount,uint256 time);
+    event SetTokenAddress(address indexed _susd,address indexed _usdt,uint256 time);
 
     constructor(address _tokensale) {
-        require(_tokensale!=address(0),"Invalid Address");
+       require(_tokensale!=address(0),"Invalid Address");
        tokenSaleAddress=_tokensale;
     }
 
-
+    // Set Both token address from which user can Purcase your token
+    // First parameter SUSD token address
+    // Second parameter USDT token address
+    // It only called by owner
     function setTokenAddress(address _susdadd,address _usdtadd) public onlyOwner{
         require(_susdadd!=address(0) && _usdtadd!=address(0),"Invalid Token Address");
         susdtokenAdd=_susdadd;
         usdttokenAdd=_usdtadd;
+        emit SetTokenAddress(_susdadd,_usdtadd,block.timestamp);
     }
 
+    // Set Stage price and token amount for sale for a given time period
+    // Add start Date and End date in unixtimstamp format
+    // Start date should be less than End date
+    // _tokenamt this should with 10**18 zeroes value
+    // price in single unit value like if one token price is 5$ then  just provide 5
     function setStage(uint256 _start,uint256 _end,uint256 _price,uint256 _tokenamt) public onlyOwner{
         require(_start<=_end,"Invalid Duration");
         require(_price>0,"Invalid Price");
@@ -376,6 +386,9 @@ contract TokenSale is Context, Ownable{
         }
     }
 
+    // User can buy token using this fucntion 
+    // Need to pass _tokenAmount with 10**18 zeroes value
+    // _tokenaddress should be one of the token between SUSD or USDT
     function buyToken(uint256 _tokenAmount,address _tokenaddress) external {
         require(_tokenaddress==susdtokenAdd || _tokenaddress==usdttokenAdd,"Invalid Token Address Provided");
         require(_tokenAmount>0,"Invalid Token Amount");
@@ -408,7 +421,7 @@ contract TokenSale is Context, Ownable{
 
     }
 
-
+    // User can claim the  5% of his purchase amount in a interval of 30 days
     function claimToken() external{
 
         for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
@@ -440,15 +453,17 @@ contract TokenSale is Context, Ownable{
         }
     }
 
-
+    // Get the length of the userPurchase record
     function purchaseLength(address _add) public view returns(uint256){
         return userPurchase[_add].length;
     }
 
+    // Get the length of the Stages
     function stagelength() public view returns(uint256){
         return Stages.length;
     }
 
+    // User can Check his Avalailable balance to claim here
     function viewClaimAmount() public view returns(uint256){
 
         uint256 totalclaim;
@@ -475,6 +490,7 @@ contract TokenSale is Context, Ownable{
         return totalclaim;
     }
 
+    
     function leftTokensStagewise(uint256 _stage) public view returns(uint256)
     {
         return Stages[_stage].tokenAmount-Stages[_stage].soldTokens;
