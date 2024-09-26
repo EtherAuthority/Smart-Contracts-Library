@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import 'hardhat/console.sol';
 
 
 /**
@@ -253,7 +252,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     /**
      * @dev Duration of the vesting period (4 months).
      */
-    uint256 public constant VESTINGDURATION = (5 * 2 minutes);
+    uint256 public constant VESTINGDURATION = (5 * 30 days);
     /**
      * @dev Timestamp for the start of the vesting period.
      */
@@ -277,8 +276,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
     mapping(address => uint256) public totalPurchased; // Store the total purchase amount per buyer
     mapping(address => uint256) public totalClaimed;   // Store the total claimed amount per buyer
     mapping(address => mapping(uint8 => bool)) public hasClaimed; // Track which vesting months the buyer has claimed
-
-    uint256 public vestingStartTime; // Timestamp for when vesting begins
+    
 
     // Vesting percentages by month (month 1 = 10%, month 2 = 15%, month 3-5 = 25%)
     uint8[5] public vestingPercentages = [10, 15, 25, 25, 25];
@@ -384,11 +382,15 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         }
     }
 
-    function activePhase() public returns(uint256){        
+    function activePhase() public view returns(uint256){
+        uint256 phase;        
         for (uint256 i = 0; i < presalePhases.length; i++) {           
-                require(presalePhases[i].activeStage == true,"Phase is not active!");
-                return i;            
+                if(presalePhases[i].activeStage == true)
+                phase = i+1;  
+                else 
+                phase = 0;          
         }
+        return phase;
     }
 
 
@@ -422,7 +424,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
 
     function buyTokensUSDC(uint256 amount) public whenPresaleActive {
         require(amount > 0, "Can't buy tokens! Amount should be grater then 0.");
-        uint256 phase = activePhase();       
+        uint256 phase = activePhase()-1;       
 
         require(
             purchases[msg.sender][uint256(phase)].usdcAmount + amount <= MAX_PURCHASE_AMOUNT,
@@ -432,12 +434,10 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         PresaleInfo storage presale = presalePhases[uint256(phase)];
         
         uint256 tokensToBuy = usdcToToken(amount, uint256(phase));
-
                
         require((presale.maxAmount+tokensToBuy) <= presale.totalTokens, "Not enough tokens left for sale");
 
-        PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)];       
-        
+        PurchaseDetails storage newPurchase = purchases[msg.sender][uint256(phase)]; 
 
         bool isNewPurchase = newPurchase.tokenAmount == 0;
 
@@ -450,8 +450,7 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         newPurchase.purchaseTime = block.timestamp;        
         newPurchase.purchaseStage = uint256(phase);
 
-        totalPurchased[msg.sender]+=tokensToBuy;
-        
+        totalPurchased[msg.sender]+=tokensToBuy;        
 
         purchases[msg.sender][uint256(phase)].usdcAmount += amount;
         USDC.transferFrom(msg.sender, owner(), amount);
@@ -460,56 +459,61 @@ contract TokenPresale is Ownable, PriceConsumerV3 {
         emit TokensPurchasedUsdc(msg.sender, tokensToBuy, amount, uint256(phase));
     }
 
-    function claimTokens() whenClaimActive external {
-        claimCalculation(msg.sender);
+    function claimTokens(uint8 monthindex) whenClaimActive external {
+        _claimCalculation(msg.sender,monthindex);
     }
 
-    function onlyOwnerClaimTokens(address[] memory users) public onlyOwner {
+    function onlyOwnerClaimTokens(address[] memory users,uint8[] memory monthindex) public onlyOwner {
         for (uint256 i = 0; i < users.length; i++) {
-            claimCalculation(users[i]);
+            _claimCalculation(users[i],monthindex[i]);
         }
     }
 
-   function claimCalculation(address wallet) public {
-        require(block.timestamp > vestingStartTime, "Vesting has not started yet");
+   function _claimCalculation(address wallet,uint8 monthindex) internal  {
+        require(block.timestamp > vestingStartdate, "Vesting has not started yet");
 
         uint256 totalAmount = totalPurchased[wallet]; // Total amount buyer has purchased
-        uint256 claimableAmount = 0;                  // Amount buyer is allowed to claim
+        uint256 claimableAmount = 0;                  // Amount buyer is allowed to claim       
 
-        bool[5] memory claimableMonths = this.viewClaimMonth(wallet); // External call
-       
+        bool[5] memory claimableMonths = this.viewClaimMonth(wallet); // External call     
 
-        for (uint8 i = 0; i < 5; i++) {
-            if (claimableMonths[i]==true) {
-                claimableAmount += totalAmount / 5;
-                hasClaimed[wallet][i]=true;
-            }
+        if (claimableMonths[monthindex]==true) {
+            claimableAmount += (totalAmount * vestingPercentages[monthindex]) / 100;
+            hasClaimed[wallet][monthindex]=true;
         }
+        
 
         require(claimableAmount > 0, "No claimable tokens available");
-
+        
         totalClaimed[wallet] += claimableAmount;
         token.transfer(wallet, claimableAmount);
     }
+   
+    function viewclaimableAmount(address wallet,uint8 monthindex) public view returns(uint256) {
+        require(block.timestamp > vestingStartdate, "Vesting has not started yet");
 
-    // View total claimed amount for a buyer
-    function viewTotalClaimed(address _buyer) external view returns (uint256) {
-        return totalClaimed[_buyer];
+        uint256 totalAmount = totalPurchased[wallet]; // Total amount buyer has purchased
+        uint256 claimableAmount = 0;                  // Amount buyer is allowed to claim       
+
+        bool[5] memory claimableMonths = this.viewClaimMonth(wallet); // External call     
+
+        if (claimableMonths[monthindex]==true) {
+           return claimableAmount += (totalAmount * vestingPercentages[monthindex]) / 100;           
+        }else return 0; 
     }
 
     // View claim month for each vesting month (returns an array of booleans)
     function viewClaimMonth(address _buyer) external view returns (bool[5] memory) {
+        require(vestingStartdate > 0, "Vesting has not started yet");
         bool[5] memory availableToClaim;
         
         // Calculate how many months have passed since vesting started
-        uint256 monthsPassed = (31*1*(24*60*60));
-
-         console.log("monthsPassed",monthsPassed);
+        uint256 monthsPassed =  (31*1*(24*60*60));
+        
         // Loop through each vesting month and set availability
         for (uint8 i = 0; i < 5; i++) {
             if (block.timestamp >= vestingStartdate+(monthsPassed*i) && !hasClaimed[_buyer][i]) {
-                // If the vesting month has passed and the buyer hasn't claimed, mark it as available
-                  console.log("vestingStartdate+(monthsPassed*i)",vestingStartdate+(monthsPassed*i));
+                // If the vesting month has passed and the buyer hasn't claimed, mark it as available               
                 availableToClaim[i] = true;
             } else {
                 // Otherwise, mark it as not available
