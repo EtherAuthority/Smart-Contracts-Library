@@ -303,10 +303,11 @@ library SafeMath {
 }
 
 
-contract TokenSale is Context, IERC20, Ownable{
+contract TokenSale is Context, Ownable{
     using SafeMath for uint256;
     address public susdtokenAdd;
     address public usdttokenAdd;
+    address public tokenSaleAddress;
     uint256 public endSaledate;
     struct _Stages{
         uint256 startTime;
@@ -332,241 +333,12 @@ contract TokenSale is Context, IERC20, Ownable{
 
     mapping(address=>uint256) public claimedIndex;
 
-    mapping(address => uint256) private _balances;
-
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    uint256 private _totalSupply;
-    uint8 private _decimals;
-    string private _symbol;
-    string private _name;
-
     event BuyToken(address indexed user,uint256 indexed amount,uint256 indexed price,uint256 time);
     event ClaimToken(address indexed user,uint256 indexed amount,uint256 time);
 
-    constructor() {
-        _name = "TestToken";
-        _symbol = "TKN";
-        _decimals = 18;
-        // _totalSupply = 3150000 * 10 ** _decimals;
-        // _balances[address(this)] = _totalSupply;
-
-        emit Transfer(address(0), address(this), _totalSupply);
-    }
-
-     /**
-     * @dev Returns the bep token owner.
-     */
-    function getOwner() external view returns (address) {
-        return owner();
-    }
-
-    /**
-     * @dev Returns the token decimals.
-     */
-    function decimals() external view returns (uint8) {
-        return _decimals;
-    }
-
-    /**
-     * @dev Returns the token symbol.
-     */
-    function symbol() external view returns (string memory) {
-        return _symbol;
-    }
-
-    /**
-     * @dev Returns the token name.
-     */
-    function name() external view returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev See {BEP20-totalSupply}.
-     */
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
-    }
-
-    /**
-     * @dev See {BEP20-balanceOf}.
-     */
-    function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
-    }
-
-    /**
-     * @dev See {BEP20-transfer}.
-     *
-     * Requirements:
-     *
-     * - `recipient` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
-     */
-    function transfer(
-        address recipient,
-        uint256 amount
-    ) external returns (bool) {
-        _transfer(_msgSender(), recipient, amount);
-        return true;
-    }
-
-    /**
-     * @dev See {BEP20-allowance}.
-     */
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256) {
-        return _allowances[owner][spender];
-    }
-
-    /**
-     * @dev See {BEP20-approve}.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function approve(address spender, uint256 amount) external returns (bool) {
-        _approve(_msgSender(), spender, amount);
-        return true;
-    }
-
-    /**
-     * @dev See {BEP20-transferFrom}.
-     *
-     * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {BEP20};
-     *
-     * Requirements:
-     * - `sender` and `recipient` cannot be the zero address.
-     * - `sender` must have a balance of at least `amount`.
-     * - the caller must have allowance for `sender`'s tokens of at least
-     * `amount`.
-     */
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool) {
-        _transfer(sender, recipient, amount);
-        _approve(
-            sender,
-            _msgSender(),
-            _allowances[sender][_msgSender()].sub(
-                amount,
-                "BEP20: transfer amount exceeds allowance"
-            )
-        );
-        return true;
-    }
-
-
-    /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {BEP20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function increaseAllowance(
-        address spender,
-        uint256 addedValue
-    ) public returns (bool) {
-        _approve(
-            _msgSender(),
-            spender,
-            _allowances[_msgSender()][spender].add(addedValue)
-        );
-        return true;
-    }
-
-    /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {BEP20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
-     */
-    function decreaseAllowance(
-        address spender,
-        uint256 subtractedValue
-    ) public returns (bool) {
-        _approve(
-            _msgSender(),
-            spender,
-            _allowances[_msgSender()][spender].sub(
-                subtractedValue,
-                "BEP20: decreased allowance below zero"
-            )
-        );
-        return true;
-    }
-
-    /**
-     * @dev Moves tokens `amount` from `sender` to `recipient`.
-     *
-     * This is internal function is equivalent to {transfer}, and can be used to
-     * e.g. implement automatic token fees, slashing mechanisms, etc.
-     *
-     * Emits a {Transfer} event.
-     *
-     * Requirements:
-     *
-     * - `sender` cannot be the zero address.
-     * - `recipient` cannot be the zero address.
-     * - `sender` must have a balance of at least `amount`.
-     */
-    function _transfer(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) internal {
-        require(sender != address(0), "BEP20: transfer from the zero address");
-        require(recipient != address(0), "BEP20: transfer to the zero address");
-
-        _balances[sender] = _balances[sender].sub(
-            amount,
-            "BEP20: transfer amount exceeds balance"
-        );
-        _balances[recipient] = _balances[recipient].add(amount);
-        emit Transfer(sender, recipient, amount);
-    }
-    
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
-     *
-     * This is internal function is equivalent to `approve`, and can be used to
-     * e.g. set automatic allowances for certain subsystems, etc.
-     *
-     * Emits an {Approval} event.
-     *
-     * Requirements:
-     *
-     * - `owner` cannot be the zero address.
-     * - `spender` cannot be the zero address.
-     */
-    function _approve(address owner, address spender, uint256 amount) internal {
-        require(owner != address(0), "BEP20: approve from the zero address");
-        require(spender != address(0), "BEP20: approve to the zero address");
-
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
+    constructor(address _tokensale) {
+        require(_tokensale!=address(0),"Invalid Address");
+       tokenSaleAddress=_tokensale;
     }
 
 
@@ -596,8 +368,7 @@ contract TokenSale is Context, IERC20, Ownable{
 
         Stages.push(stage);
 
-        _totalSupply += _tokenamt;
-        _balances[address(this)] += _tokenamt;
+        IERC20(tokenSaleAddress).transferFrom(msg.sender,address(this),_tokenamt);
 
         if(_end>endSaledate)
         {
@@ -618,7 +389,7 @@ contract TokenSale is Context, IERC20, Ownable{
                 
                 IERC20(_tokenaddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
 
-                _transfer(address(this),msg.sender,(_tokenAmount*10)/100);
+                IERC20(tokenSaleAddress).transfer(msg.sender,(_tokenAmount*10)/100);
 
                 _users memory user = _users({
                     purchaseTime:block.timestamp,
@@ -657,7 +428,7 @@ contract TokenSale is Context, IERC20, Ownable{
                 userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
                 userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
                 userPurchase[msg.sender][i].claimCount+=totalMonth;
-                _transfer(address(this),msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
+                IERC20(tokenSaleAddress).transfer(msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
                 emit ClaimToken(msg.sender, ((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth, block.timestamp);
                 if(userPurchase[msg.sender][i].claimCount==18)
                 {
