@@ -1,44 +1,125 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+//import 'hardhat/console.sol';
 
-pragma solidity 0.8.17;
+interface IERC20 {
 
+    function totalSupply() external view returns (uint256);
 
-// IERC20 standard interface
-interface IERC20
-{
-    function balanceOf(address user) external view returns(uint256);
-    function decimals() external view returns(uint8);
-    function transfer(address _to, uint256 _amount) external returns (bool);
-    function transferFrom(address _from, address _to, uint256 _amount) external returns (bool);
-} 
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
 
-//USDT contract in Ethereum does not follow ERC20 standard so it needs different interface
-interface IERC20_USDT
-{
-    function transfer(address _to, uint256 _amount) external;
-    function transferFrom(address _from, address _to, uint _value) external;
-    function balanceOf(address who) external returns (uint);
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+/**
+ * @title Context
+ * @dev The base contract that provides information about the message sender
+ * and the calldata in the current transaction.
+ */
 
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address payable) {
+        return payable(msg.sender);
+    }
 
-// Ownership smart contract
-abstract contract Ownable {
+    function _msgData() internal view virtual returns (bytes memory) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        return msg.data;
+    }
+}
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+contract Ownable is Context {
     address private _owner;
+    address private _previousOwner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Locked(address owner, address newOwner,uint256 lockTime);
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor() {
-        _setOwner(msg.sender);
+    constructor ()  {
+        address msgSender = _msgSender();
+        _owner = msgSender;
+        emit OwnershipTransferred(address(0), msgSender);
     }
 
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view virtual returns (address) {
+    function owner() public view returns (address) {
         return _owner;
     }
 
@@ -46,11 +127,11 @@ abstract contract Ownable {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        require(_owner == _msgSender(), "Ownable: caller is not the owner");
         _;
     }
 
-    /**
+     /**
      * @dev Leaves the contract without owner. It will not be possible to call
      * `onlyOwner` functions anymore. Can only be called by the current owner.
      *
@@ -58,7 +139,8 @@ abstract contract Ownable {
      * thereby removing any functionality that is only available to the owner.
      */
     function renounceOwnership() public virtual onlyOwner {
-        _setOwner(address(0));
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
     }
 
     /**
@@ -67,109 +149,336 @@ abstract contract Ownable {
      */
     function transferOwnership(address newOwner) public virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
-        _setOwner(newOwner);
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+}
+
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
     }
 
-    function _setOwner(address newOwner) private {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return sub(a, b, "SafeMath: subtraction overflow");
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     * - Subtraction cannot overflow.
+     */
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        require(b <= a, errorMessage);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, "SafeMath: division by zero");
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return mod(a, b, "SafeMath: modulo by zero");
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts with custom message when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     * - The divisor cannot be zero.
+     */
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        require(b != 0, errorMessage);
+        return a % b;
     }
 }
 
 
-// Main Token sale smart contract 
-contract TokenSale is Ownable{
-
-    //public variables
-    IERC20 public token;
-    address public usdtToken;
-
-    uint256 public exchangeRateInEth; // exchange rate => 1 ETH = how many tokens
-    uint256 public maxAmountinEth;    // Max amount limit in ETH in one transacation
-
-    uint256 public exchangeRateInUSDT; // exchange rate => 1 USDT = how many tokens
-    uint256 public maxAmountinUSDT;    // Max amount limit in USDT in one transacation
-
-    
-    // Events
-    event TokensPurchasedWithETH(address indexed buyer, uint256 amount, uint256 tokenPaid);
-    event TokensPurchasedWithUSDT(address indexed buyer, address tokenAddress, uint256 amount);
-    
-
-    constructor(
-        IERC20 _token,
-        uint256 _exchangeRateInEth,
-        uint256 _maxAmountinEth
-    ) {
-        token = _token;
-        exchangeRateInEth = _exchangeRateInEth;
-        maxAmountinEth = _maxAmountinEth;
+contract TokenSale is Context, Ownable{
+    using SafeMath for uint256;
+    address public susdtokenAdd;
+    address public usdttokenAdd;
+    address public tokenSaleAddress;
+    uint256 public endSaledate;
+    struct _Stages{
+        uint256 startTime;
+        uint256 endTime;
+        uint256 price;
+        uint256 tokenAmount;
+        uint256 soldTokens;
     }
 
-    function updateExchangeRateInEth(uint256 _exchangeRate) external onlyOwner {
-        exchangeRateInEth = _exchangeRate;
+    _Stages[] public Stages;
+
+    struct _users{
+        uint256 purchaseTime;
+        uint256 tokenAmount;
+        uint256 lastClaimTime;
+        uint256 lastClaimIndexTime;
+        uint256 claimCount;
     }
 
-    function updateMaxAmountinEth(uint256 _maxAmount) external onlyOwner {
-        maxAmountinEth = _maxAmount;
-    }
+    mapping(address=>_users[]) public userPurchase;
 
-    function updateExchangeRateInUSDT(uint256 _exchangeRate) external onlyOwner {
-        exchangeRateInUSDT = _exchangeRate;
-    }
+    uint256 public constant claimInterval=2592000;
 
-    function updateMaxAmountinUSDT(uint256 _maxAmount) external onlyOwner {
-        maxAmountinUSDT = _maxAmount;
-    }
+    mapping(address=>uint256) public claimedIndex;
 
-    function setUsdtToken(address _usdtToken) external onlyOwner {
-        usdtToken = _usdtToken;
+    event BuyToken(address indexed user,uint256 indexed amount,uint256 indexed price,uint256 time);
+    event ClaimToken(address indexed user,uint256 indexed amount,uint256 time);
+
+    constructor(address _tokensale) {
+        require(_tokensale!=address(0),"Invalid Address");
+       tokenSaleAddress=_tokensale;
     }
 
 
-    /**
-    * Token Buy
-    */
-    function buyTokensWithEth() external payable {
-        require (msg.value > 0, "You need to send some Ether");
-        require (msg.value <= maxAmountinEth, "Cannot buy more than max limit");
-
-        uint256 amount = msg.value * exchangeRateInEth;
-
-        require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
-
-        token.transfer(msg.sender, amount);
-        payable(owner()).transfer(msg.value);
-
-        emit TokensPurchasedWithETH(msg.sender, msg.value, amount);
+    function setTokenAddress(address _susdadd,address _usdtadd) public onlyOwner{
+        require(_susdadd!=address(0) && _usdtadd!=address(0),"Invalid Token Address");
+        susdtokenAdd=_susdadd;
+        usdttokenAdd=_usdtadd;
     }
 
-
-    function buyTokensWithUSDT(uint256 usdtAmount) external {
+    function setStage(uint256 _start,uint256 _end,uint256 _price,uint256 _tokenamt) public onlyOwner{
+        require(_start<=_end,"Invalid Duration");
+        require(_price>0,"Invalid Price");
+        require(_tokenamt!=0,"Invalid Token Amount");
         
-        require(IERC20_USDT(usdtToken).balanceOf(msg.sender) >= usdtAmount, "Not suffiecient balance");
-        require(usdtAmount > 0, "Token amount should be greater than zero");
-        require(usdtAmount <= maxAmountinUSDT, "Cannot buy more than max limit");
+        if(Stages.length>0)
+        {
+            require(Stages[Stages.length-1].endTime<=_start,"Conflict Stage");
+        }
 
-        uint256 amount = usdtAmount * exchangeRateInUSDT;
+        _Stages memory stage = _Stages({
+            startTime:_start,
+            endTime:_end,
+            price:_price,
+            tokenAmount:_tokenamt,
+            soldTokens:0
+        });
 
-        require(token.balanceOf(address(this)) >= amount, "Not enough tokens left for sale");
-           
-        IERC20_USDT(usdtToken).transferFrom(msg.sender, owner(), usdtAmount);
+        Stages.push(stage);
+
+        IERC20(tokenSaleAddress).transferFrom(msg.sender,address(this),_tokenamt);
+
+        if(_end>endSaledate)
+        {
+            endSaledate=_end;
+        }
+    }
+
+    function buyToken(uint256 _tokenAmount,address _tokenaddress) external {
+        require(_tokenaddress==susdtokenAdd || _tokenaddress==usdttokenAdd,"Invalid Token Address Provided");
+        require(_tokenAmount>0,"Invalid Token Amount");
+        require(endSaledate>block.timestamp,"Sale Ended");
+        for(uint256 i=0;i<Stages.length;i++)
+        {
+            require(Stages[i].startTime<=block.timestamp,"Sale Not Started");
+            if(block.timestamp>=Stages[i].startTime && block.timestamp<=Stages[i].endTime)
+            {
+                require(Stages[i].tokenAmount-Stages[i].soldTokens>=_tokenAmount,"Insufficient Balance");
+                
+                IERC20(_tokenaddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
+
+                IERC20(tokenSaleAddress).transfer(msg.sender,(_tokenAmount*10)/100);
+
+                _users memory user = _users({
+                    purchaseTime:block.timestamp,
+                    tokenAmount:_tokenAmount,
+                    lastClaimTime:block.timestamp,
+                    lastClaimIndexTime:block.timestamp,
+                    claimCount:0
+                });
+                
+                userPurchase[msg.sender].push(user);
+                Stages[i].soldTokens+=_tokenAmount;
+                emit BuyToken(msg.sender,_tokenAmount,Stages[i].price,block.timestamp);
+                break;
+            }
+        }
+
+    }
+
+
+    function claimToken() external{
+
+        for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
+        {
+            if(userPurchase[msg.sender][i].claimCount<18)
+            {
+                uint256 totalMonth;
+                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                {
+                    totalMonth=18-userPurchase[msg.sender][i].claimCount;
+                }
+                else 
+                {
+                    totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
+                }
+                
+                userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
+                userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
+                userPurchase[msg.sender][i].claimCount+=totalMonth;
+                IERC20(tokenSaleAddress).transfer(msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
+                emit ClaimToken(msg.sender, ((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth, block.timestamp);
+                if(userPurchase[msg.sender][i].claimCount==18)
+                {
+                    claimedIndex[msg.sender]++;
+                }                
+                  
+            }
             
-        token.transfer(msg.sender, amount);
-
-        emit TokensPurchasedWithUSDT(msg.sender, usdtToken, amount);
-        
+        }
     }
 
-    /**
-    * This lets owner to withdraw any leftover tokens.
-    */
-    function withdrawLeftoverTokens(address tokenAddress) external onlyOwner{
-        uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
-        require(balance > 0, "No token balance to withdraw");
-        IERC20(tokenAddress).transfer(msg.sender, balance);
+
+    function purchaseLength(address _add) public view returns(uint256){
+        return userPurchase[_add].length;
     }
+
+    function stagelength() public view returns(uint256){
+        return Stages.length;
+    }
+
+    function viewClaimAmount() public view returns(uint256){
+
+        uint256 totalclaim;
+        for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
+        {
+            if(userPurchase[msg.sender][i].claimCount<18)
+            {
+                uint256 totalMonth;
+                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                {
+                    totalMonth=18-userPurchase[msg.sender][i].claimCount;
+                }
+                else 
+                {
+                    totalMonth=(block.timestamp-userPurchase[msg.sender][i].lastClaimIndexTime)/claimInterval;
+                }
+                
+                totalclaim+=((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth;       
+                  
+            }
+            
+        }
+
+        return totalclaim;
+    }
+
+    function leftTokensStagewise(uint256 _stage) public view returns(uint256)
+    {
+        return Stages[_stage].tokenAmount-Stages[_stage].soldTokens;
+    }
+
+    receive() external payable { }
 }
