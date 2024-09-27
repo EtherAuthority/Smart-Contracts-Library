@@ -880,8 +880,7 @@ contract IGCtoken is ERC20, Ownable {
                 setHolderData(msg.sender, i);
             }
         }
-     
-        require(isHolder[msg.sender], "Only holders can claim for dividend!");
+    
         require(
             holdersIndex[msg.sender] <=
                 distributionTimeHolder[dividendDetails.length],
