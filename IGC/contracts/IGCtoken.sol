@@ -731,7 +731,7 @@ contract IGCtoken is ERC20, Ownable {
     ) internal override {
         if (from != address(0)) {
             for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
-                console.log(i);
+                
                 setHolderData(from, i);
             }
         }
