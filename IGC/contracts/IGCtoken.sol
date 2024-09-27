@@ -686,13 +686,6 @@ contract IGCtoken is ERC20, Ownable {
     function mint(address to, uint256 amount) external onlyOwner {
         require(to != owner(), "Owner cannot be a holder");
         
-        if (balanceOf(to) > 0 && !isHolder[to]) {
-            holders.push(to);
-            isHolder[to] = true;
-            userClaimIndex[to]=dividendDetails.length;
-            userSetIndex[to]=dividendDetails.length;
-       
-        }
         _mint(to, amount);
     }
 
@@ -729,6 +722,16 @@ contract IGCtoken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
+
+        if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
+            holders.push(to);
+            isHolder[to] = true;
+            holdersIndex[to] = holders.length;
+            userClaimIndex[to]=dividendDetails.length;
+            userSetIndex[to]=dividendDetails.length;
+        }
+
+
         if (from != address(0)) {
             for (uint256 i = userSetIndex[from]; i < dividendDetails.length; i++) {
                 
@@ -755,11 +758,7 @@ contract IGCtoken is ERC20, Ownable {
 
         require(amount > 0, "Amount must be greater than 0");
         
-        if (balanceOf(to) == 0 && amount > 0) {
-            holders.push(to);
-            isHolder[to] = true;
-            holdersIndex[to] = holders.length;
-        }
+        
 
         super._beforeTokenTransfer(from, to, amount);
     }
@@ -819,7 +818,7 @@ contract IGCtoken is ERC20, Ownable {
             ),
             "Transfer failed"
         );
-
+        
         _dividendDetails memory dividend = _dividendDetails({
             amount: _amount,
             timestamp: block.timestamp,
