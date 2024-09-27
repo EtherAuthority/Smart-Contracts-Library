@@ -638,7 +638,6 @@ contract IGCtoken is ERC20, Ownable {
     ISOLIDToken public solidToken;
     mapping(address => bool) public isHolder;
     mapping(address => bool) public isDEX;
-    mapping(uint256 => uint256) public distributionTimeHolder;
 
     struct _holdersDetails {
         uint256 balance;
@@ -655,10 +654,8 @@ contract IGCtoken is ERC20, Ownable {
     }
     mapping(address => _holdersDetails[]) public holdersDetails;
     _dividendDetails[] public dividendDetails;
-    
-    address[] public holders;
+
     // Mapping to store the index of each dividend holder in the dividendHolders array
-    mapping(address => uint256) private holdersIndex;
     mapping(address=>uint256) public userClaimIndex;
     mapping(address=>uint256) public userSetIndex;
 
@@ -724,9 +721,7 @@ contract IGCtoken is ERC20, Ownable {
     ) internal override {
 
         if (balanceOf(to) == 0 && amount > 0 && !isHolder[to]) {
-            holders.push(to);
             isHolder[to] = true;
-            holdersIndex[to] = holders.length;
             userClaimIndex[to]=dividendDetails.length;
             userSetIndex[to]=dividendDetails.length;
         }
@@ -808,7 +803,6 @@ contract IGCtoken is ERC20, Ownable {
      */
     function distributeDividends(uint256 _amount) external onlyOwner {
         uint256 solidBalance = solidToken.balanceOf(solidToken.owner());
-        require(holders.length > 0, "There are no holders for dividends ");
         require(solidBalance >= _amount, "No SOLID tokens to distribute");
         require(
             solidToken.transferFrom(
@@ -827,8 +821,6 @@ contract IGCtoken is ERC20, Ownable {
         });
 
         dividendDetails.push(dividend);
-        distributionTimeHolder[dividendDetails.length] = holders
-            .length;
 
         emit DividendsDistributed(solidBalance);
     }
@@ -839,9 +831,6 @@ contract IGCtoken is ERC20, Ownable {
      * @return The amount of claimable dividends.
      */
     function viewDividend(address holder) public view returns (uint256) {
-        if (totalSupply() == 0) {
-            return 0;
-        }
 
         uint256 claimableDividends = 0;
         uint256 holderShare = 0;
@@ -855,11 +844,13 @@ contract IGCtoken is ERC20, Ownable {
                         holderShare = holdersDetails[holder][i].balance;
                         totalDistributed = dividendDetails[i].amount;
                         claimableDividends +=((holderShare * totalDistributed) / dividendDetails[i].balance)*1e18;
+                     
                     }
                 } else {
                     holderShare = balanceOf(holder);
                     totalDistributed = dividendDetails[i].amount;
                     claimableDividends +=((holderShare * totalDistributed) / dividendDetails[i].balance)*1e18;
+                  
                 }
             }
             
@@ -880,11 +871,6 @@ contract IGCtoken is ERC20, Ownable {
             }
         }
     
-        require(
-            holdersIndex[msg.sender] <=
-                distributionTimeHolder[dividendDetails.length],
-            "You were not a holder at the time of distribution!"
-        );
         uint256 claimable = viewDividend(msg.sender);
         require(claimable > 0, "No dividends to claim!");
         require(solidToken.transfer(msg.sender, claimable/1e18), "Transfer failed!");
