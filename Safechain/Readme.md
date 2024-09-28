@@ -95,20 +95,24 @@ By default, the owner and the contract itself are excluded from paying fees. The
 
 This project is licensed under the MIT License.
 
-##BSCTestnet Trasaction
+## BSCTestnet Trasaction
 
 - **Contract**: https://testnet.bscscan.com/address/0x165e819852520ACb2F9D95B4A7d2F79432F8d34e#code
+  
 **function Transaction**
+  
   - **Add Liquidity ETH** : https://testnet.bscscan.com/tx/0xdbe8903d214ba477af073f53c9e8809e785f23d5888b19ed2da7b4f7fbb695e5
      
 `(when Owner BUY/SELL token that time no any tax fee deduct)`
 
-  - **Owner Buy(100 Token)** :https://testnet.bscscan.com/tx/0x732bddd92979aa75b740ae9622c80dc12b1f4c2251741c4c848fac0281ec100e
-  - **owner Sell(2000 Token)**
+  - **Owner Buy(100 Token)**:
+     https://testnet.bscscan.com/tx/0x732bddd92979aa75b740ae9622c80dc12b1f4c2251741c4c848fac0281ec100e
+  - **owner Sell(2000 Token)**:
     Threshold reach transaction perform Autoliquidity 
-    :https://testnet.bscscan.com/tx/0xa6f35d35aaf6286f038136e741bf66210720214566a2adb124c684acc3db9b17
+    https://testnet.bscscan.com/tx/0xa6f35d35aaf6286f038136e741bf66210720214566a2adb124c684acc3db9b17
 
 `(when User BUY/SELL token that time 0.50% tax fee deduct and 0.25% Reflaction & 0.25% for Liquidty fee)`
 
- -**User Buy(1000 Token)** : https://testnet.bscscan.com/tx/0x95a1175762ebc9d9e900e22aac1347ba690d1710ec30eee2bac0a3467c55abf0
- -**User Sell(500 Token)** : https://testnet.bscscan.com/tx/0x0e1ab036422de1da3995d694d5157306a8cd4cf781d83aad216680338d129ed3
+  - **User Buy(1000 Token)** : https://testnet.bscscan.com/tx/0x95a1175762ebc9d9e900e22aac1347ba690d1710ec30eee2bac0a3467c55abf0
+ 
+  - **User Sell(500 Token)** : https://testnet.bscscan.com/tx/0x0e1ab036422de1da3995d694d5157306a8cd4cf781d83aad216680338d129ed3
