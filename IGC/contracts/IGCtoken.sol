@@ -804,6 +804,7 @@ contract IGCtoken is ERC20, Ownable {
     function distributeDividends(uint256 _amount) external onlyOwner {
         uint256 solidBalance = solidToken.balanceOf(solidToken.owner());
         require(solidBalance >= _amount, "No SOLID tokens to distribute");
+        require(totalSupply()>0,"No Holders Available");
         require(
             solidToken.transferFrom(
                 solidToken.owner(),
