@@ -334,13 +334,16 @@ contract TokenSale is Context, Ownable{
 
     mapping(address=>uint256) public claimedIndex;
 
+    uint256 public claimStartDate;
+
     event BuyToken(address indexed user,uint256 indexed amount,uint256 indexed price,uint256 time);
     event ClaimToken(address indexed user,uint256 indexed amount,uint256 time);
     event SetTokenAddress(address indexed _susd,address indexed _usdt,uint256 time);
 
-    constructor(address _tokensale) {
+    constructor(address _tokensale,uint256 _claimstarttime) {
        require(_tokensale!=address(0),"Invalid Address");
        tokenSaleAddress=_tokensale;
+       claimStartDate=_claimstarttime;
     }
 
     // Set Both token address from which user can Purcase your token
@@ -425,7 +428,7 @@ contract TokenSale is Context, Ownable{
 
     // User can claim the  5% of his purchase amount in a interval of 30 days
     function claimToken() external{
-
+        require(claimStartDate<=block.timestamp,"Claim Process Not Started Yet");
         for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
         {
             if(userPurchase[msg.sender][i].claimCount<18)
@@ -464,6 +467,10 @@ contract TokenSale is Context, Ownable{
     // Get the length of the Stages
     function stagelength() public view returns(uint256){
         return Stages.length;
+    }
+
+    function setClaimStartDate(uint256 time) public onlyOwner{
+        claimStartDate=time;
     }
 
     // User can Check his Avalailable balance to claim here
@@ -524,6 +531,16 @@ contract TokenSale is Context, Ownable{
         }
 
         return stage;
+    }
+
+    function getTokenToBeClaim() public view returns(uint256){
+        uint256 totalclaim;
+        for(uint256 i=0;i<userPurchase[msg.sender].length;i++)
+        {
+            totalclaim+=userPurchase[msg.sender][i].tokenAmount-userPurchase[msg.sender][i].claimed;
+        }
+
+        return totalclaim;
     }
 
     receive() external payable { }
