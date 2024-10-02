@@ -187,6 +187,7 @@ interface IUniswapV2Factory {
  * @title IUniswapV2Router01
  * @dev Interface for the Uniswap V2 Router version 01 contract.
 */
+
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
     //WETH function that return const value,  rather than performing some state-changing operation. 
@@ -282,10 +283,7 @@ interface IUniswapV2Router01 {
     function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
 }
 
-/**
- * @title IUniswapV2Router02
- * @dev Interface for the Uniswap V2 Router version 02 contract.
-*/
+
 interface IUniswapV2Router02 is IUniswapV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
@@ -328,13 +326,11 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 contract SafeChainToken is Context, IERC20, Ownable {
-
-    mapping (address => uint256) public _rOwned;
-    mapping (address => uint256) public _tOwned;
+    mapping (address => uint256) private _rOwned;
+    mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
 
     mapping (address => bool) private _isExcludedFromFee;
-
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
    
@@ -342,52 +338,54 @@ contract SafeChainToken is Context, IERC20, Ownable {
     uint256 private _tTotal = 21 * 10**6 * 10**18;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
-
-    string private _name = "SafeChain";
-    string private _symbol = "SFC";
-    uint8 private _decimals = 18;
-    
-    uint256 public _taxFee = 250; //  0.25%
-    uint256 private _previousTaxFee = _taxFee;
-    
-    uint256 public _liquidityFee = 250; // 0.25%
-    uint256 private _previousLiquidityFee = _liquidityFee;
+   
+    string  private constant NAME = "SafeChain";
+    string  private  constant SYMBOL = "SFC";
+    uint8  private constant DECIMALS = 18;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
     
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
-  
+    
     uint256 public taxThreshold = 5 * 10**6 * 10**18;
 
+    //taxShare 
+    uint256 private refAmt;
+    uint256 private liquidty;
+
+    //Buy tax percentage
+    uint256 public buyAndSellReflectionTax=250;
+    uint256 public buyAndSellLiquidityTax=250;
+
+    event SwapAndLiquifyEnabledUpdated(bool enabled);
+    event ThresholdUpdated(uint256 amount);
+    event AddedLiquidity(uint256 totalLiquidity);
+    event ReflectedFee(uint256 totalReflectFee);
+    event SwapAndLiquify(
+        uint256 tokensSwapped,
+        uint256 ethReceived,
+        uint256 tokensIntoLiqudity
+    );
+    event BuyAndSellTaxUpdated(uint256 reflectionTax,uint256 liquidityTax);
+    event IncludedInFee(address account);
+    event ExcludedFromFee(address account);
+    event IncludedInReward(address account);
+    event ExcludedFromReward(address account);
+    
     modifier lockTheSwap {
         inSwapAndLiquify = true;
         _;
         inSwapAndLiquify = false;
     }
     
-    event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
-    event SwapAndLiquifyEnabledUpdated(bool enabled);
-    event SwapAndLiquify(
-        uint256 tokensSwapped,
-        uint256 ethReceived,
-        uint256 tokensIntoLiqudity
-    );
-
-    /**
-    * @dev Constructor function that initializes the contract.
-    * - Assigns the total reflection tokens to the owner (initial supply).
-    * - Initializes UniswapV2Router with the address of the router on Binance Smart Chain Testnet (modify for mainnet).
-    * - Creates a Uniswap pair for this token and WETH.
-    * - Excludes the owner and this contract from fees.
-    * - Excludes the Uniswap pair and this contract from rewards.
-    * - Emits a Transfer event indicating the initial supply allocation.
-    */
     constructor ()  {
         _rOwned[_msgSender()] = _rTotal;
-        
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);// BSC testnet Router >>here you can change accroding your network.
+     
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //bsc mainnet router
+
+
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -398,8 +396,9 @@ contract SafeChainToken is Context, IERC20, Ownable {
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
-        excludeFromReward(uniswapV2Pair);
         excludeFromReward(address(this));
+        excludeFromReward(uniswapV2Pair);
+        
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
 
@@ -409,18 +408,18 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * It is commonly displayed in user interfaces and provides a human-readable name for the token.
     * @return The name of the token.
     */
-    function name() public view returns (string memory) {
-        return _name;
+    function name() external pure returns (string memory) {
+        return NAME;
     }
-    
+
     /**
     * @notice Retrieves the symbol or ticker of the token.
     * @dev This function returns the symbol or ticker that represents the token.
     * It is commonly used for identifying the token in user interfaces and exchanges.
     * @return The symbol or ticker of the token.
-    */ 
-    function symbol() public view returns (string memory) {
-        return _symbol;
+    */
+    function symbol() external pure returns (string memory) {
+        return SYMBOL;
     }
 
     /**
@@ -429,8 +428,8 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * It is commonly used to interpret the token amounts correctly in user interfaces.
     * @return The number of decimal places used in the token representation.
     */
-    function decimals() public view returns (uint8) {
-        return _decimals;
+    function decimals() external pure returns (uint8) {
+        return DECIMALS;
     }
 
     /**
@@ -438,7 +437,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @dev This function returns the total supply of tokens in circulation.
     * @return The total supply of tokens.
     */
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() external view override returns (uint256) {
         return _tTotal;
     }
 
@@ -462,13 +461,13 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param recipient The address of the recipient to whom tokens are being transferred.
     * @param amount The amount of tokens to be transferred.
     * @return A boolean indicating the success of the transfer operation.
-    */
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
+     */
+    function transfer(address recipient, uint256 amount) external override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
-     /**
+    /**
     * @notice Retrieves the remaining allowance for a spender to spend tokens on behalf of an owner.
     * @dev This function returns the current allowance set for the specified spender to spend tokens
     * from the specified owner's account.
@@ -492,7 +491,6 @@ contract SafeChainToken is Context, IERC20, Ownable {
         _approve(_msgSender(), spender, amount);
         return true;
     }
-
 
     /**
     * @notice Transfers tokens from one address to another on behalf of a third-party.
@@ -535,7 +533,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender]-subtractedValue);
         return true;
     }
-   
+
     /**
     * @notice Checks if the specified address is excluded from earning reflections.
     * @dev Excluded addresses do not receive reflections in certain tokenomics designs.
@@ -543,7 +541,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param account The address to check for exclusion from reflections.
     * @return A boolean indicating whether the address is excluded from earning reflections.
     */
-    function isExcludedFromReward(address account) public view returns (bool) {
+    function isExcludedFromReward(address account) external view returns (bool) {
         return _isExcluded[account];
     }
 
@@ -553,7 +551,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * The fees are often used for various purposes like liquidity provision, rewards, or burns.
     * @return The total amount of fees collected in tokens.
     */
-    function totalFees() public view returns (uint256) {
+    function totalFees() external view returns (uint256) {
         return _tFeeTotal;
     }
 
@@ -563,15 +561,15 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * and add them to a reward pool. Excluded addresses cannot call this function.
     * @param tAmount The amount of tokens to be converted and added to reflections.
     */
-    function deliver(uint256 tAmount) public {
+    function deliver(uint256 tAmount) external {
         address sender = _msgSender();
         require(!_isExcluded[sender], "Excluded addresses cannot call this function");
-        (uint256 rAmount,,,,,) = _getValues(tAmount);
-        _rOwned[sender] = _rOwned[sender] - (rAmount);
-        _rTotal = _rTotal-(rAmount);
-        _tFeeTotal = _tFeeTotal + (tAmount);
+        (uint256 rAmount,) = _getValue(tAmount);
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rTotal = _rTotal-rAmount;
+        _tFeeTotal = _tFeeTotal+tAmount;
     }
-    
+
     /**
     * @notice Converts the given token amount to its equivalent reflection amount.
     * @dev Reflections are often used in tokenomics to calculate rewards or balances.
@@ -581,17 +579,18 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param deductTransferFee A boolean indicating whether to deduct the transfer fee from the calculation.
     * @return The equivalent reflection amount corresponding to the given token amount.
     */
-    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) public view returns(uint256) {
+
+    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) external view returns(uint256) {
         require(tAmount <= _tTotal, "Amount must be less than supply");
         if (!deductTransferFee) {
-            (uint256 rAmount,,,,,) = _getValues(tAmount);
+            (uint256 rAmount,) = _getValue(tAmount);
              return rAmount;
         } else {
-            (,uint256 rTransferAmount,,,,) = _getValues(tAmount);
+            (,uint256 rTransferAmount) = _getValue(tAmount);
              return rTransferAmount;
         }
     }
-    
+
     /**
     * @notice Converts the given reflection amount to its equivalent token amount.
     * @dev Reflections are often used in tokenomics to calculate rewards or balances.
@@ -603,7 +602,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     function tokenFromReflection(uint256 rAmount) public view returns(uint256) {
         require(rAmount <= _rTotal, "Amount must be less than total reflections");
         uint256 currentRate =  _getRate();
-        return rAmount / (currentRate);
+        return rAmount / currentRate;
     }
 
     /**
@@ -619,6 +618,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
         }
         _isExcluded[account] = true;
         _excluded.push(account);
+        emit ExcludedFromReward(account);
     }
 
     /**
@@ -634,7 +634,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @notice Requires that the specified account is currently excluded.
     */
     function includeInReward(address account) external onlyOwner() {
-        require(_isExcluded[account], "Account is already excluded");
+        require(_isExcluded[account], "Account is already Included");
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
                 _excluded[i] = _excluded[_excluded.length - 1];
@@ -644,6 +644,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
                 break;
             }
         }
+        emit IncludedInReward(account);
     }
 
     /**
@@ -652,220 +653,238 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * to support various mechanisms like liquidity provision, rewards, or token burns.
     * @param account The address to exclude from transaction fees.
     */
-    function excludeFromFee(address account) public onlyOwner {
+     function excludeFromFee(address account) external onlyOwner {
+        require(!_isExcludedFromFee[account],"Alreay excluded from fee");
         _isExcludedFromFee[account] = true;
+        emit ExcludedFromFee(account);
     }
-    
-    /**
+
+     /**
     * @notice Grants the owner the ability to include an address in transaction fees.
     * @dev Transaction fees are often applied in decentralized finance (DeFi) projects
     * to support various mechanisms like liquidity provision, rewards, or token burns.
     * @param account The address to include in transaction fees.
     */
-    function includeInFee(address account) public onlyOwner {
+    
+    function includeInFee(address account) external onlyOwner {
+        require(_isExcludedFromFee[account],"Alreay included in fee");
         _isExcludedFromFee[account] = false;
+        emit IncludedInFee(account);
     }
     
     /**
-    * @dev Allows the owner to set the tax fee percentage.
-    * @param taxFee The new tax fee percentage to be applied to transactions.
-    * - This function can only be called by the contract owner.
+    * @notice Allows the owner to enable or disable the swap and liquify feature.
+    * @dev The swap and liquify feature is a mechanism often used in decentralized finance (DeFi)
+    * projects to automatically swap a portion of tokens for liquidity and add them to a liquidity pool.
+    * @param enabled A boolean indicating whether to enable (true) or disable (false) the feature.
     */
-    function setTaxFeePercent(uint256 taxFee) external onlyOwner() {
-        _taxFee = taxFee;
+    function setSwapAndLiquifyEnabled(bool enabled) external onlyOwner {
+        swapAndLiquifyEnabled = enabled;
+        emit SwapAndLiquifyEnabledUpdated(enabled);
     }
 
     /**
-    * @dev Sets the minimum token threshold for tax collection.
-    * - Only callable by the contract owner.
-    * - Ensures that the threshold is greater than zero to prevent invalid values.
-    * - Updates the `taxThreshold` state variable with the new threshold.
-    * - Emits an `UpdatedTaxThreshold` event to log the new threshold value.
-    * @param _threshold The new tax threshold amount.
+    * @dev External function for updating the threshold amount required for triggering liquidity addition.
+    * @param amount The new threshold amount.
+    * 
+    * The function can only be called by the owner of the contract.
+    * Requires that the provided threshold amount (amount) is greater than 0.
+    * Updates the taxThreshold with the new threshold amount.
+    * @notice Only the owner of the contract can call this function.
+    * @notice Requires a positive amount for successful execution.
     */
-    function setTaxThreshold(uint256 _threshold) external onlyOwner {
-        require(_threshold > 0 , "Amount should be more than zero");
-        taxThreshold = _threshold;
-        // emit UpatedTaxThreshold(taxThreshold);
-    }
-    
-    /**
-    * @dev Allows the owner to set the liquidity fee percentage.
-    * @param liquidityFee The new liquidity fee percentage to be applied to transactions.
-    * - This function can only be called by the contract owner.
-    */
-    function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner() {
-        _liquidityFee = liquidityFee;
-    }
-   
-    /**
-    * @dev Enables or disables swap and liquify.
-    */
-    function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
-        swapAndLiquifyEnabled = _enabled;
-        emit SwapAndLiquifyEnabledUpdated(_enabled);
+    //set taxThreshold value
+    function updateThreshold(uint256 amount) external onlyOwner {
+        require(amount > 0 && amount <= 5 * 10**5 * 10**18,"Amount should be more than zero and less than 500k tokens");
+        taxThreshold = amount;
+        emit ThresholdUpdated(amount);
     }
     
      //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
-    
+
     /**
     * @dev Applies reflection by reducing the total reflection supply and increasing the total fee.
     */
     function _reflectFee(uint256 rFee, uint256 tFee) private {
         _rTotal = _rTotal - (rFee);
         _tFeeTotal = _tFeeTotal + (tFee);
-    }
-    
-    /**
-    * @dev Calculates the reflection and transfer values for a given token amount.
-    * 
-    * @param tAmount The total token amount for which values are to be calculated.
-    * @return rAmount The corresponding reflection amount.
-    * @return rTransferAmount The reflection amount after fees.
-    * @return rFee The reflection fee amount.
-    * @return tTransferAmount The token amount to be transferred after fees.
-    * @return tFee The fee amount in tokens.
-    * @return tLiquidity The liquidity amount in tokens.
-    */
-    function _getValues(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
-        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getTValues(tAmount);
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity, _getRate());
-        return (rAmount, rTransferAmount, rFee, tTransferAmount, tFee, tLiquidity);
+        emit ReflectedFee(tFee);
     }
 
+    /**
+    * @dev Calculates and returns the transfer amount, fee, and liquidity for a given transaction amount.
+    * The function calls _getTValues to compute the necessary values.
+    * 
+    * @param tAmount The total transaction amount.
+    * 
+    * @return tTransferAmount The amount to be transferred after fees and liquidity are deducted.
+    * @return tFee The fee amount to be deducted from the transaction.
+    * @return tLiquidity The liquidity amount to be deducted from the transaction.
+    */
+    function _getValues(uint256 tAmount) private view returns (uint256, uint256, uint256) {
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getTValues(tAmount); 
+        return ( tTransferAmount, tFee, tLiquidity);
+    }
+
+    /**
+    * @dev Calculates and returns the reflected amount and reflected transfer amount based on the transaction amount.
+    * The function first retrieves the fee and liquidity from _getTValues, then uses them to compute the reflected values from _getRValues.
+    * 
+    * @param tAmount The total transaction amount.
+    * 
+    * @return rAmount The reflected amount corresponding to the transaction.
+    * @return rTransferAmount The reflected amount to be transferred after deducting fees and liquidity.
+    */
+    function _getValue(uint256 tAmount) private view returns(uint256, uint256){
+        (,uint256 tFee, uint256 tLiquidity) = _getTValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount,) = _getRValues(tAmount, tFee, tLiquidity);
+         return (rAmount, rTransferAmount);
+    }
+
+    /**
+    * @dev Calculates and returns the transaction transfer amount, tax fee, and liquidity fee for a given transaction amount.
+    * It determines the fee and liquidity amounts, sums them, and calculates the final transfer amount after deducting the total tax.
+    * 
+    * @param tAmount The total transaction amount.
+    * 
+    * @return tTransferAmount The amount to be transferred after deducting the tax and liquidity fees.
+    * @return tFee The tax fee calculated based on the transaction amount.
+    * @return tLiquidity The liquidity fee calculated based on the transaction amount.
+    */
     function _getTValues(uint256 tAmount) private view returns (uint256, uint256, uint256) {
         uint256 tFee = calculateTaxFee(tAmount);
         uint256 tLiquidity = calculateLiquidityFee(tAmount);
-        uint256 tTransferAmount = tAmount - (tFee) - (tLiquidity);
+        uint256 allTax = tFee + tLiquidity;
+        uint256 tTransferAmount = tAmount - allTax;
         return (tTransferAmount, tFee, tLiquidity);
     }
 
     /**
-    * @dev Calculates the transfer values for a given token amount.
+    * @dev Calculates the reflected amount, transfer amount, and fee based on the transaction, tax, and liquidity amounts.
+    * Multiplies each by the current rate and returns the reflected values.
     * 
-    * @param tAmount The total token amount for which values are to be calculated.
-    * @return tTransferAmount The token amount to be transferred after fees.
-    * @return tFee The fee amount in tokens.
-    * @return tLiquidity The liquidity amount in tokens.
+    * @param tAmount The total transaction amount.
+    * @param tFee The transaction tax fee.
+    * @param tLiquidity The liquidity fee.
+    * 
+    * @return rAmount Reflected total amount.
+    * @return rTransferAmount Reflected transfer amount after fees.
+    * @return rFee Reflected tax fee.
     */
-    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 currentRate) private pure returns (uint256, uint256, uint256) {
-        uint256 rAmount = tAmount * (currentRate);
-        uint256 rFee = tFee * (currentRate);
-        uint256 rLiquidity = tLiquidity * (currentRate);
-        uint256 rTransferAmount = rAmount - (rFee) - (rLiquidity);
+    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity) private view returns (uint256, uint256, uint256) {
+        uint256 currentRate = _getRate();
+        uint256 rAmount = tAmount * currentRate;
+        uint256 rFee = tFee * currentRate;
+        uint256 rLiquidity = tLiquidity * currentRate;
+        uint256 allTax = rFee  + rLiquidity;
+        uint256 rTransferAmount = rAmount - allTax;
         return (rAmount, rTransferAmount, rFee);
     }
 
     /**
-    * @dev Calculates the current reflection rate based on the supply.
+    * @dev Private function for retrieving the current conversion rate between reflection and token balances.
+    * @return rate Current conversion rate.
     * 
-    * @return The reflection rate, calculated as the ratio of reflection supply to token supply.
+    * @notice Internal use only.
     */
     function _getRate() private view returns(uint256) {
         (uint256 rSupply, uint256 tSupply) = _getCurrentSupply();
-        return rSupply / (tSupply);
+        return rSupply / tSupply;
     }
 
     /**
-    * @dev Calculates the current reflection and token supply, adjusting for excluded accounts.
+    * @dev Private function for retrieving the current supply of both reflection and token balances.
+    * @return rSupply Current reflection supply.
+    * @return tSupply Current token supply.
     * 
-    * @return rSupply The adjusted reflection supply after excluding certain accounts.
-    * @return tSupply The adjusted token supply after excluding certain accounts.
+    * @notice Internal use only.
     */
     function _getCurrentSupply() private view returns(uint256, uint256) {
         uint256 rSupply = _rTotal;
         uint256 tSupply = _tTotal;      
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_rOwned[_excluded[i]] > rSupply || _tOwned[_excluded[i]] > tSupply) return (_rTotal, _tTotal);
-            rSupply = rSupply - (_rOwned[_excluded[i]]);
-            tSupply = tSupply - (_tOwned[_excluded[i]]);
+            rSupply = rSupply - _rOwned[_excluded[i]];
+            tSupply = tSupply - _tOwned[_excluded[i]];
         }
-        if (rSupply < _rTotal / (_tTotal)) return (_rTotal, _tTotal);
+        if (rSupply < _rTotal / _tTotal) return (_rTotal, _tTotal);
         return (rSupply, tSupply);
+    }
+    
+    /**
+    * @dev Private function for handling the transfer of liquidity to the contract.
+    * @param tLiquidity The amount of liquidity tokens to be taken.
+    * 
+    * @notice Internal use only.
+    */
+    function _takeLiquidity(uint256 tLiquidity) private {
+           uint256 currentRate =  _getRate();
+        uint256 rLiquidity = tLiquidity * currentRate;
+        _rOwned[address(this)] = _rOwned[address(this)] + rLiquidity;
+        if(_isExcluded[address(this)])
+            _tOwned[address(this)] = _tOwned[address(this)] + tLiquidity;
+        emit AddedLiquidity(tLiquidity);
     }
 
     /**
-    * @dev Takes liquidity by updating the reflection and token balances for the contract.
+    * @dev Calculates the tax fee for reflection based on a specified amount.
+    * @param amount Amount for tax fee calculation.
+    * @return Calculated tax fee amount.
     * 
-    * @param tLiquidity The amount of liquidity to be taken (in tokens).
+    * @notice Internal use only.
     */
-    function _takeLiquidity(uint256 tLiquidity) private {
-        uint256 currentRate =  _getRate();
-        uint256 rLiquidity = tLiquidity * (currentRate);
-        _rOwned[address(this)] = _rOwned[address(this)] + (rLiquidity);
-        if(_isExcluded[address(this)])
-            _tOwned[address(this)] = _tOwned[address(this)] + (tLiquidity);
+    function calculateTaxFee(uint256 amount) private view returns (uint256) {
+        return amount * refAmt / 10**5;
+    }
+
+    /**
+    * @dev Calculates the liquidity fee based on a specified amount.
+    * @param amount Amount for liquidity fee calculation.
+    * @return Calculated liquidity fee amount.
+    * 
+    * @notice Internal use only.
+    */
+    function calculateLiquidityFee(uint256 amount) private view returns (uint256) {
+        return amount * liquidty / 10**5;
     }
     
     /**
-    * @dev Calculates the tax fee based on the given amount.
+    * @dev Private function for removing all fee values.
     * 
-    * @param _amount The amount on which the tax fee is to be calculated.
-    * @return The calculated tax fee.
-    */
-    function calculateTaxFee(uint256 _amount) private view returns (uint256) {
-        return _amount * (_taxFee)/(
-            10**5
-        );
-    }
- 
-    /**
-    * @dev Calculates the liquidity fee based on the given amount.
+    * Sets all fee values (refAmt, liquidity) to zero.
+    * This function is typically used to temporarily disable fees during specific operations.
     * 
-    * @param _amount The amount on which the liquidity fee is to be calculated.
-    * @return The calculated liquidity fee.
-    */
-    function calculateLiquidityFee(uint256 _amount) private view returns (uint256) {
-        return _amount*(_liquidityFee)/(
-            10**5
-        );  
-    }
-    
-    /**
-    * @dev Temporarily removes all fees by setting tax and liquidity fees to zero.
-    * 
-    * This function saves the previous fee values so they can be restored later.
+    * @notice This function is intended for internal use and should not be called directly.
     */
     function removeAllFee() private {
-        if(_taxFee == 0 && _liquidityFee == 0) return;
-        
-        _previousTaxFee = _taxFee;
-        _previousLiquidityFee = _liquidityFee;
-        
-        _taxFee = 0;
-        _liquidityFee = 0;
+        refAmt = 0;   
+        liquidty = 0; 
     }
     
     /**
-    * @dev Restores the previous tax and liquidity fees.
-    * 
-    * This function is used to revert the fees to their values before they were removed.
-    */
-    function restoreAllFee() private {
-        _taxFee = _previousTaxFee;
-        _liquidityFee = _previousLiquidityFee;
-    }
-  
-    /**
-    * @dev Checks if a given account is excluded from fees.
+    * @dev Checks if a given account is excluded from transaction fees.
     * 
     * @param account The address to check for fee exclusion.
     * @return A boolean indicating whether the account is excluded from fees.
     */
-    function isExcludedFromFee(address account) public view returns(bool) {
+    function isExcludedFromFee(address account) external view returns(bool) {
         return _isExcludedFromFee[account];
     }
 
     /**
-    * @dev Sets the allowance of a spender for a specified owner.
-    * 
-    * This function is used to approve a spender to spend a certain amount of tokens on behalf of the owner.
-    * 
-    * @param owner The address of the token owner.
-    * @param spender The address of the account that will be allowed to spend the tokens.
+    * @dev Private function for approving a spender to spend a certain amount on behalf of the owner.
+    * @param owner The address that owns the tokens.
+    * @param spender The address that is approved to spend the tokens.
     * @param amount The amount of tokens to be approved for spending.
+    * 
+    * Requires that both the owner and spender addresses are not the zero address.
+    * Sets the allowance for the spender on behalf of the owner to the specified amount.
+    * Emits an `Approval` event with details about the approval.
+    * 
+    * @notice This function is intended for internal use and should not be called directly.
     */
+
     function _approve(address owner, address spender, uint256 amount) private {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
@@ -875,21 +894,42 @@ contract SafeChainToken is Context, IERC20, Ownable {
     }
 
     /**
-    * @dev Handles the transfer of tokens from one address to another.
+    * @dev Allows the contract owner to update the reflection and liquidity tax percentages for buy and sell transactions.
+    * The reflection and liquidity tax percentages cannot exceed 6%. Emits an event to indicate the tax update.
     * 
-    * This function checks various conditions, manages fees, and performs the transfer.
+    * @param reflectionPercent The new reflection tax percentage (maximum of 6%).
+    * @param liquidityTaxPer The new liquidity tax percentage (maximum of 6%).
+    */
+    function updateBuyAndSellTaxPer(uint256 reflectionPercent,uint256 liquidityTaxPer) external onlyOwner {
+        require(reflectionPercent <= 6,"You can not set reflection tax more then 6%");
+        require(liquidityTaxPer <= 6,"You can not set liquidity tax more then 6%");     
+        buyAndSellReflectionTax = reflectionPercent;
+        buyAndSellLiquidityTax = liquidityTaxPer;
+        
+        emit BuyAndSellTaxUpdated(buyAndSellReflectionTax,buyAndSellLiquidityTax);
+    }
+    
+    /**
+    * @dev Handles token transfers, including conditions for swapping and liquifying, applying fees, 
+    * and checking exclusion from fees. Owner transfers bypass fees, while other transfers may trigger 
+    * liquidity functions.
     * 
     * @param from The address sending the tokens.
     * @param to The address receiving the tokens.
-    * @param amount The amount of tokens to be transferred.
+    * @param amount The number of tokens to transfer.
     */
     function _transfer( address from, address to, uint256 amount ) private {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
+
+        if (from == owner() || to == owner()){
+            _tokenTransfer(from,to,amount,false);
+            return;
+        }
         
         uint256 contractTokenBalance = balanceOf(address(this));
-           
+        
         bool overMinTokenBalance = contractTokenBalance >= taxThreshold;
         if (
             overMinTokenBalance &&
@@ -898,7 +938,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
             swapAndLiquifyEnabled
         ) {
             contractTokenBalance = taxThreshold;
-            // auto liquidity
+            //add liquidity
             swapAndLiquify(contractTokenBalance);
         }
         
@@ -910,44 +950,74 @@ contract SafeChainToken is Context, IERC20, Ownable {
             takeFee = false;
         }
         
-        //transfer amount, it will take tax, burn, liquidity fee
-        _tokenTransfer(from,to,amount,takeFee);
+        //if takeFee is true then set sell or buy tax percentage
+        if(takeFee)
+        _sellBuyTax(from,to); 
+      _tokenTransfer(from,to,amount,takeFee);
     }
-    
+
     /**
-    * @dev Swaps a portion of the contract's tokens for ETH and adds liquidity to Uniswap.
+    * @dev Evaluates whether the transaction is a buy or sell based on the Uniswap pair address.
+    * If the transaction is a buy or sell, it sets the reflection and liquidity taxes accordingly.
+    * If neither, it removes all fees.
     * 
-    * This function splits the contract's token balance into two halves: 
-    * one half is swapped for ETH, and the other half is added as liquidity.
+    * @param from The address sending the tokens.
+    * @param to The address receiving the tokens.
+    */
+    function _sellBuyTax(address from, address to) private {
+           //sell and buy logic
+        bool isBuy = from == uniswapV2Pair;
+        bool isSell = to == uniswapV2Pair;
+
+            if (isBuy || isSell) {    
+            refAmt =   buyAndSellReflectionTax; //0.25 %
+            liquidty = buyAndSellLiquidityTax; //0.25%
+            } 
+            else {
+          removeAllFee();
+            }
+    } 
+  
+    /**
+    * @dev Private function for performing token swap and liquidity addition on the Uniswap V2 router.
+    * @param contractTokenBalance The balance of tokens in the contract to be used for the swap and liquidity.
     * 
-    * @param contractTokenBalance The total token balance held by the contract.
+    * Splits the contract token balance into halves, swaps one half for ETH, captures the ETH balance,
+    * and adds liquidity with the other half. Emits a `SwapAndLiquify` event with details about the swap and liquidity addition.
+    * 
+    * @notice This function is intended for internal use and should not be called directly.
     */
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
-        uint256 half = contractTokenBalance/(2);
-        uint256 otherHalf = contractTokenBalance - (half);
+        uint256 half = contractTokenBalance / 2;
+        uint256 otherHalf = contractTokenBalance - half;
 
+        // capture the contract's current ETH balance.
+        // this is so that we can capture exactly the amount of ETH that the
+        // swap creates, and not make the liquidity event include any ETH that
+        // has been manually sent to the contract
         uint256 initialBalance = address(this).balance;
 
         // swap tokens for ETH
-        swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
+        swapTokensForEth(half); // <- this breaks the ETH -> swap when swap+liquify is triggered
 
         // how much ETH did we just swap into?
-        uint256 newBalance = address(this).balance - (initialBalance);
+        uint256 newBalance = address(this).balance - initialBalance;
 
         // add liquidity to uniswap
         addLiquidity(otherHalf, newBalance);
         
         emit SwapAndLiquify(half, newBalance, otherHalf);
     }
-    
+
     /**
-    * @dev Swaps a specified amount of tokens for ETH using Uniswap.
-    * 
-    * This function approves the Uniswap router to spend the tokens and performs
-    * the token-to-ETH swap, allowing for any amount of ETH to be accepted.
-    * 
+    * @dev Private function for swapping tokens for ETH on the Uniswap V2 router.
     * @param tokenAmount The amount of tokens to be swapped for ETH.
+    * 
+    * Generates the Uniswap pair path of token -> WETH and approves token transfer to the Uniswap V2 router.
+    * Makes the token-to-ETH swap using the Uniswap V2 router's `swapExactTokensForETHSupportingFeeOnTransferTokens` function.
+    * 
+    * @notice This function is intended for internal use and should not be called directly.
     */
     function swapTokensForEth(uint256 tokenAmount) private {
         // generate the uniswap pair path of token -> weth
@@ -968,14 +1038,18 @@ contract SafeChainToken is Context, IERC20, Ownable {
     }
 
     /**
-    * @dev Adds liquidity to Uniswap by depositing a specified amount of tokens and ETH.
+    * @dev Private function for adding liquidity to the Uniswap V2 router.
+    * @param tokenAmount The amount of tokens to be added to the liquidity pool.
+    * @param ethAmount The amount of ETH to be added to the liquidity pool.
     * 
-    * This function approves the Uniswap router to spend the tokens and adds
-    * the specified amounts of tokens and ETH as liquidity to the pool.
-    * 
-    * @param tokenAmount The amount of tokens to be added as liquidity.
-    * @param ethAmount The amount of ETH to be added as liquidity.
+    * Approves token transfer to the Uniswap V2 router and adds liquidity with specified amounts.
+    * Uses the Uniswap V2 router's `addLiquidityETH` function, specifying the token address, token amount,
+    * slippage tolerance, and other parameters.
+    *  
+    * @notice This function is intended for internal use and should not be called directly.
     */
+
+ 
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
         _approve(address(this), address(uniswapV2Router), tokenAmount);
@@ -990,15 +1064,20 @@ contract SafeChainToken is Context, IERC20, Ownable {
             block.timestamp
         );
     }
- 
+
     /**
-    * @dev Manages the transfer of tokens between accounts, applying fees based on exclusions.
+    * @dev Internal function for transferring tokens between addresses, applying fees if specified.
+    * @param sender The address from which the tokens are being sent.
+    * @param recipient The address to which the tokens are being received.
+    * @param amount The amount of tokens to be transferred.
+    * @param takeFee A boolean indicating whether fees should be applied.
     * 
-    * @param sender The address sending the tokens.
-    * @param recipient The address receiving the tokens.
-    * @param amount The amount of tokens to transfer.
-    * @param takeFee Indicates whether to apply fees.
+    * If `takeFee` is false, all fees are removed for the current transfer.
+    * Determines the transfer scenario (standard, to/from excluded), and calls the appropriate transfer function accordingly.
+    *  
+    * @notice This function is intended for internal use and should not be called directly.
     */
+    
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
         if(!takeFee)
             removeAllFee();
@@ -1014,30 +1093,37 @@ contract SafeChainToken is Context, IERC20, Ownable {
         } else {
             _transferStandard(sender, recipient, amount);
         }
-        
-        if(!takeFee)
-            restoreAllFee();
+  
     }
 
     /**
-    * @dev Transfers tokens between two excluded addresses, updates balances,
-    * takes liquidity, reflects fees, and emits a transfer event.
-    *
-    * @param sender Address sending the tokens.
-    * @param recipient Address receiving the tokens.
-    * @param tAmount Amount of tokens to transfer.
+    * @dev Internal function for transferring tokens between two excluded addresses.
+    * @param sender The address from which the tokens are being sent.
+    * @param recipient The address to which the tokens are being sent.
+    * @param tAmount The amount of tokens to be transferred.
+    * 
+    * Retrieves token values, including transfer amount, fees, and liquidity, and updates both token balances.
+    * Takes liquidity and reflects fees based on specified values.
+    * Emits a `Transfer` event with details about the transfer.
+    * 
+    * @param sender The sender's address.
+    * @param recipient The recipient's address.
+    * @param tAmount The amount of tokens to be transferred.
+    * 
+    * @notice This function is intended for internal use and should not be called directly.
     */
-    function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
-        _tOwned[sender] = _tOwned[sender] - (tAmount);
-        _rOwned[sender] = _rOwned[sender] - (rAmount);
-        _tOwned[recipient] = _tOwned[recipient] + (tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);        
+     function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity);
+        _tOwned[sender] = _tOwned[sender]-tAmount;
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _tOwned[recipient] = _tOwned[recipient]+tTransferAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;        
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
-    
+
     /**
     * @dev Handles the standard transfer of tokens between two addresses,
     * updating balances, taking liquidity, reflecting fees, and emitting a transfer event.
@@ -1047,9 +1133,10 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param tAmount Amount of tokens to transfer.
     */
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
-        _rOwned[sender] = _rOwned[sender] - (rAmount);
-        _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity);
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
@@ -1064,16 +1151,17 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param tAmount Amount of tokens to transfer.
     */
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
-        _rOwned[sender] = _rOwned[sender] - (rAmount);
-        _tOwned[recipient] = _tOwned[recipient] + (tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);           
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity);
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _tOwned[recipient] = _tOwned[recipient]+tTransferAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;           
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-    /**
+        /**
     * @dev Transfers tokens from an excluded account to an included account,
     * updating balances, taking liquidity, reflecting fees, and emitting a transfer event.
     *
@@ -1082,10 +1170,11 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param tAmount Amount of tokens to transfer.
     */
     function _transferFromExcluded(address sender, address recipient, uint256 tAmount) private {
-        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
-        _tOwned[sender] = _tOwned[sender] - (tAmount);
-        _rOwned[sender] = _rOwned[sender] - (rAmount);
-        _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);   
+        (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getValues(tAmount);
+        (uint256 rAmount, uint256 rTransferAmount, uint256 rFee) = _getRValues(tAmount, tFee, tLiquidity);
+        _tOwned[sender] = _tOwned[sender]-tAmount;
+        _rOwned[sender] = _rOwned[sender]-rAmount;
+        _rOwned[recipient] = _rOwned[recipient]+rTransferAmount;   
         _takeLiquidity(tLiquidity);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
