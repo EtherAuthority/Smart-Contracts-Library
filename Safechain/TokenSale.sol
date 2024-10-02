@@ -325,11 +325,12 @@ contract TokenSale is Context, Ownable{
         uint256 lastClaimTime;
         uint256 lastClaimIndexTime;
         uint256 claimCount;
+        uint256 claimed;
     }
 
     mapping(address=>_users[]) public userPurchase;
 
-    uint256 public constant claimInterval=2592000;
+    uint256 public constant claimInterval=10;//2592000
 
     mapping(address=>uint256) public claimedIndex;
 
@@ -409,7 +410,8 @@ contract TokenSale is Context, Ownable{
                     tokenAmount:_tokenAmount,
                     lastClaimTime:block.timestamp,
                     lastClaimIndexTime:block.timestamp,
-                    claimCount:0
+                    claimCount:0,
+                    claimed:(_tokenAmount*10)/100
                 });
                 
                 userPurchase[msg.sender].push(user);
@@ -441,6 +443,7 @@ contract TokenSale is Context, Ownable{
                 userPurchase[msg.sender][i].lastClaimIndexTime+=claimInterval*totalMonth;
                 userPurchase[msg.sender][i].lastClaimTime=block.timestamp;
                 userPurchase[msg.sender][i].claimCount+=totalMonth;
+                userPurchase[msg.sender][i].claimed+=((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth;
                 IERC20(tokenSaleAddress).transfer(msg.sender,((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth);
                 emit ClaimToken(msg.sender, ((userPurchase[msg.sender][i].tokenAmount*5)/100)*totalMonth, block.timestamp);
                 if(userPurchase[msg.sender][i].claimCount==18)
@@ -490,10 +493,37 @@ contract TokenSale is Context, Ownable{
         return totalclaim;
     }
 
-    
-    function leftTokensStagewise(uint256 _stage) public view returns(uint256)
-    {
-        return Stages[_stage].tokenAmount-Stages[_stage].soldTokens;
+    function viewClaimedAmount() public view returns(uint256){
+
+        uint256 totalclaim;
+        for(uint256 i=0;i<userPurchase[msg.sender].length;i++)
+        {
+            totalclaim+=userPurchase[msg.sender][i].claimed;
+        }
+
+        return totalclaim;
+    }
+
+    function withdrawTokens(address _tokenadd,uint256 _amount) public onlyOwner{
+        IERC20(_tokenadd).transfer(msg.sender,_amount);
+    }
+
+    function withdrawNative() public onlyOwner{
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function getActiveStage() public view returns(uint256){
+        uint256 stage=0;
+        for(uint256 i=0;i<Stages.length;i++)
+        {
+           
+            if(block.timestamp>=Stages[i].startTime && block.timestamp<=Stages[i].endTime)
+            {
+                stage=i+1;
+            }
+        }
+
+        return stage;
     }
 
     receive() external payable { }
