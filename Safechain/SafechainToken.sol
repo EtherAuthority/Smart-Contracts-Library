@@ -283,7 +283,6 @@ interface IUniswapV2Router01 {
     function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
 }
 
-
 interface IUniswapV2Router02 is IUniswapV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
@@ -379,12 +378,16 @@ contract SafeChainToken is Context, IERC20, Ownable {
         _;
         inSwapAndLiquify = false;
     }
-    
+
+    /**
+    * @dev Contract constructor that initializes the token with the total supply assigned to the deployer.
+    * It also sets up the Uniswap router and creates a Uniswap trading pair for the token.
+    * The owner and the contract itself are excluded from fees and rewards.
+    */
     constructor ()  {
         _rOwned[_msgSender()] = _rTotal;
      
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E); //bsc mainnet router
-
 
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
@@ -579,7 +582,6 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * @param deductTransferFee A boolean indicating whether to deduct the transfer fee from the calculation.
     * @return The equivalent reflection amount corresponding to the given token amount.
     */
-
     function reflectionFromToken(uint256 tAmount, bool deductTransferFee) external view returns(uint256) {
         require(tAmount <= _tTotal, "Amount must be less than supply");
         if (!deductTransferFee) {
@@ -665,7 +667,6 @@ contract SafeChainToken is Context, IERC20, Ownable {
     * to support various mechanisms like liquidity provision, rewards, or token burns.
     * @param account The address to include in transaction fees.
     */
-    
     function includeInFee(address account) external onlyOwner {
         require(_isExcludedFromFee[account],"Alreay included in fee");
         _isExcludedFromFee[account] = false;
@@ -700,7 +701,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
         emit ThresholdUpdated(amount);
     }
     
-     //to recieve ETH from uniswapV2Router when swaping
+    //to recieve ETH from uniswapV2Router when swaping
     receive() external payable {}
 
     /**
@@ -1048,8 +1049,6 @@ contract SafeChainToken is Context, IERC20, Ownable {
     *  
     * @notice This function is intended for internal use and should not be called directly.
     */
-
- 
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
         _approve(address(this), address(uniswapV2Router), tokenAmount);
@@ -1077,7 +1076,6 @@ contract SafeChainToken is Context, IERC20, Ownable {
     *  
     * @notice This function is intended for internal use and should not be called directly.
     */
-    
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
         if(!takeFee)
             removeAllFee();
@@ -1161,7 +1159,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-        /**
+    /**
     * @dev Transfers tokens from an excluded account to an included account,
     * updating balances, taking liquidity, reflecting fees, and emitting a transfer event.
     *
