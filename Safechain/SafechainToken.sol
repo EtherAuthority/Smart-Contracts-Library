@@ -354,7 +354,7 @@ contract SafeChainToken is Context, IERC20, Ownable {
     uint256 private refAmt;
     uint256 private liquidty;
 
-    //Buy tax percentage
+    //Buy&Sell tax percentage
     uint256 public buyAndSellReflectionTax=250;
     uint256 public buyAndSellLiquidityTax=250;
 
