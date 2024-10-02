@@ -324,6 +324,7 @@ contract TokenSale is Context, Ownable{
         uint256 tokenAmount;
         uint256 lastClaimTime;
         uint256 lastClaimIndexTime;
+        uint256 calculationStartTime;
         uint256 claimCount;
         uint256 claimed;
     }
@@ -407,12 +408,19 @@ contract TokenSale is Context, Ownable{
                 IERC20(_tokenaddress).transferFrom(msg.sender,address(this),_tokenAmount*Stages[i].price);
 
                 IERC20(tokenSaleAddress).transfer(msg.sender,(_tokenAmount*10)/100);
+                
+                uint256 calc=block.timestamp;
+                if(claimStartDate>block.timestamp)
+                {
+                    calc=claimStartDate;
+                }
 
                 _users memory user = _users({
                     purchaseTime:block.timestamp,
                     tokenAmount:_tokenAmount,
                     lastClaimTime:block.timestamp,
-                    lastClaimIndexTime:block.timestamp,
+                    lastClaimIndexTime:calc,
+                    calculationStartTime:calc,
                     claimCount:0,
                     claimed:(_tokenAmount*10)/100
                 });
@@ -434,7 +442,7 @@ contract TokenSale is Context, Ownable{
             if(userPurchase[msg.sender][i].claimCount<18)
             {
                 uint256 totalMonth;
-                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                if(userPurchase[msg.sender][i].calculationStartTime+(claimInterval*18)<=block.timestamp)
                 {
                     totalMonth=18-userPurchase[msg.sender][i].claimCount;
                 }
@@ -469,20 +477,16 @@ contract TokenSale is Context, Ownable{
         return Stages.length;
     }
 
-    function setClaimStartDate(uint256 time) public onlyOwner{
-        claimStartDate=time;
-    }
-
     // User can Check his Avalailable balance to claim here
     function viewClaimAmount() public view returns(uint256){
-
+        require(claimStartDate<block.timestamp,"Claim Process Not Started");
         uint256 totalclaim;
         for(uint256 i=claimedIndex[msg.sender];i<userPurchase[msg.sender].length;i++)
         {
             if(userPurchase[msg.sender][i].claimCount<18)
             {
                 uint256 totalMonth;
-                if(userPurchase[msg.sender][i].purchaseTime+(claimInterval*18)<=block.timestamp)
+                if(userPurchase[msg.sender][i].calculationStartTime+(claimInterval*18)<=block.timestamp)
                 {
                     totalMonth=18-userPurchase[msg.sender][i].claimCount;
                 }
