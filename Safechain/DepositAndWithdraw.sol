@@ -177,8 +177,8 @@ contract DepositWithdraw is Ownable{
         require(usdtToken.transferFrom(msg.sender, adminWallet, amount), "USDT transfer failed");
     }
     
-    // Withdraw USDT or SUSD from the withdrawal wallet by specifying the token address
-    function withdraw(address tokenAddress, uint256 amount) public {
+    // This function allows the owner to withdraw specified amounts of USDT or SUSD to a recipient.
+    function withdraw(address tokenAddress,address recipient, uint256 amount) public onlyOwner {
         require(amount > 0, "Amount should be greater than 0");
 
         IERC20 token = IERC20(tokenAddress);  // Specify either USDT or SUSD
@@ -188,7 +188,7 @@ contract DepositWithdraw is Ownable{
         
         require(walletBalance >= amount, "Insufficient balance in withdraw wallet");
        
-        require(token.transferFrom(withdrawWallet, msg.sender, amount), "Token transfer failed");
+        require(token.transferFrom(withdrawWallet, recipient, amount), "Token transfer failed");
         
     }
 
