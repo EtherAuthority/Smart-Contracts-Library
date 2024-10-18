@@ -284,12 +284,18 @@ contract DogeCatToken is Ownable,IERC20 {
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapPair;
 
+    /** 
+    * @dev Initializes the contract by setting the marketing wallet and setting up Uniswap.
+    * - Sets the total supply to the sender's balance.
+    * - Initializes the poodl router and creates a pair for this token.
+    * - Approves the maximum possible amount for Uniswap to handle token transfers.
+    * - Sets the marketing wallet.
+    */
     constructor(address _marketingWallet) {
         _balances[msg.sender] = _totalSupply;
        
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //BSC Testnet
-
+            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
