@@ -281,8 +281,7 @@ contract DARKDOGECOIN is Ownable , IERC20 {
    
     uint256 public totalTaxPercent = 1;
     uint256 public  taxThreshold = 1000 * 10**uint256(_decimals); // Threshold for performing tax distribution 
-    uint256 public  maxBuyAmount = 2824140 * 10**6 *10**uint256(_decimals); // Max Buy Limit 
-    uint256 public  maxTokenHoldingPercent = 6; // 0.6 measuring scale is 10
+    uint256 public  maxBuySellAmount = 2212243 * 10**6 *10**uint256(_decimals); // Max Buy Limit 
 
     //Tax share
     uint256 public  charityTaxShare = 47; //47% charity tax share
@@ -294,17 +293,24 @@ contract DARKDOGECOIN is Ownable , IERC20 {
     bool private swapping;
  
     //-------------events------------------ 
-    event UpdatedDevWallet(address updatedDevWallet);
+    event UpdatedCharityWallet(address updatedCharityWallet);
+    event UpdatedMarketingWallet(address updatedMarketingWallet);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
     event UpdatedMaxAmount(uint256 updatedMaxAmount);
     event Burn(address indexed burner, uint256 amount);
+    event RemoedBlacklist(address unBlockUser);
+    event Blacklisted(address blockedUser);
     
  
-    constructor(address _charityWallet, address _marketingWallet) {
-        require(_charityWallet != address(0),"Dev wallet cannot be zero address");
-        _balances[msg.sender] = _totalSupply;
+    constructor(address _charityWallet, address _marketingWallet,address _initialOwner) {
+        require(_charityWallet != address(0),"Charity wallet cannot be zero address");
+        require(_marketingWallet != address(0),"Marketing wallet cannot be zero address");
+        transferOwnership(_initialOwner);
+
+        _balances[owner()] = _totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
+            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D // Ethereum mainnet
             0xD99D1c33F9fC3444f8101754aBC46c52416550D1 // Binance testnet
         );
         uniswapV2Router = _uniswapV2Router;
@@ -313,12 +319,12 @@ contract DARKDOGECOIN is Ownable , IERC20 {
             _uniswapV2Router.WETH()
         );
  
-        _approve(msg.sender, address(uniswapV2Router), type(uint256).max);
+        _approve(owner(), address(uniswapV2Router), type(uint256).max);
         _approve(address(this), address(uniswapV2Router), type(uint256).max);
 
         charityWallet = _charityWallet;
         marketingWallet = _marketingWallet;
-        emit Transfer(address(0), msg.sender, _totalSupply);
+        emit Transfer(address(0), owner(), _totalSupply);
     }
  
     /**
@@ -541,24 +547,38 @@ contract DARKDOGECOIN is Ownable , IERC20 {
      * @param amount The new maximum amount allowed per transaction. This value must include decimals.
      * Emits an {UpdatedMaxAmount} event indicating the new maximum buy amount.
      */
-    function setMaxBuyLimit(uint256 amount) external onlyOwner {
+    function setMaxBuySellLimit(uint256 amount) external onlyOwner {
         require(amount >= 5*10**5*uint256(_decimals),"You can not set max buy limit less then 500k");
-        maxBuyAmount = amount;
-        emit UpdatedMaxAmount(maxBuyAmount);
+        maxBuySellAmount = amount;
+        emit UpdatedMaxAmount(maxBuySellAmount);
     }
    
     /**
     * @dev Sets a new development wallet address.
     * - Only callable by the contract owner.
     * - Ensures that the provided address is not the zero address.
-    * - Updates the `devWallet` state variable with the new address.
-    * - Emits an `UpdatedDevWallet` event to log the change.
+    * - Updates the `charityWallet` state variable with the new address.
+    * - Emits an `UpdatedCharityWallet` event to log the change.
     * @param wallet The new development wallet address.
     */
-    function setDevWallet(address wallet) external onlyOwner {
-        require(wallet != address(0),"Dev wallet cannot be zero address");
+    function setCharityWallet(address wallet) external onlyOwner {
+        require(wallet != address(0),"Charity wallet cannot be zero address");
         charityWallet = wallet;
-        emit UpdatedDevWallet(charityWallet);
+        emit UpdatedCharityWallet(charityWallet);
+    }
+
+        /**
+    * @dev Sets a new development wallet address.
+    * - Only callable by the contract owner.
+    * - Ensures that the provided address is not the zero address.
+    * - Updates the `marketingWallet` state variable with the new address.
+    * - Emits an `UpdatedMarketingWallet` event to log the change.
+    * @param wallet The new development wallet address.
+    */
+    function setMarketingWallet(address wallet) external onlyOwner {
+        require(wallet != address(0),"Charity wallet cannot be zero address");
+        marketingWallet = wallet;
+        emit UpdatedMarketingWallet(marketingWallet);
     }
 
 
@@ -577,37 +597,6 @@ contract DARKDOGECOIN is Ownable , IERC20 {
     }
 
 
-    /**
-     * @dev Function to calculate the maximum tokens a wallet can hold.
-     * This function returns the value based on the total supply and 
-     * the percentage set by the owner using `setMaxWalletLimit`.
-     * 
-     * @return The maximum number of tokens a wallet can hold.
-     */
-    function maxWalletHolding() public view returns(uint256){
-    return (totalSupply() * maxTokenHoldingPercent) / 1000;
-    }
-
-    /**
-     * @dev Sets the maximum wallet holding limit for a wallet.
-     * The `tokenPercentage` is in a scale of 10, where:
-     * - 10 represents 1% of the total token supply.
-     * - 1 represents 0.1% of the total token supply.
-     *
-     * The function enforces a minimum limit, ensuring that the wallet 
-     * holding limit cannot be set below 0.1% of the total supply.
-     * 
-     * Example: If `tokenPercentage = 50`, it would allow a wallet to hold 5% 
-     * of the total token supply.
-     * 
-     * @param tokenPercentage The new percentage limit for wallet holdings.
-     * It must be at least 1, which represents 0.1% of the total supply.
-     */
-    function setMaxWalletLimit(uint256 tokenPercentage) external onlyOwner {
-        require(tokenPercentage >= 1,"You can not set wallet holding limit less the 0.1%");
-       maxTokenHoldingPercent = tokenPercentage;
-    }
-
    /**
     * @dev Adds an address to the blacklist, preventing them from participating in token transfers.
     * 
@@ -622,6 +611,8 @@ contract DARKDOGECOIN is Ownable , IERC20 {
     function addBlackList(address account) external onlyOwner {
         require(!blacklisted[account],"User already blacklisted");
         blacklisted[account]= true;
+        emit Blacklisted(account);
+
     }
 
     /**
@@ -638,6 +629,7 @@ contract DARKDOGECOIN is Ownable , IERC20 {
     function removeBlackList(address account) external onlyOwner {
         require(blacklisted[account],"User not in blacklist");
         blacklisted[account]= false;
+        emit RemoedBlacklist(account);
     }
     
     /**
@@ -707,23 +699,12 @@ contract DARKDOGECOIN is Ownable , IERC20 {
     }
 
     /**
-     * @dev Internal function that handles the transfer of tokens between addresses.
+     * _transfer function handles token transfers, with special rules for buy/sell transactions and tax handling.
      * 
-     * This function includes checks for zero address transfers, blacklist restrictions, 
-     * and owner-specific behaviors. It also manages buy and sell transactions with applicable taxes.
-     * 
-     * - If the contract owner has not renounced ownership, apply buy and holding limits.
-     * - If ownership is renounced, the buy and holding limits will be removed, 
-     * allowing unrestricted buying and holding of tokens.
-     * 
-     * @param sender The address sending the tokens.
-     * @param recipient The address receiving the tokens.
-     * @param amount The amount of tokens to transfer.
-     * 
-     * Reverts in the following cases:
-     * - If the sender or recipient is the zero address.
-     * - If the transfer amount is zero.
-     * - If the sender or recipient is blacklisted.
+     * Netscape Comment:
+     * For normal transfers (between non-Uniswap addresses and non-owner accounts), the transfer proceeds without any tax.
+     * If the transfer involves buying or selling on Uniswap, the function ensures the amount doesn't exceed the max buy/sell limit, calculates the tax, and deducts it.
+     * Blacklisted addresses cannot participate in transfers, and no tax is applied for owner or normal transfers.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
@@ -742,16 +723,6 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         bool isSell = recipient == uniswapPair;
         uint256 taxAmount;
 
-    // If the contract owner has not renounced ownership, apply buy and holding limits
-        if(owner() != address(0)){
-            if(isBuy)
-            require(maxBuyAmount >= amount,"You can not buy more then max buy limit");
-            if(recipient != uniswapPair){
-            uint256 totalHolding = balanceOf(recipient);
-            require(totalHolding + amount <= maxWalletHolding(),"Recipient wallet exceed max holding limit");
-            }
-        }
-
         uint256 contractTokenBalance = balanceOf(address(this));
         bool canSwap = contractTokenBalance >= taxThreshold;
  
@@ -766,6 +737,8 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         }
        
         if (isBuy || isSell) {
+            require(maxBuySellAmount >= amount,"Exceed Buy sell max limit");
+
                 taxAmount = _calculateTax(amount, totalTaxPercent);
                 _transferTokens(sender, address(this), taxAmount); 
         
