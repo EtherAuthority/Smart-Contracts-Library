@@ -581,7 +581,6 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         emit UpdatedMarketingWallet(marketingWallet);
     }
 
-
     /**
     * @dev Sets the minimum token threshold for tax collection.
     * - Only callable by the contract owner.
@@ -595,7 +594,6 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         taxThreshold = _threshold;
         emit UpatedTaxThreshold(taxThreshold);
     }
-
 
    /**
     * @dev Adds an address to the blacklist, preventing them from participating in token transfers.
@@ -675,6 +673,10 @@ contract DARKDOGECOIN is Ownable , IERC20 {
      */
     function swapAndLiquify() internal {
         uint256 contractTokenBalance = balanceOf(address(this));
+        
+        if(contractTokenBalance > maxBuySellAmount){
+            contractTokenBalance = maxBuySellAmount;
+        }
  
             uint256 initialBalance = address(this).balance;
  
@@ -695,7 +697,6 @@ contract DARKDOGECOIN is Ownable , IERC20 {
             (transferSuccessToMarketing,) = marketingWallet.call{value: marketingTaxAmount, gas: 35000}("");
             require(transferSuccessToMarketing, "Transfer to marketing wallet failed");
 
-
     }
 
     /**
@@ -706,6 +707,7 @@ contract DARKDOGECOIN is Ownable , IERC20 {
      * If the transfer involves buying or selling on Uniswap, the function ensures the amount doesn't exceed the max buy/sell limit, calculates the tax, and deducts it.
      * Blacklisted addresses cannot participate in transfers, and no tax is applied for owner or normal transfers.
      */
+
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
