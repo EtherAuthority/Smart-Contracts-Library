@@ -1,11 +1,10 @@
-/* 
-                        
-                        ██████╗  ██████╗  ██████╗ ███████╗ ██████╗ █████╗ ████████╗
-                        ██╔══██╗██╔═══██╗██╔════╝ ██╔════╝██╔════╝██╔══██╗╚══██╔══╝
-                        ██║  ██║██║   ██║██║  ███╗█████╗  ██║     ███████║   ██║   
-                        ██║  ██║██║   ██║██║   ██║██╔══╝  ██║     ██╔══██║   ██║   
-                        ██████╔╝╚██████╔╝╚██████╔╝███████╗╚██████╗██║  ██║   ██║   
-                        ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   
+/*
+                    ██████╗  ██████╗  ██████╗ ███████╗ ██████╗ █████╗ ████████╗
+                    ██╔══██╗██╔═══██╗██╔════╝ ██╔════╝██╔════╝██╔══██╗╚══██╔══╝
+                    ██║  ██║██║   ██║██║  ███╗█████╗  ██║     ███████║   ██║   
+                    ██║  ██║██║   ██║██║   ██║██╔══╝  ██║     ██╔══██║   ██║   
+                    ██████╔╝╚██████╔╝╚██████╔╝███████╗╚██████╗██║  ██║   ██║   
+                    ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   
                                                            
 */
 // SPDX-License-Identifier: MIT
@@ -259,7 +258,7 @@ interface IUniswapV2Router02 is IRouter01 {
 
 contract DogeCatToken is Ownable,IERC20 {
 
-    string private constant _name = "DogeCat Token";
+    string private constant _name = " DogeCat Token";
     string private constant _symbol = "DOGECAT";
     uint8 private constant _decimals = 18;
     uint256 private _totalSupply = 300 * 10**12 * 10**uint256(_decimals);
@@ -274,7 +273,7 @@ contract DogeCatToken is Ownable,IERC20 {
     uint256 public  marketingPercentage = 5;   
     uint256 public  burnTaxPercentage = 1;  
 
-    //event
+    //------------------event-------------------------------
     event UpdatedMarketingWallet(address updatedMarketingWallet);
     event UpdatedBuyTax(uint256 updatedBuyTax);
     event UpdatedSellTax(uint256 updatedSellTax);
@@ -295,7 +294,8 @@ contract DogeCatToken is Ownable,IERC20 {
         _balances[msg.sender] = _totalSupply;
        
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 
+            0x98b9b035e60d211c2181FdEAc29fCB492B2C84C8  
+
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
@@ -421,6 +421,14 @@ contract DogeCatToken is Ownable,IERC20 {
     }
 
     /**
+    * @dev Burns a specific amount of tokens from the caller's address.
+    * @param amount The amount of tokens to be burned.
+    */
+    function burn(uint256 amount) external  {
+        _burnTokens(msg.sender, amount);
+    }
+
+    /**
     * @notice Internal function to set allowance for a spender.
     * @dev This function sets the allowance for a spender to spend tokens on behalf of the owner.
     * @param sender The address of the owner of the tokens.
@@ -462,20 +470,22 @@ contract DogeCatToken is Ownable,IERC20 {
     }
 
     /**
-    * @dev Internal function to burn tokens from an account and transfer them to a designated 'dead' address.
-    * This reduces the total supply of the token.
+    * @dev Burns tokens from the specified account. 
     * 
-    * @param account The address from which the tokens are burned.
-    * @param dead The designated address where the burned tokens will be sent.
-    * @param amount The number of tokens to be burned.
+    * - Ensures the account is valid and has sufficient balance.
+    * - Reduces the account balance, increases the 'DEAD' address balance, and decreases the total supply.
+    * - Emits a Transfer event indicating the burn.
+    *
+    * @param account The address to burn tokens from.
+    * @param amount The amount of tokens to burn.
     */
-    function _burnTokens(address account, address dead, uint256 amount) internal virtual {
+    function _burnTokens(address account,uint256 amount) internal virtual {
         require(account != address(0), "ERC20: burn from the zero address");
 
         require(_balances[account] >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] -= amount;
-            _balances[dead] += amount;
+            _balances[DEAD] += amount;
             // Overflow not possible: amount <= accountBalance <= totalSupply.
             _totalSupply -= amount;
         }
@@ -603,7 +613,7 @@ contract DogeCatToken is Ownable,IERC20 {
             marketingTax = _calculateTax(amount, marketingPercentage);
             burnTax = _calculateTax(amount, burnTaxPercentage);
             _transferTokens(sender, marketingWallet, marketingTax); // send marketing tax to marketingWallet
-            _burnTokens(sender, DEAD, burnTax); // send burn tax to dead wallet
+            _burnTokens(sender, burnTax); // send burn tax to dead wallet
         }
 
         uint256 transferAmount = amount - (buyTax) - (marketingTax)- (burnTax);
