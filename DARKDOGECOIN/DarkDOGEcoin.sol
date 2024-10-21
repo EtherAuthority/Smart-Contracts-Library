@@ -385,15 +385,22 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         _burn(msg.sender, amount);
     }
 
-    /**
-    * @dev Burns a specified amount of tokens from an account.
-    * This does not decrease the total supply. Requirements: 
-    * - `account` cannot be the zero address.
-    * - `amount` must not exceed the balance of `account`.
-    *
-    * @param account The address from which to burn tokens.
-    * @param amount The number of tokens to burn.
-    */
+/**
+ * @dev Destroys `amount` tokens from `account`, reducing the total supply.
+ * 
+ * This is an internal function that can only be called within the contract or 
+ * by derived contracts. It checks that the account is not the zero address and 
+ * that the account holds sufficient balance to burn the requested `amount` of tokens.
+ * 
+ * Emits a {Burn} event.
+ * 
+ * Requirements:
+ * - `account` cannot be the zero address.
+ * - `account` must have at least `amount` tokens.
+ * 
+ * @param account The address of the token holder whose tokens will be burned.
+ * @param amount The number of tokens to be destroyed from the account's balance.
+ */
     function _burn(address account, uint256 amount) internal {
        require(account != address(0), "ERC20: burn from the zero address");
    
