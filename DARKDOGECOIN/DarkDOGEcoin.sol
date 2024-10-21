@@ -10,7 +10,7 @@
 */
 
 /**
-                                   website:-   www.darkdogecoin.org  
+                                   Website:-   www.darkdogecoin.org  
                                    Telegram:-  t.me/darkdogecoineth
 
 */
