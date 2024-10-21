@@ -8,6 +8,12 @@
                     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝
                                                                                                                     
 */
+
+/**
+                                   website:-   Www.darkdogecoin.org  
+                                   Telegram:-  t.me/darkdogecoineth
+
+*/
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
  
