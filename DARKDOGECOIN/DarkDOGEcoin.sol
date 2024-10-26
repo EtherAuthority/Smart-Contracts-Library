@@ -13,8 +13,8 @@
 */
 
 /**
-                                   Website:-   www.darkdogecoin.org  
-                                   Telegram:-  t.me/darkdogecoineth
+                                   Website:-   https://darkdogecoin.org/ 
+                                   Telegram:-  https://t.me/darkdogecoineth
 
 */
 // SPDX-License-Identifier: MIT
