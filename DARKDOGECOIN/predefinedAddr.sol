@@ -7,9 +7,9 @@ import "./DarkDOGEcoin.sol";
 contract Create {
     event ContractAddress(address contractAddress);
     address addr;
-    address charityWallet = 0x8bCAdD633b090678EE5dF92D8Bed797406bFec4B;
-    address marketingWallet = 0x453a4192Abb2c30af0f5fb397Fa604F41d86fa25;
-    address initialOwnerAddress = 0x4E0BdcfBAF1A59C78270e1164e571697489783CB;
+    address charityWallet = 0xaCf3B34363dA9754268f0191b562ade230165779;
+    address marketingWallet = 0x8453700E2D05a48Db9B3dB8599B004278ea7E6CC;
+    address initialOwnerAddress = ownerWalletAddress;
     bytes public creationCode = type(DARKDOGECOIN).creationCode;
 
     // Function to deploy the contract using a string as the salt
