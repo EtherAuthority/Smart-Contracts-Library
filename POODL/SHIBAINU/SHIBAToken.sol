@@ -256,7 +256,7 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
 
-contract SHIBToken is Ownable,IERC20 {
+contract ShibaInuToken is Ownable,IERC20 {
 
     string private constant _name = "Shiba Inu";
     string private constant _symbol = "SHIB";
@@ -294,8 +294,7 @@ contract SHIBToken is Ownable,IERC20 {
         _balances[msg.sender] = _totalSupply;
        
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1  
-
+            0xf7EBAD581d13f73e7b85AaFdC2F70c6Ab10d7f31 
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
