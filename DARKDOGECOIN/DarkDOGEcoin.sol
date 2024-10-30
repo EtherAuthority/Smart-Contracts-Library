@@ -319,8 +319,7 @@ contract DARKDOGECOIN is Ownable , IERC20 {
         _balances[owner()] = _totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            // 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D // Ethereum mainnet
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 // Binance testnet
+            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D // Ethereum mainnet
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
@@ -564,7 +563,7 @@ contract DARKDOGECOIN is Ownable , IERC20 {
      * Emits an {UpdatedMaxAmount} event indicating the new maximum buy amount.
      */
     function setMaxBuySellLimit(uint256 amount) external onlyOwner {
-        require(amount >= 5*10**5*uint256(_decimals),"You can not set max buy limit less then 500k");
+        require(amount >= 500000 * 10**uint256(_decimals), "Max buy sell limit can not be less than 500,000 tokens");
         maxBuySellAmount = amount;
         emit UpdatedMaxAmount(maxBuySellAmount);
     }
