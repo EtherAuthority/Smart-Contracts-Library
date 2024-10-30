@@ -1,11 +1,11 @@
 /*
-                    ██████╗  ██████╗  ██████╗ ███████╗ ██████╗ █████╗ ████████╗
-                    ██╔══██╗██╔═══██╗██╔════╝ ██╔════╝██╔════╝██╔══██╗╚══██╔══╝
-                    ██║  ██║██║   ██║██║  ███╗█████╗  ██║     ███████║   ██║   
-                    ██║  ██║██║   ██║██║   ██║██╔══╝  ██║     ██╔══██║   ██║   
-                    ██████╔╝╚██████╔╝╚██████╔╝███████╗╚██████╗██║  ██║   ██║   
-                    ╚═════╝  ╚═════╝  ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   
-                                                           
+
+                            ███████╗██╗  ██╗██╗██████╗  █████╗     ██╗███╗   ██╗██╗   ██╗
+                            ██╔════╝██║  ██║██║██╔══██╗██╔══██╗    ██║████╗  ██║██║   ██║
+                            ███████╗███████║██║██████╔╝███████║    ██║██╔██╗ ██║██║   ██║
+                            ╚════██║██╔══██║██║██╔══██╗██╔══██║    ██║██║╚██╗██║██║   ██║
+                            ███████║██║  ██║██║██████╔╝██║  ██║    ██║██║ ╚████║╚██████╔╝
+                            ╚══════╝╚═╝  ╚═╝╚═╝╚═════╝ ╚═╝  ╚═╝    ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
 */
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
@@ -256,12 +256,12 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
 
-contract DogeCatToken is Ownable,IERC20 {
+contract ShibaInuToken is Ownable,IERC20 {
 
-    string private constant _name = " DogeCat Token";
-    string private constant _symbol = "DOGECAT";
+    string private constant _name = "Shiba Inu";
+    string private constant _symbol = "SHIB";
     uint8 private constant _decimals = 18;
-    uint256 private _totalSupply = 300 * 10**12 * 10**uint256(_decimals);
+    uint256 private _totalSupply = 1000 * 10**12 * 10**uint256(_decimals);
 
     mapping(address => uint256) internal _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -270,8 +270,8 @@ contract DogeCatToken is Ownable,IERC20 {
     address constant public DEAD = 0x000000000000000000000000000000000000dEaD;
 
     uint256 public  buyTaxPercentage = 0;         
-    uint256 public  marketingPercentage = 5;   
-    uint256 public  burnTaxPercentage = 1;  
+    uint256 public  marketingPercentage = 8;   
+    uint256 public  burnTaxPercentage = 2;  
 
     //------------------event-------------------------------
     event UpdatedMarketingWallet(address updatedMarketingWallet);
@@ -294,8 +294,7 @@ contract DogeCatToken is Ownable,IERC20 {
         _balances[msg.sender] = _totalSupply;
        
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0x98b9b035e60d211c2181FdEAc29fCB492B2C84C8  
-
+            0xf7EBAD581d13f73e7b85AaFdC2F70c6Ab10d7f31 
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
@@ -637,3 +636,4 @@ contract DogeCatToken is Ownable,IERC20 {
     */
     receive() external payable {}
 }
+
