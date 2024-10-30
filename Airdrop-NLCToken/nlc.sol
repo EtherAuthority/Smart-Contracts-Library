@@ -22,7 +22,7 @@ contract NLC is Context {
     /**
      * @dev Initial supply of 1100 million tokens 
      */
-    uint256 private _totalSupply = 89678917389084000;
+    uint256 private _totalSupply = 11E16;
 
     event Transfer(
         address indexed from,
