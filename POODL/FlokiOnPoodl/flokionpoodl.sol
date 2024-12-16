@@ -670,7 +670,7 @@ contract flokiToken is Context, IERC20, Ownable {
     /**
     * @notice Grants the owner the ability to exclude an address from transaction fees.
     * @dev Transaction fees are often applied in decentralized finance (DeFi) projects
-    * to support various mechanisms like liquidity provision, rewards, or token burns.
+    * to support various mechanisms like  rewards, or token burns.
     * @param account The address to exclude from transaction fees.
     */
      function excludeFromFee(address account) external onlyOwner {
@@ -678,6 +678,13 @@ contract flokiToken is Context, IERC20, Ownable {
         _isExcludedFromFee[account] = true;
     }
     
+    /**
+    * @dev Includes an account in the transaction fee system. 
+    * The account will no longer be excluded from paying transaction fees.
+    * Can only be called by the contract owner.
+    * @param account The address of the account to include in fees.
+    * @notice Reverts if the account is already included in fees.
+    */
     function includeInFee(address account) external onlyOwner {
         require(_isExcludedFromFee[account],"Alreay included in fee");
         _isExcludedFromFee[account] = false;
@@ -922,8 +929,8 @@ contract flokiToken is Context, IERC20, Ownable {
     * @param from The address from which the tokens are being sent.
     * @param to The address to which the tokens are being sent.
     * 
-    * Sets tax shares for buy and sell transactions, including referral amount, coin operation fee,
-    * liquidity fee, and burn fee, based on specified percentages.
+    * Sets tax shares for buy and sell transactions, including refe amount, 
+    * and burn fee, based on specified percentages.
     * 
     * @notice This function is intended for internal use and should not be called directly.
     * Auditor Note:- Due to Less time and in order to reduce contract size we have opted to change the tax percentages for buy, sell and normal transfer dynamically instead of hardcoding it.
