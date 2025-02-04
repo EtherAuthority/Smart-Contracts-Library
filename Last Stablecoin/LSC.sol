@@ -351,7 +351,7 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
     string private constant _name = "Last Stablecoin";
     string private constant _symbol = "LSC";
     uint8 private constant _decimals = 18;
-    uint256 private _totalSupply = 1_000_000_000 * 10**uint256(_decimals); // 100 trillion tokens
+    uint256 private _totalSupply = 1_000_000_000 * 10**uint256(_decimals); // 1 billion tokens
     
     // Mapping to store balances and allowances
     mapping(address => uint256) internal _balances;
