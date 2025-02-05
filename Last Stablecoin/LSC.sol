@@ -348,8 +348,8 @@ interface IUniswapV2Router02 is IRouter01 {
 contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
     
     // Token metadata
-    string private constant _name = "Last Stablecoin";
-    string private constant _symbol = "LSC";
+    string private constant _name = "Test coin";
+    string private constant _symbol = "TC";
     uint8 private constant _decimals = 18;
     uint256 private _totalSupply = 1_000_000_000 * 10**uint256(_decimals); // 1 billion tokens
     
@@ -379,7 +379,7 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
     
     bool public trade_open;
     uint256 private currentBlockNumber;
-    uint256 public numBlocks = 100;
+    uint256 public numBlocks = 20;
     // Events for tracking updates
     event UpdatedTaxWallet(address updatedTaxWallet);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
@@ -400,7 +400,7 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
 
         // Initialize Uniswap router and create liquidity pair
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xD99D1c33F9fC3444f8101754aBC46c52416550D1 // Ethereum mainnet UniswapV2 Router
+            0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff // Ethereum mainnet UniswapV2 Router
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
@@ -751,6 +751,7 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
             require(false);       
             return;
         }
+
 
         bool isBuy = sender == uniswapPair;
         bool isSell = recipient == uniswapPair;
