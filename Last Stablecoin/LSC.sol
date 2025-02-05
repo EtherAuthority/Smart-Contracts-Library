@@ -378,8 +378,11 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
     bool private swapping;
     
     bool public trade_open;
+
+    // Used in Anti-bot
     uint256 private currentBlockNumber;
     uint256 public numBlocks = 20;
+
     // Events for tracking updates
     event UpdatedTaxWallet(address updatedTaxWallet);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
@@ -744,14 +747,16 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
             return;
         }
 
-         //Check if trading is enabled
+        //Check if trading is enabled
         require(trade_open, "Trading is disabled");
-
-        if(block.number <= currentBlockNumber + numBlocks){     
-            require(false);       
+        
+        // Check if the current block number is within the restricted block range (anti-bot mechanism).  
+        // If the current block is less than or equal to the allowed block range (currentBlockNumber + numBlocks),  
+        // the transaction will be reverted to prevent execution.  
+        if (block.number <= currentBlockNumber + numBlocks) {     
+            require(false);  // Reverts the transaction if within the restricted block range.     
             return;
         }
-
 
         bool isBuy = sender == uniswapPair;
         bool isSell = recipient == uniswapPair;
