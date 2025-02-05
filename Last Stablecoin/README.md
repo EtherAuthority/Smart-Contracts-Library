@@ -4,7 +4,7 @@
 The **Last Stablecoin (LSC)** is an ERC-20 token on the Ethereum blockchain designed with specific functionalities to ensure security, efficiency, and stability.
 
 ## Features
-- **Fixed Supply:** 100 trillion LSC tokens minted at deployment.
+- **Fixed Supply:** 1 billion LSC tokens minted at deployment.
 - **Ownable Contract:** Admin control for contract ownership.
 - **Reentrancy Protection:** Prevents reentrancy attacks.
 - **Anti-Whale Mechanism:** Limits transactions to a maximum of 1% of the total supply.
@@ -19,7 +19,7 @@ The **Last Stablecoin (LSC)** is an ERC-20 token on the Ethereum blockchain desi
 - **Token Name:** Last Stablecoin (LSC)
 - **Symbol:** LSC
 - **Decimals:** 18
-- **Total Supply:** 100 trillion
+- **Total Supply:** 1 billion
 - **Solidity Version:** 0.8.x or higher
 
 ## Installation
