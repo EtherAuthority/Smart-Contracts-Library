@@ -348,8 +348,8 @@ interface IUniswapV2Router02 is IRouter01 {
 contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
     
     // Token metadata
-    string private constant _name = "Test coin";
-    string private constant _symbol = "TC";
+    string private constant _name = "Last Stablecoin";
+    string private constant _symbol = "LSC";
     uint8 private constant _decimals = 18;
     uint256 private _totalSupply = 1_000_000_000 * 10**uint256(_decimals); // 1 billion tokens
     
