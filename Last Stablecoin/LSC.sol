@@ -670,10 +670,6 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
         taxThreshold = _threshold;
         emit UpatedTaxThreshold(taxThreshold);
     }
-
-  
-
-   
     
     /**
     * @dev Swaps a specified amount of tokens for ETH using the Uniswap V2 router.
