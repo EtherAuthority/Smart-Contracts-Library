@@ -11,7 +11,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -403,7 +403,7 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
 
         // Initialize Uniswap router and create liquidity pair
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
-            0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff // Ethereum mainnet UniswapV2 Router
+            0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D // Ethereum mainnet UniswapV2 Router
         );
         uniswapV2Router = _uniswapV2Router;
         uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
@@ -730,7 +730,6 @@ contract LastStablecoin is Ownable, IERC20,ReentrancyGuard {
      * If the transfer involves buying or selling on Uniswap, the function ensures the amount doesn't exceed the max buy/sell limit, calculates the tax, and deducts it.
      * Blacklisted addresses cannot participate in transfers, and no tax is applied for owner or normal transfers.
      */
-
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
