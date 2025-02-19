@@ -32,6 +32,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         uint256 stakedAmount; // Amount of EAI tokens staked by the user
         uint256 lastStakeTimestamp; // Timestamp of the last stake
         uint256 lastStakeEpoch; // Last epoch in which the user staked
+        uint256 lastClaimEpoch;
         mapping(uint256 => bool) hasClaimedRewards; // Tracks if user claimed rewards for each epoch
         mapping(uint256 => uint256) claimedEAIRewards; // Tracks EAI rewards claimed per epoch
         mapping(uint256 => uint256) claimedUSDCRewards; // Tracks USDC rewards claimed per epoch
@@ -75,7 +76,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         eaiToken = IERC20(_eaiToken);
         usdcToken = IERC20(_usdcToken);
         tdEAIToken = ITdEAI(_tdEAIToken);
-        currentEpoch = 1;
+        currentEpoch = 0;
         isContractActive = false;
         totalPauseDuration = 0;
         totalStakedAmount = 0;
@@ -97,8 +98,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     */
     function activateContract() external onlyOwner {
         require(!isContractActive, "Contract is already active");
-        isContractActive = true;
-         emit ContractActivated(address(this),true);
+        isContractActive = true;       
+        emit ContractActivated(address(this),true);
     }
     /**
     * @dev Returns the current epoch number based on the elapsed time since staking started.
@@ -153,25 +154,30 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         UserInfo storage userinfo = userInfo[msg.sender];
 
-        if (epochStartTime == 0) {
-            epochStartTime = block.timestamp;
-            emit FirstStake(msg.sender, amount, block.timestamp);
-            emit EpochStarted(getCurrentEpochNumber(), epochStartTime);
-        }        
+            
 
         // Reward claim logic before updating stake
-        if (block.timestamp > userinfo.lastStakeTimestamp + EPOCH_DURATION) {
-            claim();
-        } else if (block.timestamp <= userinfo.lastStakeTimestamp + EPOCH_DURATION) {
-            revert("Staking cooldown period is active, please wait until the next epoch.");
-        }
+        
+            if (block.timestamp > userinfo.lastStakeTimestamp + EPOCH_DURATION && getCurrentEpochNumber() != 0) {
+                claim();
+            } else if (getCurrentEpochNumber()  <= userinfo.lastStakeEpoch  && getCurrentEpochNumber() != 0 ) {
+                revert("Staking cooldown period is active, please wait until the next epoch.");
+            }
+         
 
         userinfo.stakedAmount += amount;
         userinfo.lastStakeTimestamp = block.timestamp;
 
+        if (epochStartTime == 0) {
+            epochStartTime = block.timestamp;
+            currentEpoch = 1;
+            emit FirstStake(msg.sender, amount, block.timestamp);
+            emit EpochStarted(getCurrentEpochNumber(), epochStartTime);
+        }    
+
         totalStakedAmount += amount;
         epochs[getCurrentEpochNumber()].totalStaked = totalStakedAmount;
-
+        userinfo.lastStakeEpoch = getCurrentEpochNumber();
         // Mint tdEAI tokens to the staker
         tdEAIToken.mint(msg.sender, amount);
 
@@ -203,13 +209,13 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         require(tdEAIToken.balanceOf(msg.sender) >= amount, "Insufficient tdEAI balance");
 
         UserInfo storage user_info = userInfo[msg.sender];
-       
-        if (block.timestamp > user_info.lastStakeTimestamp + EPOCH_DURATION) {
+        require(user_info.stakedAmount >= amount, "Insufficient staked amount");
+
+        if (block.timestamp > user_info.lastStakeTimestamp + EPOCH_DURATION && getCurrentEpochNumber()!=0 ) {
             claim();
         }    
         
-        require(user_info.stakedAmount >= amount, "Insufficient staked amount");
-
+       
         uint256 epochNumber = getCurrentEpochNumber();
         Epoch storage currentEpochData = epochs[epochNumber];
 
@@ -283,14 +289,14 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * 4. Calculates the user's share of rewards in both EAI and USDC.
     * 5. Updates the reward tracking variables and ensures rewards are marked as claimed.
     * 6. Transfers the accumulated rewards to the user.
-    * 7. Updates the `lastStakeEpoch` to prevent double-claiming.
+    * 7. Updates the `lastClaimEpoch` to prevent double-claiming.
     * 8. Emits a `RewardsClaimed` event with the details of the claimed rewards.
     */
     function claim() internal {
         require(epochStartTime > 0, "Staking has not started");
 
         UserInfo storage user = userInfo[msg.sender];
-        uint256 lastClaimedEpoch = user.lastStakeEpoch;
+        uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
         //require(lastClaimedEpoch < latestEpoch, "No new rewards available");
 
@@ -327,7 +333,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         }
 
         if (totalEAIRewards > 0) {
-            user.lastStakeEpoch = latestEpoch - 1;
+            user.lastClaimEpoch = latestEpoch - 1;
             emit RewardsClaimed(msg.sender, latestEpoch - 1, totalEAIRewards, totalUSDCRewards);
         }
     }
@@ -346,14 +352,14 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * 4. Iterates through each unclaimed epoch and calculates the user's rewards.
     * 5. Updates reward tracking to prevent double claims.
     * 6. Transfers the accumulated rewards to the user.
-    * 7. Updates the `lastStakeEpoch` to the latest claimed epoch.
+    * 7. Updates the `lastClaimEpoch` to the latest claimed epoch.
     * 8. Emits the `RewardsClaimed` event with details.
     */
      function claimRewards() public nonReentrant whenNotPaused whenContractActive {
          require(epochStartTime > 0, "Staking has not started");
 
         UserInfo storage user = userInfo[msg.sender];
-        uint256 lastClaimedEpoch = user.lastStakeEpoch;
+        uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
         require(lastClaimedEpoch < latestEpoch, "No new rewards available");
 
@@ -389,7 +395,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             require(usdcToken.transfer(msg.sender, totalUSDCRewards), "USDC reward transfer failed");
         }
 
-        user.lastStakeEpoch = latestEpoch - 1;
+        user.lastClaimEpoch = latestEpoch - 1;
 
         emit RewardsClaimed(msg.sender, latestEpoch - 1, totalEAIRewards, totalUSDCRewards);
     }
@@ -413,7 +419,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     */
     function getPendingRewards(address user) external view returns (uint256 totalEAIRewards, uint256 totalUSDCRewards) {
         UserInfo storage userInfo_ = userInfo[user];
-        uint256 lastClaimedEpoch = userInfo_.lastStakeEpoch;
+        uint256 lastClaimedEpoch = userInfo_.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
 
         for (uint256 epoch = lastClaimedEpoch + 1; epoch < latestEpoch; epoch++) {
