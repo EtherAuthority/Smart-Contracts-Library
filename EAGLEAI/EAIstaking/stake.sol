@@ -110,13 +110,16 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @return The current epoch number.
     */
     function getCurrentEpochNumber() public view returns (uint256) {
-        if (paused()) {           
+        if (epochStartTime == 0) 
+            return currentEpoch; 
+        else if (paused())          
             return currentEpoch + 1;
-        }
-
-        uint256 timeElapsed = block.timestamp - epochStartTime - totalPauseDuration;
-        uint256 completedEpochs = timeElapsed / EPOCH_DURATION;
-        return currentEpoch + completedEpochs;
+        else{
+            uint256 timeElapsed = block.timestamp - epochStartTime - totalPauseDuration;
+            uint256 completedEpochs = timeElapsed / EPOCH_DURATION;
+            return currentEpoch + completedEpochs; 
+        }  
+       
     }
     /**
     * @dev Allows users to stake EAI tokens in the contract.
@@ -574,10 +577,12 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @param amount The amount of EAI tokens to withdraw.
     * @dev Reverts if the amount is 0, if the contract does not have enough EAI tokens, or if the transfer fails.
     */
-    /*function withdrawEAI(uint256 amount) external onlyOwner {
+
+    /*
+    function withdrawEAI(uint256 amount) external onlyOwner {
         require(amount > 0, "Amount must be greater than 0");
         require(eaiToken.balanceOf(address(this)) >= amount, "Insufficient EAI balance in contract");
-
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
-    }*/
+    }
+    */
 }
