@@ -110,8 +110,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @return The current epoch number.
     */
     function getCurrentEpochNumber() public view returns (uint256) {
-        if (epochStartTime == 0 || paused()) {
-            return currentEpoch;
+        if (paused()) {           
+            return currentEpoch + 1;
         }
 
         uint256 timeElapsed = block.timestamp - epochStartTime - totalPauseDuration;
@@ -298,7 +298,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         UserInfo storage user = userInfo[msg.sender];
         uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
-        //require(lastClaimedEpoch < latestEpoch, "No new rewards available");
+        if(lastClaimedEpoch < latestEpoch){
 
         uint256 totalEAIRewards = 0;
         uint256 totalUSDCRewards = 0;
@@ -323,19 +323,20 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             user.claimedUSDCRewards[epoch] = usdcRewards;
         }
 
-        //require(totalEAIRewards > 0 || totalUSDCRewards > 0, "No rewards to claim");
+        if(totalEAIRewards > 0 || totalUSDCRewards > 0){
 
-        if (totalEAIRewards > 0) {
-            require(eaiToken.transfer(msg.sender, totalEAIRewards), "EAI reward transfer failed");
-        }
-        if (totalUSDCRewards > 0) {
-            require(usdcToken.transfer(msg.sender, totalUSDCRewards), "USDC reward transfer failed");
-        }
-
-        if (totalEAIRewards > 0) {
+            if (totalEAIRewards > 0) {
+                require(eaiToken.transfer(msg.sender, totalEAIRewards), "EAI reward transfer failed");
+            }
+            if (totalUSDCRewards > 0) {
+                require(usdcToken.transfer(msg.sender, totalUSDCRewards), "USDC reward transfer failed");
+            }
+            
             user.lastClaimEpoch = latestEpoch - 1;
             emit RewardsClaimed(msg.sender, latestEpoch - 1, totalEAIRewards, totalUSDCRewards);
+            
         }
+    }
     }
     /**
     * @dev Allows users to claim their accumulated staking rewards.
@@ -573,10 +574,10 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @param amount The amount of EAI tokens to withdraw.
     * @dev Reverts if the amount is 0, if the contract does not have enough EAI tokens, or if the transfer fails.
     */
-    function withdrawEAI(uint256 amount) external onlyOwner {
+    /*function withdrawEAI(uint256 amount) external onlyOwner {
         require(amount > 0, "Amount must be greater than 0");
         require(eaiToken.balanceOf(address(this)) >= amount, "Insufficient EAI balance in contract");
 
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
-    }
+    }*/
 }
