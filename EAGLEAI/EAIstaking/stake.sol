@@ -48,6 +48,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     uint256 public lastPauseTime; // Last time the contract was paused
     uint256 public totalPauseDuration; // Total duration contract was paused
     bool public isContractActive; // Indicates if the contract is active
+    bool public isEpochStarted; // Indicates that epoch start or not
     uint256 public totalStakedAmount; // Total amount staked in the contract
 
     mapping(uint256 => Epoch) public epochs; // Mapping of epoch number to Epoch struct
@@ -59,6 +60,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     event RewardsClaimed(address indexed user, uint256 indexed epoch, uint256 eaiAmount, uint256 usdcAmount);
     event EpochExtended(uint256 indexed epoch, uint256 pauseDuration);
     event ContractActivated(address contractaddress, bool status);
+    event FirstEpochStarted(uint256 startTime);
     event EpochStarted(uint256 indexed epoch, uint256 startTime);
     event FirstStake(address indexed user, uint256 amount, uint256 timestamp);
 
@@ -96,10 +98,33 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * Ensures the contract is not already active before activation.
     * Emits a {ContractActivated} event upon successful activation.
     */
-    function activateContract() external onlyOwner {
+    function activateContract() external onlyOwner {       
         require(!isContractActive, "Contract is already active");
+        require(epochStartTime > 0, "please set epoch start Date");
         isContractActive = true;       
         emit ContractActivated(address(this),true);
+    }
+    /**
+     * @dev Sets the start date for epoch 1. This can only be set once before any staking occurs.
+     * @param dateTimestamp The timestamp for the epoch 1 start time.
+     * @notice This function ensures that the epoch start date is set only if no staking has occurred.
+     */
+    function setEpoch1date(uint256 dateTimestamp) external onlyOwner{
+        require(totalStakedAmount==0,"Staking has started");
+        epochStartTime = dateTimestamp;
+    }
+    /**
+     * @dev Starts the first epoch. This function can only be called once by the owner.
+     * @notice Epoch 1 cannot be started again once it has been initialized.
+     * Emits {FirstEpochStarted} and {EpochStarted} events.
+     */
+    function startEpoch1() external onlyOwner {
+        require(!isEpochStarted, "Epoch 1 already started");
+        require(epochStartTime > 0,"please set epoch start Date");
+        currentEpoch = 1;
+        isEpochStarted = true;
+        emit FirstEpochStarted(epochStartTime);
+        emit EpochStarted(currentEpoch, epochStartTime);
     }
     /**
     * @dev Returns the current epoch number based on the elapsed time since staking started.
@@ -110,8 +135,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @return The current epoch number.
     */
     function getCurrentEpochNumber() public view returns (uint256) {
-        if (epochStartTime == 0) 
-            return currentEpoch; 
+        if (!isEpochStarted || epochStartTime == 0) 
+            return 0; 
         else if (paused())          
             return currentEpoch + 1;
         else{
@@ -155,32 +180,28 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         // Transfer tokens from user to contract
         require(eaiToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
 
-        UserInfo storage userinfo = userInfo[msg.sender];
-
-            
+        UserInfo storage userinfo = userInfo[msg.sender];            
 
         // Reward claim logic before updating stake
         
             if (block.timestamp > userinfo.lastStakeTimestamp + EPOCH_DURATION && getCurrentEpochNumber() != 0) {
                 claim();
-            } else if (getCurrentEpochNumber()  <= userinfo.lastStakeEpoch  && getCurrentEpochNumber() != 0 ) {
+            } else if (getCurrentEpochNumber()  <= userinfo.lastStakeEpoch  ) {
                 revert("Staking cooldown period is active, please wait until the next epoch.");
             }
          
 
         userinfo.stakedAmount += amount;
-        userinfo.lastStakeTimestamp = block.timestamp;
-
-        if (epochStartTime == 0) {
-            epochStartTime = block.timestamp;
-            currentEpoch = 1;
-            emit FirstStake(msg.sender, amount, block.timestamp);
-            emit EpochStarted(getCurrentEpochNumber(), epochStartTime);
-        }    
-
         totalStakedAmount += amount;
         epochs[getCurrentEpochNumber()].totalStaked = totalStakedAmount;
-        userinfo.lastStakeEpoch = getCurrentEpochNumber();
+
+        if(currentEpoch == 0){
+            userinfo.lastStakeTimestamp = epochStartTime;
+            userinfo.lastStakeEpoch = 1;
+        }else{
+            userinfo.lastStakeTimestamp = block.timestamp;    
+            userinfo.lastStakeEpoch = getCurrentEpochNumber();
+        }
         // Mint tdEAI tokens to the staker
         tdEAIToken.mint(msg.sender, amount);
 
@@ -576,13 +597,11 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     *      If the conditions are met, the EAI tokens are transferred to the owner's address.
     * @param amount The amount of EAI tokens to withdraw.
     * @dev Reverts if the amount is 0, if the contract does not have enough EAI tokens, or if the transfer fails.
-    */
-
-    /*
+    */    
     function withdrawEAI(uint256 amount) external onlyOwner {
         require(amount > 0, "Amount must be greater than 0");
-        require(eaiToken.balanceOf(address(this)) >= amount, "Insufficient EAI balance in contract");
+        require(eaiToken.balanceOf(address(this)) > (amount + totalStakedAmount), "Insufficient EAI balance in contract");
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
     }
-    */
+    
 }
