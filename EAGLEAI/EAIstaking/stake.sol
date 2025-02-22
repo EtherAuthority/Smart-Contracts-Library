@@ -194,14 +194,16 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         userinfo.stakedAmount += amount;
         totalStakedAmount += amount;
-        epochs[getCurrentEpochNumber()].totalStaked = totalStakedAmount;
+       
 
         if(currentEpoch == 0){
             userinfo.lastStakeTimestamp = epochStartTime;
             userinfo.lastStakeEpoch = 1;
+            epochs[getCurrentEpochNumber()+1].totalStaked = totalStakedAmount;
         }else{
             userinfo.lastStakeTimestamp = block.timestamp;    
             userinfo.lastStakeEpoch = getCurrentEpochNumber();
+            epochs[getCurrentEpochNumber()].totalStaked = totalStakedAmount;
         }
         // Mint tdEAI tokens to the staker
         tdEAIToken.mint(msg.sender, amount);
