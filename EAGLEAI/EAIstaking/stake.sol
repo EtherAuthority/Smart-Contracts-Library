@@ -326,7 +326,10 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         UserInfo storage user = userInfo[msg.sender];
         uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
-        if(lastClaimedEpoch < latestEpoch){       
+        if(lastClaimedEpoch < latestEpoch){ 
+
+        // Limit claim to only 12 epochs at a time        
+        require(latestEpoch - lastClaimedEpoch < 13, "Pending rewards for more than 12 epochs exist; please claim all rewards before updating tokens.");
 
         (uint256 totalEAIRewards, uint256 totalUSDCRewards)= calculateClaim(lastClaimedEpoch,latestEpoch);
 
@@ -369,7 +372,13 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         UserInfo storage user = userInfo[msg.sender];
         uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
-        require(lastClaimedEpoch < latestEpoch, "No new rewards available");       
+        require(lastClaimedEpoch < latestEpoch, "No new rewards available");   
+
+        // Limit claim to only 13 epochs at a time
+        uint256 claimUntilEpoch = latestEpoch;
+        if (latestEpoch - lastClaimedEpoch > 13) {
+            claimUntilEpoch = lastClaimedEpoch + 13;
+        }    
 
         (uint256 totalEAIRewards, uint256 totalUSDCRewards)= calculateClaim(lastClaimedEpoch,latestEpoch);
 
