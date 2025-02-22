@@ -42,8 +42,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     IERC20 public immutable usdcToken; // USDC token contract
     ITdEAI public immutable tdEAIToken; // tdEAI token contract for staking receipts
 
-    uint256 public constant EPOCH_DURATION = 5 minutes; // Duration of each epoch
-    uint256 public  currentEpoch; // Tracks the current epoch number
+    uint256 public constant EPOCH_DURATION = 30 days; // Duration of each epoch
+    uint256 private currentEpoch; // Tracks the current epoch number
     uint256 public epochStartTime; // Timestamp when staking started
     uint256 public lastPauseTime; // Last time the contract was paused
     uint256 public totalPauseDuration; // Total duration contract was paused
@@ -118,9 +118,10 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
      * @notice Epoch 1 cannot be started again once it has been initialized.
      * Emits {FirstEpochStarted} and {EpochStarted} events.
      */
-    function startEpoch1() external onlyOwner {
+    function startEpoch1() external onlyOwner whenContractActive {        
         require(!isEpochStarted, "Epoch 1 already started");
         require(epochStartTime > 0,"please set epoch start Date");
+        require(block.timestamp >= epochStartTime ,"Epoch has not started yet");
         currentEpoch = 1;
         isEpochStarted = true;
         emit FirstEpochStarted(epochStartTime);
@@ -282,7 +283,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     function distributeRewards(uint256 amount, bool isUSDC) external onlyOwner whenNotPaused whenContractActive {
         require(isEpochStarted, "Epoch is not start");
         require(amount > 0, "Amount must be greater than 0");
-        require(epochStartTime > 0, "Staking has not started");
+        require( block.timestamp >= epochStartTime, "Staking has not started");
         require(totalStakedAmount > 0, "No stakes in current epoch"); 
 
         uint256 epochNumber = getCurrentEpochNumber();       
@@ -419,7 +420,13 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             totalUSDCRewards = (userStake * epochData.usdcRewards) / epochData.totalStaked;
         }
     }
-
+     /**
+     * @dev Calculates the total unclaimed EAI and USDC rewards for a user between two epochs.
+     * @param lastClaimedEpoch The last epoch for which the user has claimed rewards.
+     * @param latestEpoch The latest epoch up to which rewards can be claimed.
+     * @return totalEAIRewards The total amount of EAI rewards the user can claim.
+     * @return totalUSDCRewards The total amount of USDC rewards the user can claim.
+     */
     function calculateClaim(uint256 lastClaimedEpoch,uint256 latestEpoch) internal returns (uint256 , uint256){
 
         UserInfo storage user = userInfo[msg.sender];
