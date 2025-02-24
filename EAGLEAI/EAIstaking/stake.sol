@@ -9,18 +9,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @dev Interface of the ERC-20 standard as defined in the ERC.
  */
-
 interface ITdEAI is IERC20 {
     function mint(address to, uint256 amount) external;
     function burn(address from, uint256 amount) external;
 }
+
 /**
  * @title EAIStaking
  * @dev A staking contract where users stake EAI tokens, earn rewards in EAI and USDC,
  *      and manage epochs dynamically. Implements security features like reentrancy guards
  *      and pausable mechanisms.
  */
-
 contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
    struct Epoch {
         uint256 totalStaked;   // Total amount staked in this epoch
@@ -104,6 +103,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         isContractActive = true;       
         emit ContractActivated(address(this),true);
     }
+
     /**
      * @dev Sets the start date for epoch 1. This can only be set once before any staking occurs.
      * @param dateTimestamp The timestamp for the epoch 1 start time.
@@ -128,6 +128,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         emit FirstEpochStarted(epochStartTime);
         emit EpochStarted(currentEpoch, epochStartTime);
     }
+
     /**
     * @dev Returns the current epoch number based on the elapsed time since staking started.
     * If staking has not started or the contract is paused, it returns the current stored epoch.
@@ -148,6 +149,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         }  
        
     }
+
     /**
     * @dev Allows users to stake EAI tokens in the contract.
     * Enforces reentrancy protection and ensures the contract is active and not paused.
@@ -215,6 +217,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         emit Staked(msg.sender, amount);
     }
+
     /**
     * @dev Allows users to unstake EAI tokens by burning their tdEAI tokens.
     * Ensures reentrancy protection and that the contract is active and not paused.
@@ -262,7 +265,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             user_info.lastStakeEpoch = 0; 
             user_info.lastClaimEpoch = 0; 
         }
-        
+
         totalStakedAmount -= amount;
         currentEpochData.totalStaked = totalStakedAmount;
 
@@ -272,6 +275,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         emit Unstaked(msg.sender, amount);
     }
+
     /**
     * @dev Distributes rewards for the current staking epoch in either USDC or EAI.
     * Only the contract owner can call this function when the contract is active and not paused.
@@ -293,7 +297,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * @param amount The amount of tokens to distribute as rewards.
     * @param isUSDC Boolean indicating whether the reward is in USDC (true) or EAI (false).
     */
-    function distributeRewards(uint256 amount, bool isUSDC) external onlyOwner whenNotPaused whenContractActive {
+    function distributeRewards(uint256 amount, bool isUSDC) external onlyOwner whenNotPaused whenContractActive {        
+        require(eaiToken.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance, approve contract first");
         require(isEpochStarted, "Epoch is not start");
         require(amount > 0, "Amount must be greater than 0");
         require( block.timestamp >= epochStartTime, "Staking has not started");
@@ -312,6 +317,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         updateEpoch();  // Ensure current epoch is updated
         emit RewardsDistributed(epochNumber, isUSDC ? 0 : amount, isUSDC ? amount : 0);
     }
+
     /**
     * @dev Internal function to claim staking rewards from past epochs.
     * This function calculates and transfers rewards for the user based on their stake
@@ -360,6 +366,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             }
         } 
     }
+
     /**
     * @dev Allows users to claim their accumulated staking rewards.
     * Rewards are distributed based on the user's stake in each epoch.
@@ -409,6 +416,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         emit RewardsClaimed(msg.sender, latestEpoch - 1, totalEAIRewards, totalUSDCRewards);
     }
+
     /**
     * @dev Returns the pending rewards (EAI and USDC) for a given user.
     * Rewards are calculated based on the user's stake in each epoch.
@@ -449,6 +457,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             return (totalEAIRewards,totalUSDCRewards);
         }   
     }
+
      /**
      * @dev Calculates the total unclaimed EAI and USDC rewards for a user between two epochs.
      * @param lastClaimedEpoch The last epoch for which the user has claimed rewards.
@@ -486,6 +495,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         return (totalEAIRewards , totalUSDCRewards);
     }
+
     /**
     * @dev Updates the current epoch if enough time has passed.
     * 
@@ -527,10 +537,10 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * - If the epoch has progressed, finalizes the previous epoch and updates `totalStakedAmount`.
     * - Aligns `epochStartTime` to the beginning of the new epoch.
     */
-
      function getTotalStaked() external view returns (uint256) {
         return totalStakedAmount;
     }
+
    /**
     * @dev Returns the reward amounts (EAI and USDC) for a given epoch.
     * @param epoch The epoch number to fetch rewards for.
@@ -540,6 +550,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     function getEpochRewards(uint256 epoch) external view returns (uint256 eaiRewards, uint256 usdcRewards) {
         return (epochs[epoch].eaiRewards, epochs[epoch].usdcRewards);
     }
+    
     /**
     * @notice Checks if a user is eligible for rewards.
     * @dev The function returns true if the user has staked tokens and the contract is not active.
@@ -550,6 +561,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         UserInfo storage userInfo_ = userInfo[user];
         return userInfo_.stakedAmount > 0 && isContractActive;
     }
+
     /**
     * @notice Returns the adjusted end time for the current epoch, factoring in any pause durations.
     * @dev If the epoch has not started yet (`epochStartTime` is 0), the function returns 0. 
@@ -563,6 +575,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         }
         return epochStartTime + EPOCH_DURATION + totalPauseDuration;
     }
+
     /**
     * @notice Pauses the contract, preventing further actions until resumed.
     * @dev This function can only be called by the contract owner (`onlyOwner`). 
@@ -573,6 +586,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         lastPauseTime = block.timestamp;
         _pause();
     }
+
     /**
     * @notice Resumes the contract from a paused state.
     * @dev This function can only be called by the contract owner (`onlyOwner`). It requires that the contract is currently paused 
@@ -600,6 +614,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     function hasUserClaimedRewards(address user, uint256 epoch) external view returns (bool) {
         return userInfo[user].hasClaimedRewards[epoch];
     }
+
     /**
     * @notice Retrieves the amount of claimed rewards for a user for a specific epoch.
     * @dev This function returns the amounts of both EAI and USDC rewards that the user has claimed for the specified epoch.
@@ -616,6 +631,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             userInfo_.claimedUSDCRewards[epoch]
         );  
     }
+
     /**
     * @notice Allows the contract owner to withdraw EAI tokens from the contract.
     * @dev This function enables the owner to withdraw a specified amount of EAI tokens from the contract. 
@@ -628,6 +644,21 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, "Amount must be greater than 0");
         require(eaiToken.balanceOf(address(this)) > (amount + totalStakedAmount), "Insufficient EAI balance in contract");
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
+    }
+
+    /**
+    * @dev Withdraws a specified amount of USDC tokens from the contract.
+    * Only callable by the owner.
+    * Requirements:
+    * - The withdrawal amount must be greater than 0.
+    * - The contract must have a sufficient USDC balance.
+    * - The USDC token transfer to the owner must succeed.
+    * @param amount The amount of USDC tokens to withdraw.
+    */
+    function withdrawUSDC(uint256 amount) external onlyOwner {
+        require(amount > 0, "Amount must be greater than 0");
+        require(usdcToken.balanceOf(address(this)) > amount, "Insufficient USDC balance in contract");
+        require(usdcToken.transfer(msg.sender, amount), "USDC transfer failed");
     }
     
 }
