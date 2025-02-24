@@ -198,9 +198,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
        
         if(userinfo.lastStakeEpoch==0){
             if(getCurrentEpochNumber()!=0)
-                userinfo.lastClaimEpoch=getCurrentEpochNumber()-1;
-           
-        }    
+                userinfo.lastClaimEpoch=getCurrentEpochNumber()-1;           
+        }
 
         if(currentEpoch == 0){
             userinfo.lastStakeTimestamp = epochStartTime;
@@ -257,7 +256,13 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
         // Update user and global staking data
         user_info.stakedAmount -= amount;
-      
+
+
+        if(user_info.stakedAmount == 0){
+            user_info.lastStakeEpoch = 0; 
+            user_info.lastClaimEpoch = 0; 
+        }
+        
         totalStakedAmount -= amount;
         currentEpochData.totalStaked = totalStakedAmount;
 
@@ -512,6 +517,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             emit EpochStarted(currentEpoch, epochStartTime);
         }
     }
+
     /**
     * @dev Updates the current epoch if enough time has passed.
     * 
@@ -581,7 +587,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         totalPauseDuration += pauseDuration;
         emit EpochExtended(currentEpoch, pauseDuration);
         _unpause();
-    }   
+    }
+   
     /**
     * @notice Checks if a user has claimed rewards for a specific epoch.
     * @dev This function returns a boolean value indicating whether the user has claimed rewards for the given epoch. 
@@ -621,5 +628,6 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, "Amount must be greater than 0");
         require(eaiToken.balanceOf(address(this)) > (amount + totalStakedAmount), "Insufficient EAI balance in contract");
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
-    }    
+    }
+    
 }
