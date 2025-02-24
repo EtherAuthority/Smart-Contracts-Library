@@ -118,10 +118,15 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
      * @notice Epoch 1 cannot be started again once it has been initialized.
      * Emits {FirstEpochStarted} and {EpochStarted} events.
      */
-    function startEpoch1() external onlyOwner whenContractActive {        
+    function test() public view returns (uint256,uint256){
+        return (block.timestamp,epochStartTime );
+    }
+
+    function startEpoch1() external onlyOwner whenContractActive {
+        require(block.timestamp >= epochStartTime ,"Epoch has not started yet");        
         require(!isEpochStarted, "Epoch 1 already started");
         require(epochStartTime > 0,"please set epoch start Date");
-        require(block.timestamp >= epochStartTime ,"Epoch has not started yet");
+        
         currentEpoch = 1;
         isEpochStarted = true;
         emit FirstEpochStarted(epochStartTime);
@@ -195,12 +200,17 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         userinfo.stakedAmount += amount;
         totalStakedAmount += amount;
        
+        if(userinfo.lastStakeEpoch==0){
+            if(getCurrentEpochNumber()!=0)
+                userinfo.lastClaimEpoch=getCurrentEpochNumber()-1;
+           
+        }    
 
         if(currentEpoch == 0){
             userinfo.lastStakeTimestamp = epochStartTime;
-            userinfo.lastStakeEpoch = 1;
+            userinfo.lastStakeEpoch = 1;           
             epochs[getCurrentEpochNumber()+1].totalStaked = totalStakedAmount;
-        }else{
+        }else{           
             userinfo.lastStakeTimestamp = block.timestamp;    
             userinfo.lastStakeEpoch = getCurrentEpochNumber();
             epochs[getCurrentEpochNumber()].totalStaked = totalStakedAmount;
@@ -368,13 +378,14 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     * 8. Emits the `RewardsClaimed` event with details.
     */
      function claimRewards() public nonReentrant whenNotPaused whenContractActive {
-        require(epochStartTime > 0, "Staking has not started");       
-
+        require(epochStartTime > 0, "Staking has not started");      
+        
         UserInfo storage user = userInfo[msg.sender];
         uint256 lastClaimedEpoch = user.lastClaimEpoch;
         uint256 latestEpoch = getCurrentEpochNumber();
+        require((block.timestamp > user.lastStakeTimestamp + EPOCH_DURATION && getCurrentEpochNumber() != 0), "Please wait until the next epoch.");
         require(lastClaimedEpoch < latestEpoch, "No new rewards available");  
-        require(getCurrentEpochNumber()  > user.lastStakeEpoch, "please wait until the next epoch."); 
+        require(getCurrentEpochNumber()  > user.lastStakeEpoch, "Please wait until the next epoch."); 
 
         // Limit claim to only 13 epochs at a time
         uint256 claimUntilEpoch = latestEpoch;
