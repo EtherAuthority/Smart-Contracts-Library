@@ -117,11 +117,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
      * @dev Starts the first epoch. This function can only be called once by the owner.
      * @notice Epoch 1 cannot be started again once it has been initialized.
      * Emits {FirstEpochStarted} and {EpochStarted} events.
-     */
-    function test() public view returns (uint256,uint256){
-        return (block.timestamp,epochStartTime );
-    }
-
+     */   
     function startEpoch1() external onlyOwner whenContractActive {
         require(block.timestamp >= epochStartTime ,"Epoch has not started yet");        
         require(!isEpochStarted, "Epoch 1 already started");
@@ -516,7 +512,6 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             emit EpochStarted(currentEpoch, epochStartTime);
         }
     }
-
     /**
     * @dev Updates the current epoch if enough time has passed.
     * 
@@ -586,8 +581,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         totalPauseDuration += pauseDuration;
         emit EpochExtended(currentEpoch, pauseDuration);
         _unpause();
-    }
-   
+    }   
     /**
     * @notice Checks if a user has claimed rewards for a specific epoch.
     * @dev This function returns a boolean value indicating whether the user has claimed rewards for the given epoch. 
@@ -627,6 +621,5 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, "Amount must be greater than 0");
         require(eaiToken.balanceOf(address(this)) > (amount + totalStakedAmount), "Insufficient EAI balance in contract");
         require(eaiToken.transfer(msg.sender, amount), "EAI transfer failed");
-    }
-    
+    }    
 }
