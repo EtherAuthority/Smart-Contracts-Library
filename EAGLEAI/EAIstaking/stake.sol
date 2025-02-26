@@ -198,13 +198,11 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         userinfo.stakedAmount += amount;
         totalStakedAmount += amount;
        
-        if(userinfo.lastStakeEpoch==0){
-            if(getCurrentEpochNumber()!=0)
-                if(block.timestamp == epochStartTime)
-                    userinfo.lastClaimEpoch=getCurrentEpochNumber() - 1;
-                else   
-                    userinfo.lastClaimEpoch=getCurrentEpochNumber();            
-        }
+         if(getCurrentEpochNumber()!=0)
+            if(block.timestamp == epochStartTime)
+                userinfo.lastClaimEpoch=getCurrentEpochNumber() - 1;
+            else   
+                userinfo.lastClaimEpoch=getCurrentEpochNumber(); 
 
         if(currentEpoch == 0){
             userinfo.lastStakeTimestamp = epochStartTime;
