@@ -41,7 +41,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     IERC20 public immutable usdcToken; // USDC token contract
     ITdEAI public immutable tdEAIToken; // tdEAI token contract for staking receipts
 
-    uint256 public constant EPOCH_DURATION = 5 minutes; // Duration of each epoch
+    uint256 public constant EPOCH_DURATION = 30 days; // Duration of each epoch
     uint256 private currentEpoch; // Tracks the current epoch number
     uint256 public epochStartTime; // Timestamp when staking started
     uint256 public lastPauseTime; // Last time the contract was paused
@@ -200,7 +200,10 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
        
         if(userinfo.lastStakeEpoch==0){
             if(getCurrentEpochNumber()!=0)
-                userinfo.lastClaimEpoch=getCurrentEpochNumber()-1;           
+                if(block.timestamp == epochStartTime)
+                    userinfo.lastClaimEpoch=getCurrentEpochNumber() - 1;
+                else   
+                    userinfo.lastClaimEpoch=getCurrentEpochNumber();            
         }
 
         if(currentEpoch == 0){
@@ -526,7 +529,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
 
             emit EpochStarted(currentEpoch, epochStartTime);
         }
-    }
+    }   
 
     /**
     * @dev Updates the current epoch if enough time has passed.
@@ -659,6 +662,5 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, "Amount must be greater than 0");
         require(usdcToken.balanceOf(address(this)) > amount, "Insufficient USDC balance in contract");
         require(usdcToken.transfer(msg.sender, amount), "USDC transfer failed");
-    }
-    
+    }    
 }
