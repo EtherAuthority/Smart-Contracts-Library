@@ -47,7 +47,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     ITdEAI public immutable tdEAIToken; // tdEAI token contract for staking receipts
      
     address[] public stakers;  // Array to track stakers 
-    uint256 public constant EPOCH_DURATION = 5 minutes; // Duration of each epoch
+    uint256 public constant EPOCH_DURATION = 30 days; // Duration of each epoch
     uint256 private currentEpoch; // Tracks the current epoch number
     uint256 public epochStartTime; // Timestamp when staking started
     uint256 public lastPauseTime; // Last time the contract was paused
@@ -57,7 +57,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     uint256 private totalStakedAmount; // Total amount staked in the contract
 
     uint256 public lastProcessedIndex = 0; // Track last processed index
-    uint256 public batchSize = 2; // Default batch size (can be changed manually)
+    uint256 public batchSize = 1000; // Default batch size (can be changed manually)
 
     mapping(uint256 => Epoch) public epochs; // Mapping of epoch number to Epoch struct
     mapping(address => UserInfo) public userInfo; // Mapping of user addresses to UserInfo struct
