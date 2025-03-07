@@ -409,12 +409,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         emit RewardsDistributed(epochNumber, isUSDC ? 0 : amount, isUSDC ? amount : 0);
     }
 
-      /**
-     * @dev Helper function: returns the minimum of two numbers.
-     */
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a <= b ? a : b;
-    }
+  
 
     /**
      * @notice Returns the aggregated unclaimed rewards for the user from previous epochs.
