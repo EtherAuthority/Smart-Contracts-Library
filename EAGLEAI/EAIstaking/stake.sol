@@ -35,8 +35,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         uint256 lockedStake;   // "Old" stake locked in at the start of an epoch and eligible for rewards.
         uint256 pendingStake;  // "New" stake added mid-epoch; not eligible for rewards until next epoch.
         uint256 lastStakeTimestamp; // Timestamp of the last stake (for cooldowns, etc.)
-        uint256 lastStakeEpoch; // The epoch in which the user last updated their stake (rolled over pending)
-        uint256 lastClaimEpoch; // Last epoch that has been fully claimed
+        uint256 lastStakeEpoch; // The epoch in which the user last updated their stake (rolled over pending)       
         // For each epoch, we now store the amount claimed so far (so that partial claims are possible)
         mapping(uint256 => uint256) claimedEAIRewards; 
         mapping(uint256 => uint256) claimedUSDCRewards;
@@ -409,35 +408,8 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         emit RewardsDistributed(epochNumber, isUSDC ? 0 : amount, isUSDC ? amount : 0);
     }
 
-  
 
     /**
-     * @notice Returns the aggregated unclaimed rewards for the user from previous epochs.
-     * Rewards are calculated based on the user's lockedStake at the start of each epoch.
-     *
-     * @param userAddr The address of the user.
-     * @return availableEAI The total available EAI rewards.
-     * @return availableUSDC The total available USDC rewards.
-     */
-    function getUserEpochRewards(address userAddr) public view returns (uint256 availableEAI, uint256 availableUSDC) {
-        UserInfo storage user = userInfo[userAddr];
-        uint256 latestEpoch = getCurrentEpochNumber();
-        // Iterate through epochs from lastClaimEpoch+1 until latestEpoch (non-inclusive)
-        for (uint256 epoch = user.lastClaimEpoch + 1; epoch < latestEpoch; epoch++) {
-            Epoch storage epochData = epochs[epoch];
-            if (epochData.totalStaked == 0) continue;
-            // User's full entitled rewards in this epoch, based on lockedStake at that epoch.
-            uint256 fullEAI = (epochs[epoch].rewardStakeBalance[userAddr] * epochData.eaiRewards) / epochData.totalStaked;
-            uint256 fullUSDC = (epochs[epoch].rewardStakeBalance[userAddr] * epochData.usdcRewards) / epochData.totalStaked;
-            // Subtract any amounts already claimed for this epoch.
-            uint256 epochAvailableEAI = fullEAI > user.claimedEAIRewards[epoch] ? fullEAI - user.claimedEAIRewards[epoch] : 0;
-            uint256 epochAvailableUSDC = fullUSDC > user.claimedUSDCRewards[epoch] ? fullUSDC - user.claimedUSDCRewards[epoch] : 0;
-            availableEAI += epochAvailableEAI;
-            availableUSDC += epochAvailableUSDC;
-        }
-    }
-   
-     /**
      * @notice Claims the reward for a specific epoch.
      * @dev The caller specifies the epoch number, the wallet address to receive the reward, 
      * and the token type (USDC or EAI). The function calculates the reward based on the user's 
@@ -484,10 +456,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
             emit RewardsClaimed(msg.sender, epoch, rewardAmount, 0);
         }
 
-        // If the full rewards for this epoch have been claimed, update lastClaimEpoch.
-            if (userInfo[msg.sender].claimedEAIRewards[epoch]  > 0 && userInfo[msg.sender].claimedUSDCRewards[epoch] > 0) {
-                userInfo[msg.sender].lastClaimEpoch = epoch;
-            }
+      
     }
    
     /**
@@ -622,6 +591,5 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     */
     function getUserRewardStakeBalance(uint256 epoch, address user) external view returns (uint256) {
         return epochs[epoch].rewardStakeBalance[user];
-    }
-    
+    }    
 }
