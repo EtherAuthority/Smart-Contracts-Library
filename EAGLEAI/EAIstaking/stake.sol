@@ -71,6 +71,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     event FirstEpochStarted(uint256 startTime);
     event EpochStarted(uint256 indexed epoch, uint256 startTime);
     event FirstStake(address indexed user, uint256 amount, uint256 timestamp);
+    event Rollover(address indexed user, uint256 newLockedStake);
     
     /**
      * @dev Constructor initializes the contract with token addresses and ownership.
@@ -164,7 +165,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
      * When a new epoch begins, users should call this function to update their epochStartBalance.
      * New lockedStake = (previous lockedStake - any unstaked during epoch) + pendingStake.
      */
-    function rolloverPending(address userAdd) public {
+    function rolloverPending(address userAdd) internal  {
         UserInfo storage user = userInfo[userAdd];
         uint256 currentEpochNumber = getCurrentEpochNumber();
         if(user.lastStakeEpoch < currentEpochNumber){
@@ -174,7 +175,7 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
         user.pendingStake = 0;
         user.lastStakeEpoch = currentEpochNumber;
         }
-        //emit Rollover(msg.sender, user.epochStartBalance);
+        emit Rollover(msg.sender, user.lockedStake);
     }
     /**
     * @dev Allows users to stake EAI tokens in the contract.
@@ -591,5 +592,6 @@ contract EAIStaking is ReentrancyGuard, Pausable, Ownable {
     */
     function getUserRewardStakeBalance(uint256 epoch, address user) external view returns (uint256) {
         return epochs[epoch].rewardStakeBalance[user];
-    }    
+    }
+    
 }
