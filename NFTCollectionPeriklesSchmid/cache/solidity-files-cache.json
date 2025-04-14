@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/contracts/NFTCollection.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/contracts/NFTCollection.sol": {
       "lastModificationDate": 1744375541837,
       "contentHash": "5d2a01868d1115410e284316f8a0170a",
       "sourceName": "contracts/NFTCollection.sol",
@@ -43,43 +43,7 @@
         "NFTCollection"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/Counters.sol": {
-      "lastModificationDate": 1744362948137,
-      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
-      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Counters"
-      ]
-    },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
       "lastModificationDate": 1744362948958,
       "contentHash": "5a20b2cad87ddb61c7a3a6af21289e28",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
@@ -117,7 +81,79 @@
         "Ownable"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/security/Pausable.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
+      "lastModificationDate": 1744362948973,
+      "contentHash": "1535f8c0c68463f8c1b5239f7584e71f",
+      "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/Counters.sol": {
+      "lastModificationDate": 1744362948137,
+      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
+      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Counters"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/security/Pausable.sol": {
       "lastModificationDate": 1744362948964,
       "contentHash": "25c8108f36fdd472bc78d4c4af240c11",
       "sourceName": "@openzeppelin/contracts/security/Pausable.sol",
@@ -155,7 +191,7 @@
         "Pausable"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol": {
       "lastModificationDate": 1744362948573,
       "contentHash": "5a341bfc4fe3ee5357ccdebd3a78ad2c",
       "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol",
@@ -194,43 +230,7 @@
         "ERC721Burnable"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
-      "lastModificationDate": 1744362948973,
-      "contentHash": "1535f8c0c68463f8c1b5239f7584e71f",
-      "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ReentrancyGuard"
-      ]
-    },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/Context.sol": {
       "lastModificationDate": 1744362948135,
       "contentHash": "f07feb4a44b1a4872370da5aa70e8e46",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
@@ -266,7 +266,7 @@
         "Context"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
       "lastModificationDate": 1744362948569,
       "contentHash": "95602b04f0b53f1139f4668d123ddeb7",
       "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
@@ -310,7 +310,7 @@
         "ERC721"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "lastModificationDate": 1744362947999,
       "contentHash": "211ffd288c1588ba8c10eae668ca3c66",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
@@ -346,7 +346,119 @@
         "Address"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+      "lastModificationDate": 1744362948849,
+      "contentHash": "48de4c9a3a4ae5ef66a2aa620843413f",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/introspection/IERC165.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+      "lastModificationDate": 1744362948857,
+      "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IERC721.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Metadata"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+      "lastModificationDate": 1744362948860,
+      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Receiver"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
       "lastModificationDate": 1744362949027,
       "contentHash": "48686fc32a22a3754b8e63321857dd2a",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
@@ -385,45 +497,7 @@
         "Strings"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1744362948849,
-      "contentHash": "48de4c9a3a4ae5ef66a2aa620843413f",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../../utils/introspection/IERC165.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721"
-      ]
-    },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
       "lastModificationDate": 1744362948390,
       "contentHash": "0e7db055ce108f9da7bb6686a00287c0",
       "sourceName": "@openzeppelin/contracts/utils/introspection/ERC165.sol",
@@ -461,10 +535,10 @@
         "ERC165"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1744362948860,
-      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "lastModificationDate": 1744362948783,
+      "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
+      "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
@@ -494,84 +568,10 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "IERC721Receiver"
+        "IERC165"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "lastModificationDate": 1744362948857,
-      "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../IERC721.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721Metadata"
-      ]
-    },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol": {
-      "lastModificationDate": 1744362949017,
-      "contentHash": "9488ebd4daacfee8ad04811600d7d061",
-      "sourceName": "@openzeppelin/contracts/utils/math/SignedMath.sol",
-      "solcConfig": {
-        "version": "0.8.24",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "SignedMath"
-      ]
-    },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/math/Math.sol": {
       "lastModificationDate": 1744362948947,
       "contentHash": "fe63409d8a06818b926cf89e0ea88b1b",
       "sourceName": "@openzeppelin/contracts/utils/math/Math.sol",
@@ -607,10 +607,10 @@
         "Math"
       ]
     },
-    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/NFTCollection/Smart-Contracts-Library/NFTCollection/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1744362948783,
-      "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
-      "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol": {
+      "lastModificationDate": 1744362949017,
+      "contentHash": "9488ebd4daacfee8ad04811600d7d061",
+      "sourceName": "@openzeppelin/contracts/utils/math/SignedMath.sol",
       "solcConfig": {
         "version": "0.8.24",
         "settings": {
@@ -640,7 +640,7 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "IERC165"
+        "SignedMath"
       ]
     }
   }
