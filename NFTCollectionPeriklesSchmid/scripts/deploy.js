@@ -22,7 +22,7 @@ async function deployContract(name = "", args = []) {
 async function main() {
     
     let minPrice = parseUnits("0.001", 18);
-    const NFTCollection = await deployContract("NFTCollection", ["NFT Collection", "LNFT", "https://ipfs.io/ipfs/", minPrice]);
+    const NFTCollection = await deployContract("NFTCollection", ["NFT Collection", "LNFT", "", minPrice]); // set blank as base url
     
 }
 

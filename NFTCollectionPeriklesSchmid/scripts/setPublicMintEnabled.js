@@ -3,14 +3,22 @@ const { ethers } = require("hardhat");
 async function main() {
   try {
     
-    const { CONTRACT_ADDRESS } = process.env;
+    const { CONTRACT_ADDRESS, GAS_LIMIT, CUSTOM_GAS_GWEI } = process.env;
     const contract = await ethers.getContractAt("NFTCollection", CONTRACT_ADDRESS);
+
+    const [owner] = await ethers.getSigners();
+    const gasPrice = await ethers.provider.getFeeData().then(data => data.gasPrice);
+    const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
+
+    console.log("Current gas price (Gwei):", gasPrice);
+    console.log("Custom gas price (Gwei) :", customGasPrice);
 
     const enabled = true; // Change to false to disable
 
-    const [owner] = await ethers.getSigners();
-
-    const tx = await contract.connect(owner).setPublicMintEnabled(enabled);
+    const tx = await contract.connect(owner).setPublicMintEnabled(enabled, {
+                gasLimit: GAS_LIMIT,
+                gasPrice: customGasPrice
+              });
     await tx.wait();
 
     console.log(`✅ Public minting has been ${enabled ? "enabled" : "disabled"}`);
