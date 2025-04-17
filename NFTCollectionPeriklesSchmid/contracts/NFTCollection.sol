@@ -213,6 +213,7 @@ contract NFTCollection is ERC721Burnable, Ownable, Pausable, ReentrancyGuard {
 
     function burn(uint256 tokenId) public override onlyOwner {
         require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) == msg.sender, "Not the token owner");
         _burn(tokenId);
     }
 
