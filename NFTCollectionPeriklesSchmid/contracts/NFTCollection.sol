@@ -35,16 +35,13 @@ contract NFTCollection is ERC721Burnable, Ownable, Pausable, ReentrancyGuard {
      * @notice Constructor to initialize the NFT collection.
      * @param name Name of the NFT token.
      * @param symbol Symbol of the NFT token.
-     * @param baseTokenURI Base URI for metadata.
      * @param _mintPrice Price per NFT mint in wei.
      */
     constructor(
         string memory name,
-        string memory symbol,
-        string memory baseTokenURI,
+        string memory symbol,        
         uint256 _mintPrice
-    ) ERC721(name, symbol) {
-        _baseTokenURI = baseTokenURI;
+    ) ERC721(name, symbol) {        
         mintPrice = _mintPrice;
     }
 
@@ -212,6 +209,11 @@ contract NFTCollection is ERC721Burnable, Ownable, Pausable, ReentrancyGuard {
      */
     function withdraw() external onlyOwner nonReentrant {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function burn(uint256 tokenId) public override onlyOwner {
+        require(_exists(tokenId), "Token does not exist");
+        _burn(tokenId);
     }
 
     /**
