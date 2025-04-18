@@ -5,6 +5,7 @@
     "@openzeppelin/contracts": "^4.9.6",
     "chai": "^5.2.0",
     "dotenv": "^16.3.1",
+    "erc721a": "^4.3.0",
     "example-lib": "^0.1.0",
     "hardhat": "^2.22.19",
     "hardhat-ethers": "^1.0.1",

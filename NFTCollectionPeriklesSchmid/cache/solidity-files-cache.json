@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/contracts/NFTCollection.sol": {
-      "lastModificationDate": 1744375541837,
-      "contentHash": "5d2a01868d1115410e284316f8a0170a",
+      "lastModificationDate": 1744880043679,
+      "contentHash": "b795be53f186ae78725670f43f715cb5",
       "sourceName": "contracts/NFTCollection.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -1283,6 +1283,120 @@
       ],
       "artifacts": [
         "IERC165"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/contracts/NFTERC721A.sol": {
+      "lastModificationDate": 1744872500963,
+      "contentHash": "ad1ea758a7ad8a802d9c5cf11cbc7dd5",
+      "sourceName": "contracts/NFTERC721A.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "erc721a/contracts/ERC721A.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "NFTERC721A"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/erc721a/contracts/ERC721A.sol": {
+      "lastModificationDate": 1744711329044,
+      "contentHash": "f00e8b038a7d958f397c9fb8d107ec1c",
+      "sourceName": "erc721a/contracts/ERC721A.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC721A.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.4"
+      ],
+      "artifacts": [
+        "ERC721A",
+        "ERC721A__IERC721Receiver"
+      ]
+    },
+    "/media/user/HDD/0_lalji/1_Yogeshbhai_GDO/projects/Smart-Contracts-Library/NFTCollectionPeriklesSchmid/node_modules/erc721a/contracts/IERC721A.sol": {
+      "lastModificationDate": 1744711329049,
+      "contentHash": "f6791e37b41ad9fa583adb9845c17d51",
+      "sourceName": "erc721a/contracts/IERC721A.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.4"
+      ],
+      "artifacts": [
+        "IERC721A"
       ]
     }
   }

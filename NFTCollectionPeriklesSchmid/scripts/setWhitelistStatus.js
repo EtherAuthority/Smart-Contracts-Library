@@ -10,18 +10,16 @@ async function main() {
   const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
   console.log("Current gas price (Gwei):", gasPrice);
-  console.log("Custom gas price (Gwei) :", customGasPrice);
+  //console.log("Custom gas price (Gwei) :", customGasPrice);
 
-  const userAddress = "0xWHITELISTED_ADDRESS";
+  const userAddress = "0xe5377E463C230c3A1e97abdF25aCDAfB51E20cDb";
   const status = true;
 
-  const tx = await contract.setWhitelistStatus(userAddress, status, {
-                gasLimit: GAS_LIMIT,
-                gasPrice: customGasPrice
-              });
-  await tx.wait();
+  const tx = await contract.setWhitelistStatus(userAddress, status);
+  const receipt = await tx.wait();
+  console.log("✅ Gas used:", receipt.gasUsed.toString());
 
-  console.log(`Whitelist status of ${userAddress} set to ${status}`);
+  console.log(`✅ Whitelist status of ${userAddress} set to ${status}`);
 }
 
 main().catch((error) => {

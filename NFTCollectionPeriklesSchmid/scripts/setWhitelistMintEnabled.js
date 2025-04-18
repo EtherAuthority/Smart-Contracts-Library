@@ -11,15 +11,12 @@ async function main() {
     const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
     console.log("Current gas price (Gwei):", gasPrice);
-    console.log("Custom gas price (Gwei) :", customGasPrice);
+    //console.log("Custom gas price (Gwei) :", customGasPrice);
     
-    const enabled = true; // Change to false to disable
-    
-    const tx = await contract.connect(owner).setWhitelistMintEnabled(enabled, {
-                gasLimit: GAS_LIMIT,
-                gasPrice: customGasPrice
-              });
-    await tx.wait();
+    const enabled = true; // Change to false to disable    
+    const tx = await contract.connect(owner).setWhitelistMintEnabled(enabled);
+    const receipt = await tx.wait();
+    console.log("✅ Gas used:", receipt.gasUsed.toString());
 
     console.log(`✅ Whitelist minting has been ${enabled ? "enabled" : "disabled"}`);
   } catch (error) {

@@ -10,15 +10,12 @@ async function main() {
   const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
   console.log("Current gas price (Gwei):", gasPrice);
-  console.log("Custom gas price (Gwei) :", customGasPrice);
+  //console.log("Custom gas price (Gwei) :", customGasPrice);
 
-  const tx = await contract.withdraw({
-    gasLimit: GAS_LIMIT,
-    gasPrice: customGasPrice
-  });
-  await tx.wait();
-
-  console.log("Withdrawn to owner");
+  const tx = await contract.withdraw();
+  const receipt = await tx.wait();
+  console.log("✅ Gas used:", receipt.gasUsed.toString());
+  console.log("✅ Withdrawn to owner");
 }
 
 main().catch((error) => {

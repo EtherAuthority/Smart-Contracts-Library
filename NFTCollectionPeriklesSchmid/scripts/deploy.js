@@ -22,7 +22,9 @@ async function deployContract(name = "", args = []) {
 async function main() {
     
     let minPrice = parseUnits("0.001", 18);
-    const NFTCollection = await deployContract("NFTCollection", ["NFT Collection", "LNFT", "", minPrice]); // set blank as base url
+    const NFTCollection = await deployContract("NFTCollection", ["NFT Collection", "LNFT", minPrice]); // set blank as base url
+    //const MyCheapNFTCollection = await deployContract("MyCheapNFTCollection", [""]);
+    //const NFTERC721A = await deployContract("NFTERC721A", ["NFT Collection ERC721A", "LNFTA", minPrice]);
     
 }
 

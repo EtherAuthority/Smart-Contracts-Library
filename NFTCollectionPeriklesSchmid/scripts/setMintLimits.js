@@ -11,17 +11,16 @@ async function main() {
     const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
     console.log("Current gas price (Gwei):", gasPrice);
-    console.log("Custom gas price (Gwei) :", customGasPrice);
+    //console.log("Custom gas price (Gwei) :", customGasPrice);
 
     const maxPerTx = 5; // 🔧 Max mints per transaction
     const maxPerWallet = 20; // 🔧 Max mints per wallet
   
-    const tx = await contract.connect(owner).setMintLimits(maxPerTx, maxPerWallet, {
-                gasLimit: GAS_LIMIT,
-                gasPrice: customGasPrice
-              });
+    const tx = await contract.connect(owner).setMintLimits(maxPerTx, maxPerWallet);
     console.log(`⏳ Setting mint limits (perTx: ${maxPerTx}, perWallet: ${maxPerWallet})...`);
-    await tx.wait();
+    
+    const receipt = await tx.wait();
+    console.log("✅ Gas used:", receipt.gasUsed.toString());
     console.log(`✅ Mint limits set successfully.`);
   } catch (error) {
     console.error("❌ Error setting mint limits:", error.message);

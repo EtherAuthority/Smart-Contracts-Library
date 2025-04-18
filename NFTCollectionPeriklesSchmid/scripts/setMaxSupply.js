@@ -11,16 +11,15 @@ async function main() {
     const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
     console.log("Current gas price (Gwei):", gasPrice);
-    console.log("Custom gas price (Gwei) :", customGasPrice);
+    //console.log("Custom gas price (Gwei) :", customGasPrice);
 
     const maxSupply = 1000; // 🔧 Change this to your desired max supply
-
-    const tx = await contract.connect(owner).setMaxSupply(maxSupply, {
-                gasLimit: GAS_LIMIT,
-                gasPrice: customGasPrice
-              });
+    const tx = await contract.connect(owner).setMaxSupply(maxSupply);
     console.log(`⏳ Setting max supply to ${maxSupply}...`);
-    await tx.wait();
+    
+    const receipt = await tx.wait();
+    console.log("✅ Gas used:", receipt.gasUsed.toString());
+
     console.log(`✅ Max supply set to ${maxSupply}`);
   } catch (error) {
     console.error("❌ Error setting max supply:", error.message);

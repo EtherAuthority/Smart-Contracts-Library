@@ -10,7 +10,7 @@ async function main() {
   const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
   console.log("Current gas price (Gwei):", gasPrice);
-  console.log("Custom gas price (Gwei) :", customGasPrice);
+  //console.log("Custom gas price (Gwei) :", customGasPrice);
 
   const tokenURIs = [
     "ipfs://CID/new.json"
@@ -18,14 +18,16 @@ async function main() {
   const quantity = tokenURIs.length;
 
   const mintPrice = await contract.mintPrice();
-  const tx = await contract.whitelistMint(quantity, tokenURIs, {
-    value: mintPrice.mul(quantity),
-    gasLimit: GAS_LIMIT,
-    gasPrice: customGasPrice
-  });
-  await tx.wait();
+  const totalCost = mintPrice * BigInt(quantity);
 
-  console.log(`Whitelist minted ${quantity} tokens`);
+  const tx = await contract.whitelistMint(quantity, tokenURIs, {
+    value: totalCost
+  });
+
+  const receipt = await tx.wait();
+  console.log("✅ Gas used:", receipt.gasUsed.toString());
+  console.log(`✅ Whitelist minted ${quantity} tokens`);
+  console.log("🧾 Transaction hash:", receipt.hash);
 }
 
 main().catch((error) => {

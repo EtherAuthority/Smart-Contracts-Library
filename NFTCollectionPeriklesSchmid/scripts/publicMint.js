@@ -10,7 +10,6 @@ async function main() {
   const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
   console.log("Current gas price (Gwei):", gasPrice);
-  console.log("Custom gas price (Gwei) :", customGasPrice);
 
   const tokenURIs = [
     "ipfs://test.json",
@@ -21,14 +20,12 @@ async function main() {
   const mintPrice = await contract.mintPrice();
   const totalCost = mintPrice * BigInt(quantity);
 
-  const tx = await contract.publicMint(quantity, tokenURIs, {
-    gasLimit: GAS_LIMIT,
-    gasPrice: customGasPrice,
+  const tx = await contract.publicMint(quantity, tokenURIs, {    
     value: totalCost,
   });
   
   const receipt = await tx.wait();
-
+  console.log("✅ Gas used:", receipt.gasUsed.toString());
   console.log(`✅ Successfully minted ${quantity} NFTs`);
   console.log("🧾 Transaction hash:", receipt.hash);
 }

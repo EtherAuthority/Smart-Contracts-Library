@@ -28,10 +28,23 @@ module.exports = {
   defaultNetwork: "bscTestnet",
   networks: {
     hardhat: {},
+
+    SCAIMainnet: {
+      url: "https://mainnet-rpc.scai.network",
+      chainId: 34,      
+      accounts: [`0x${ACCOUNT_PRIVATE_KEY}`]
+    },
+    
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
+      //url: "https://bsc-testnet-rpc.publicnode.com",
       chainId: 97,      
       accounts: [`0x${ACCOUNT_PRIVATE_KEY}`]
+    },
+    
+    poodlTestnet: {
+      url: "https://testnet-rpc.poodl.org",
+      accounts: [`0x${ACCOUNT_PRIVATE_KEY}`],
     },
     poodlMainnet: {
       url: "https://rpc.poodl.org",
@@ -39,10 +52,42 @@ module.exports = {
       accounts: [`0x${ACCOUNT_PRIVATE_KEY}`]
     },
     
+    
   },
   etherscan: {
     //apiKey: ETHERSCAN_API_KEY,
     apiKey: BSCSCAN_API_KEY,
+
+    customChains: [
+      {
+        network: "SCAIMainnet",
+        chainId: 34,
+        urls: {
+          apiURL: "https://explorer.securechain.ai/api",
+          browserURL: "https://explorer.securechain.ai"
+        }
+      },
+
+      {
+        network: "bscTestnet",
+        chainId: 97,
+        urls: {
+          apiURL: "https://api-testnet.bscscan.com/api",
+          browserURL: "https://testnet.bscscan.com"
+        }
+      },
+
+      {
+        network: "poodlTestnet",
+        chainId: 15257,
+        urls: {
+          apiURL: "https://testnet.poodl.org/api",
+          browserURL: "https://testnet.poodl.org"
+        }
+      },
+      
+    ]
+
   },
   optimizer: {
     enabled: true,

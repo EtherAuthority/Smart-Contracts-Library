@@ -12,16 +12,14 @@ async function main() {
   const customGasPrice = ethers.parseUnits(CUSTOM_GAS_GWEI, "gwei"); // 45 Gwei
 
   console.log("Current gas price (Gwei):", gasPrice);
-  console.log("Custom gas price (Gwei) :", customGasPrice);
+  //console.log("Custom gas price (Gwei) :", customGasPrice);
   
-  const tx = await contract.setBaseURI(baseURI,{
-    gasLimit: GAS_LIMIT,
-    gasPrice: customGasPrice
-  });
+  const tx = await contract.setBaseURI(baseURI);
 
-  await tx.wait();
+  const receipt = await tx.wait();
+  console.log("✅ Gas used:", receipt.gasUsed.toString());
 
-  console.log("Base URI updated to:", baseURI);
+  console.log("✅ Base URI updated to:", baseURI);
 }
 
 main().catch((error) => {
