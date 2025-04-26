@@ -1,0 +1,185 @@
+export interface TokenAllowanceParams {
+    contract: string;
+    owner: string;
+    spender: string;
+}
+export declare type TokenAllowanceResponse = string;
+export interface TokenBalancesResponse {
+    address: string;
+    tokenBalances: TokenBalance[];
+}
+export declare type TokenBalance = TokenBalanceSuccess | TokenBalanceFailure;
+export interface TokenBalanceSuccess {
+    contractAddress: string;
+    tokenBalance: string;
+    error: null;
+}
+export interface TokenBalanceFailure {
+    contractAddress: string;
+    tokenBalance: null;
+    error: string;
+}
+export interface TokenMetadataResponse {
+    decimals: number | null;
+    logo: string | null;
+    name: string | null;
+    symbol: string | null;
+}
+export interface AssetTransfersParams {
+    fromBlock?: string;
+    toBlock?: string;
+    order?: AssetTransfersOrder;
+    fromAddress?: string;
+    toAddress?: string;
+    contractAddresses?: string[];
+    excludeZeroValue?: boolean;
+    maxCount?: number;
+    category: AssetTransfersCategory[];
+    pageKey?: string;
+}
+export declare enum AssetTransfersCategory {
+    EXTERNAL = "external",
+    INTERNAL = "internal",
+    TOKEN = "token",
+    ERC20 = "erc20",
+    ERC721 = "erc721",
+    ERC1155 = "erc1155",
+    SPECIALNFT = "specialnft"
+}
+export declare enum AssetTransfersOrder {
+    ASCENDING = "asc",
+    DESCENDING = "desc"
+}
+export interface AssetTransfersResponse {
+    transfers: AssetTransfersResult[];
+    pageKey?: string;
+}
+export interface AssetTransfersResult {
+    category: AssetTransfersCategory;
+    blockNum: string;
+    from: string;
+    to: string | null;
+    value: number | null;
+    erc721TokenId: string | null;
+    erc1155Metadata: ERC1155Metadata[] | null;
+    tokenId: string | null;
+    asset: string | null;
+    hash: string;
+    rawContract: RawContract;
+}
+export interface NftMetadata extends Record<string, any> {
+    name?: string;
+    description?: string;
+    image?: string;
+    attributes?: Array<Record<string, any>>;
+}
+export interface TokenUri {
+    raw: string;
+    gateway: string;
+}
+export interface NftContract {
+    address: string;
+}
+export interface NftId {
+    tokenId: string;
+    tokenMetadata?: NftTokenMetadata;
+}
+export interface NftTokenMetadata {
+    tokenType: "erc721" | "erc1155";
+}
+export interface GetNftMetadataParams {
+    contractAddress: string;
+    tokenId: string;
+    tokenType?: "erc721" | "erc1155";
+}
+export declare type GetNftMetadataResponse = Nft;
+export interface Nft extends BaseNft {
+    title: string;
+    description: string;
+    tokenUri?: TokenUri;
+    media?: TokenUri[];
+    metadata?: NftMetadata;
+    timeLastUpdated: string;
+    error?: string;
+}
+export interface BaseNft {
+    contract: NftContract;
+    id: NftId;
+    balance: string;
+}
+export interface GetNftsParams {
+    owner: string;
+    pageKey?: string;
+    contractAddresses?: string[];
+    withMetadata?: boolean;
+    filters?: NftFilters[];
+}
+export interface GetNftsParamsWithoutMetadata {
+    owner: string;
+    pageKey?: string;
+    contractAddresses?: string[];
+    withMetadata: false;
+}
+export interface GetNftsResponse {
+    ownedNfts: Nft[];
+    pageKey?: string;
+    totalCount: number;
+}
+export interface GetNftsResponseWithoutMetadata {
+    ownedNfts: BaseNft[];
+    pageKey?: string;
+    totalCount: number;
+}
+export declare enum NftFilters {
+    SPAM = "SPAM"
+}
+export interface TransactionReceiptsBlockNumber {
+    blockNumber: string;
+}
+export interface TransactionReceiptsBlockHash {
+    blockHash: string;
+}
+export declare type TransactionReceiptsParams = TransactionReceiptsBlockNumber | TransactionReceiptsBlockHash;
+export interface TransactionReceiptsResponse {
+    receipts: TransactionReceipt[] | null;
+}
+export interface TransactionReceipt {
+    transactionHash: string;
+    blockHash: string;
+    blockNumber: string;
+    contractAddress: string | null;
+    cumulativeGasUsed: string;
+    effectiveGasPrice: string;
+    from: string;
+    gasUsed: string;
+    logs: Log[];
+    logsBloom: string;
+    root?: string;
+    status?: string;
+    to: string;
+    transactionIndex: string;
+    type: string;
+}
+export interface Log {
+    blockHash: string;
+    address: string;
+    logIndex: string;
+    data: string;
+    removed: boolean;
+    topics: string[];
+    blockNumber: string;
+    transactionHash: string;
+    transactionIndex: string;
+}
+export interface ERC1155Metadata {
+    tokenId: string;
+    value: string;
+}
+export interface RawContract {
+    value: string | null;
+    address: string | null;
+    decimal: string | null;
+}
+export interface PrivateTransactionPreferences {
+    fast: boolean | null;
+}

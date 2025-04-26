@@ -1,0 +1,28 @@
+{
+  "name": "forge-std",
+  "version": "1.1.2",
+  "private": false,
+  "description": "Unofficial NPM distribution of Forge Standard Library",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shunkakinoki/contracts.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Foundry",
+  "files": [
+    "test",
+    "console.sol",
+    "console2.sol",
+    "Script.sol",
+    "Test.sol",
+    "Vm.sol"
+  ],
+  "scripts": {
+    "build": "cp -r ../../lib/forge-std/src/* . && mkdir -p ds-test && cp ../../lib/ds-test/src/test.sol ds-test/test.sol",
+    "fix": "cd ../.. && yarn run fix"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
